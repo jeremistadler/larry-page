@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <ProjectGuid>{BA939F02-3C41-4C40-B764-3D23095C0550}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="app.css" />
+    <Content Include="gulpfile.js" />
+    <Content Include="index.html" />
+    <Content Include="nature-photography-8.jpg" />
+    <Content Include="src\Color.ts" />
+    <Content Include="src\Texture.ts" />
+    <Content Include="references.ts" />
+    <Content Include="src\Vectorizer.ts" />
+    <Content Include="src\Utils.ts" />
+    <Content Include="src\MathHelper.ts" />
+    <Content Include="src\Matrix4.ts" />
+    <Content Include="src\Vector3.ts" />
+    <Content Include="vendor\jquery-2.1.0.js" />
+    <Content Include="app.ts" />
+    <Content Include="vendor\jquery.d.ts" />
+    <Content Include="package.json" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>image-vectorizer</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+</Project>

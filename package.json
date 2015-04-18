@@ -1,0 +1,26 @@
+{
+  "name": "image-vectorizer",
+  "version": "1.0.0",
+  "description": "Webgl image vectorizer",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeremistadler/image-vectorizer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jeremistadler/image-vectorizer/issues"
+  },
+  "homepage": "https://github.com/jeremistadler/image-vectorizer",
+  "devDependencies": {
+    "event-stream": "^3.2.1",
+    "gulp": "^3.8.10",
+    "gulp-connect": "^2.2.0",
+    "gulp-inject": "^1.2.0",
+    "gulp-typescript": "^2.3.0"
+  }
+}
