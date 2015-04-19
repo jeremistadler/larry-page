@@ -75,3 +75,6 @@ $RECYCLE.BIN/
 *.lnk
 bin
 obj
+build
+*.suo
+image-vectorizer.csproj.user

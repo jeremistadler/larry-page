@@ -4,14 +4,16 @@ var eventStream = require('event-stream');
 var connect = require('gulp-connect');
 var inject = require('gulp-inject');
 
-gulp.task('scripts', function() {
-    return gulp.src(['app.ts','vendor/**/*.ts','src/**/*.ts'])
+gulp.task('scripts', ['index'], function() {
+    gulp.src(['app.css', './*.jpg'])
+        .pipe(gulp.dest('build'));
+
+    return gulp.src(['references.ts', 'app.ts', 'Q.d.ts', 'src/**/*.ts'])
                .pipe(ts({
                    target: 'ES6',
                    noExternalResolve: true
-                }))
+               }))
                 .js
-                .pipe(gulp.src('vendor/**/*.js'))
                 .pipe(gulp.dest('build'));
 });
 
@@ -24,7 +26,7 @@ gulp.task('index', function() {
 });
 
 gulp.task('watch', function() {
-    gulp.watch(['app.ts', 'app.css', 'src/**/*.ts'], { debounceDelay: 200 }, ['scripts']);
+    gulp.watch(['app.ts', 'app.css', 'index.html', 'src/**/*.ts'], { debounceDelay: 200 }, ['scripts']);
     gulp.watch(['build/**/*.*'], { debounceDelay: 500 }, ['reload']);
 });
 
@@ -36,6 +38,7 @@ gulp.task('reload', function() {
 
 gulp.task('serve', function() {
     connect.server({
+        root: 'build',
         livereload: true
     });
 });

@@ -1,8 +1,8 @@
 ﻿///<reference path="../references.ts" />
 
-    class Utils {
+class Utils {
     static StartTick(tickMethod: (dt: number) => void) {
-        var result = $.Deferred();
+        var result = Q.defer();
         var oldTime = 0;
         var tickLoop = (time) => {
             try {
@@ -17,6 +17,6 @@
             }
         };
         tickLoop(0);
-        return result.promise();
+        return result.promise;
     }
 }

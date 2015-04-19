@@ -20,6 +20,18 @@
             return color;
         }
 
+        static RgbByte(red: number, green: number, blue: number, alpha?: number) {
+            var hasAlpha = true;
+            if (typeof alpha !== "number") {
+                hasAlpha = false;
+                alpha = 255;
+            }
+
+            var color = new Color(new Float32Array([red / 255, green / 255, blue / 255, alpha / 255]));
+            color.hasAlphaChannel = hasAlpha;
+            return color;
+        }
+
         get red() {
             return this.data[this.startIndex];
         }

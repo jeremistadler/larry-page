@@ -6,11 +6,15 @@ class Game {
     vectorizer: Vectorizer;
 
     constructor(public webgl: WebGLRenderingContext) {
-        this.vectorizer = new Vectorizer(webgl);
     }
 
     init() {
-        return Game.LoadTexture(this.webgl, 'nature-photography-8.jpg', false, 256);
+        var game = this;
+
+        return Game.LoadTexture(this.webgl, 'cube.jpg', false, 256).then(function (tex) {
+            game.vectorizer = new Vectorizer(game.webgl, tex);
+            game.vectorizer.init();
+        });
     }
 
     onResize() {
@@ -37,8 +41,8 @@ class Game {
         });
     }
 
-    static LoadTexture(context: WebGLRenderingContext, url: string, tile?: boolean, density?: number) {
-        var def = $.Deferred<Texture>();
+    static LoadTexture(context: WebGLRenderingContext, url: string, tile?: boolean, density?: number) : Q.Promise<Texture> {
+        var def = Q.defer<Texture>();
         var image = new Image();
         image.onload = () => {
             var width = image.naturalWidth || image.width;
@@ -51,7 +55,7 @@ class Game {
         };
         image.onerror = def.reject;
         image.src = url;
-        return def;
+        return def.promise;
     }
 
 }
@@ -70,15 +74,17 @@ function matchWindowSize(canvas: HTMLCanvasElement, sizeChanged?: () => any) {
     resizeCanvas();
 }
 
-$(document).ready(function () {
+var onloaded = function () {
     var canvas = <HTMLCanvasElement>document.getElementById("canvas-element-id");
-    var webgl = canvas.getContext("webgl");
+    var webgl = canvas.getContext("webgl", { alpha: false });
     var game = new Game(webgl);
 
     matchWindowSize(canvas, () => { game.onResize() });
 
     game.init()
         .then(() => game.run())
-        .fail(e => alert("Error: " + e.message));
-});
+        .fail(e => console.error(e.message));
+};
+
+document.addEventListener('DOMContentLoaded', onloaded, false);
 
