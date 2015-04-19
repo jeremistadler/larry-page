@@ -16,7 +16,7 @@ class Texture {
 
         if (tile && (width !== height || (width & (width - 1))))
             throw new Error("A tile texture size must be power of two");
-
+        
         if (tile) {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);

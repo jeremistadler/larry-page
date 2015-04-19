@@ -78,7 +78,7 @@ var onloaded = function () {
     var canvas = <HTMLCanvasElement>document.getElementById("canvas-element-id");
     var webgl = canvas.getContext("webgl", { alpha: false });
     var game = new Game(webgl);
-
+    
     matchWindowSize(canvas, () => { game.onResize() });
 
     game.init()

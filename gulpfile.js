@@ -4,6 +4,8 @@ var eventStream = require('event-stream');
 var connect = require('gulp-connect');
 var inject = require('gulp-inject');
 
+
+
 gulp.task('scripts', ['index'], function() {
     gulp.src(['app.css', './*.jpg'])
         .pipe(gulp.dest('build'));
