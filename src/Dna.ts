@@ -20,7 +20,7 @@ class Dna {
         var newTriangleList = this.Triangles.slice();
 
         var tri = new Triangle()
-        tri.Color = Color.Rgb(Math.random(), Math.random(), Math.random(), 0.5);
+        tri.Color = Color.Rgb(Math.random(), Math.random(), Math.random(), 0.2);
         tri.Pos = [];
         for (var i = 0; i < 3; i++)
             tri.Pos.push(new Vector3(Math.random() * 400 + 400, Math.random() * 400, 0));
@@ -53,6 +53,14 @@ class Dna {
             colors.push(tri.Color.green);
             colors.push(tri.Color.blue);
             colors.push(tri.Color.alpha);
+            colors.push(tri.Color.red);
+            colors.push(tri.Color.green);
+            colors.push(tri.Color.blue);
+            colors.push(tri.Color.alpha);
+            colors.push(tri.Color.red);
+            colors.push(tri.Color.green);
+            colors.push(tri.Color.blue);
+            colors.push(tri.Color.alpha);
         }
 
         var gl = this.webgl;
@@ -80,8 +88,7 @@ class Dna {
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, posbuff);
-        gl.drawArrays(gl.TRIANGLES, 0, this.Triangles.length);
+        gl.drawArrays(gl.TRIANGLES, 0, this.Triangles.length * 3);
     }
 
 
