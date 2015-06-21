@@ -78,3 +78,12 @@ obj
 build
 *.suo
 image-vectorizer.csproj.user
+src/Vectorizer.js
+app.js
+src/Color.js
+src/Dna.js
+src/Texture.js
+src/Vector3.js
+src/Utils.js
+src/MathHelper.js
+src/Matrix4.js

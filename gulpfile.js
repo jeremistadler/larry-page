@@ -7,7 +7,7 @@ var inject = require('gulp-inject');
 
 
 gulp.task('scripts', ['index'], function() {
-    gulp.src(['app.css', './*.jpg'])
+    gulp.src(['app.css', './*.jpg', 'Q.js'])
         .pipe(gulp.dest('build'));
 
     return gulp.src(['references.ts', 'app.ts', 'Q.d.ts', 'src/**/*.ts'])

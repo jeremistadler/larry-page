@@ -77,7 +77,7 @@ function matchWindowSize(canvas: HTMLCanvasElement, sizeChanged?: () => any) {
 var onloaded = function () {
     var canvas = <HTMLCanvasElement>document.getElementById("canvas-element-id");
     var webgl = canvas.getContext("webgl", { alpha: false });
-    var game = new Game(webgl);
+    var game = new Game(<WebGLRenderingContext>webgl);
     
     matchWindowSize(canvas, () => { game.onResize() });
 
@@ -87,4 +87,3 @@ var onloaded = function () {
 };
 
 document.addEventListener('DOMContentLoaded', onloaded, false);
-

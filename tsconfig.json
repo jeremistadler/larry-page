@@ -1,0 +1,30 @@
+{
+    "version": "1.5.0-alpha",
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "declaration": false,
+        "noImplicitAny": false,
+        "removeComments": true,
+        "noLib": false,
+        "preserveConstEnums": true,
+        "suppressImplicitAnyIndexErrors": true
+    },
+    "filesGlob": [
+        "./**/*.ts",
+        "!./node_modules/**/*.ts"
+    ],
+    "files": [
+        "./Q.d.ts",
+        "./app.ts",
+        "./references.ts",
+        "./src/Color.ts",
+        "./src/Dna.ts",
+        "./src/MathHelper.ts",
+        "./src/Matrix4.ts",
+        "./src/Texture.ts",
+        "./src/Utils.ts",
+        "./src/Vector3.ts",
+        "./src/Vectorizer.ts"
+    ]
+}
