@@ -13,10 +13,15 @@
     <TypeScriptToolsVersion>1.0</TypeScriptToolsVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include=".gitignore" />
     <Content Include="app.css" />
+    <Content Include="cube.jpg" />
+    <Content Include="rainbow.png" />
+    <Content Include="vendor\gl-matrix-min.js" />
     <Content Include="gulpfile.js" />
     <Content Include="index.html" />
     <Content Include="nature-photography-8.jpg" />
+    <Content Include="vendor\Q.js" />
     <Content Include="src\Color.ts" />
     <Content Include="src\Texture.ts" />
     <Content Include="references.ts" />
@@ -29,10 +34,14 @@
     <Content Include="package.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Q.d.ts" />
+    <None Include="vendor\Q.d.ts" />
+    <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="src\Dna.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="vendor\gl-matrix.d.ts" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -1,14 +1,14 @@
 ﻿///<reference path="../references.ts" />
 
 class Texture {
-    constructor(public texture: WebGLTexture, public image: HTMLImageElement, public tile: boolean, public density: number) {
+    constructor(public texture: WebGLTexture, public image: HTMLImageElement, public tile: boolean) {
     }
 
-    static FromImage(context: WebGLRenderingContext, image: HTMLImageElement, tile: boolean, density = 256) {
+    static FromImage(context: WebGLRenderingContext, image: HTMLImageElement, tile: boolean) {
         var gl = context;
         var texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, <any>true);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, <any>false);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, <any>image);
 
         var width = image.naturalWidth || image.width;
@@ -36,6 +36,6 @@ class Texture {
 
         gl.bindTexture(gl.TEXTURE_2D, null);
 
-        return new Texture(texture, image, tile, density);
+        return new Texture(texture, image, tile);
     }
 }

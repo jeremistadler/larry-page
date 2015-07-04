@@ -6,6 +6,12 @@ class Triangle {
     Color: Color;
 }
 
+
+// TODO
+// Have a fixed list if triangles with a isDelted property,
+// store the last triangle as a property for rollback
+// create a new triangle and replace random when trying to evolve
+
 class Dna {
     Triangles: Triangle[];
     Age: number;
@@ -21,10 +27,10 @@ class Dna {
         var newTriangleList = this.Triangles.slice();
 
         var tri = new Triangle()
-        tri.Color = Color.Rgb(Math.random(), Math.random(), Math.random(), 0.2);
+        tri.Color = Color.Rgb(Math.random(), Math.random(), Math.random(), Math.random() * 0.5);
         tri.Pos = [];
         for (var i = 0; i < 3; i++)
-            tri.Pos.push(new Vector3(Math.random(), Math.random(), 0));
+            tri.Pos.push(new Vector3(Math.random() * 1.2 - 0.1, Math.random() * 1.2 - 0.1, 0));
 
         newTriangleList.push(tri);
 
@@ -43,14 +49,14 @@ class Dna {
         for (var i = 0; i < this.Triangles.length; i++) {
             var tri = this.Triangles[i];
 
-            positions.push(tri.Pos[0].x * imageWidth);
-            positions.push(tri.Pos[0].y * imageHeight);
+            positions.push(tri.Pos[0].x);
+            positions.push(tri.Pos[0].y);
 
-            positions.push(tri.Pos[1].x * imageWidth);
-            positions.push(tri.Pos[1].y * imageHeight);
+            positions.push(tri.Pos[1].x);
+            positions.push(tri.Pos[1].y);
 
-            positions.push(tri.Pos[2].x * imageWidth);
-            positions.push(tri.Pos[2].y * imageHeight);
+            positions.push(tri.Pos[2].x);
+            positions.push(tri.Pos[2].y);
 
             colors.push(tri.Color.red);
             colors.push(tri.Color.green);
@@ -67,16 +73,11 @@ class Dna {
         }
 
 
-        var positionLocation = gl.getAttribLocation(program, "a_position");
-        var colorLocation = gl.getAttribLocation(program, "a_color");
-        var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
-        gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
-
-
         var colorBuff = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
+        var colorLocation = gl.getAttribLocation(program, "a_color");
         gl.enableVertexAttribArray(colorLocation);
         gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
 
@@ -85,6 +86,7 @@ class Dna {
         gl.bindBuffer(gl.ARRAY_BUFFER, posbuff);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
+        var positionLocation = gl.getAttribLocation(program, "a_position");
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
