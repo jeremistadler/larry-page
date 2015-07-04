@@ -1,4 +1,5 @@
-﻿///<reference path="Q.d.ts" />
+﻿///<reference path="vendor/gl-matrix.d.ts" />
+///<reference path="vendor/Q.d.ts" />
 ///<reference path="src/Vector3.ts" />
 ///<reference path="src/Matrix4.ts" />
 ///<reference path="src/Texture.ts" />

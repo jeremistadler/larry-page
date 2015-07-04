@@ -7,10 +7,10 @@ var inject = require('gulp-inject');
 
 
 gulp.task('scripts', ['index'], function() {
-    gulp.src(['app.css', './*.jpg', 'Q.js'])
+    gulp.src(['app.css', './*.jpg', 'vendor/*.js'])
         .pipe(gulp.dest('build'));
 
-    return gulp.src(['references.ts', 'app.ts', 'Q.d.ts', 'src/**/*.ts'])
+    return gulp.src(['references.ts', 'app.ts', 'vendor/*.d.ts', 'src/**/*.ts'])
                .pipe(ts({
                    target: 'ES6',
                    noExternalResolve: true

@@ -7,7 +7,7 @@ class Utils {
         
 
         var result = Q.defer();
-        result.resolve();
+        result.resolve({});
         //var oldTime = 0;
         //var tickLoop = (time) => {
         //    try {
