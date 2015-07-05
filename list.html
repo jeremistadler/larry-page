@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Image Vectorizer List</title>
+
+    <style>
+        body {
+            background: #f8f8f8;
+            margin: 0;
+        }
+
+        svg {
+            margin: 10px;
+        }
+
+        #container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+
+
+    <div id="container"></div>
+
+    <label for=versionInput>Version</label>
+    <input type=range min=0 max=1 value=0 id=versionInput>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.4/raphael-min.js"></script>
+
+    <script>
+        var dnaItems = [];
+        var slider = document.getElementById('versionInput');
+        var container = document.getElementById('container');
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://localhost:2270/api/list/latest?limit=200', true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function(e) {
+            if (this.status != 200)
+                throw 'Could not get items';
+
+            dnaItems = JSON.parse(this.response);
+            dnaItems.sort(function(a, b) { return a.Generation - b.Generation });
+            slider.max = dnaItems.length - 1;
+            slider.value = 0;
+            RenderDna(dnaItems[0]);
+        };
+        xhr.send();
+
+        slider.oninput = UpdateSlider;
+
+        function UpdateSlider() {
+            RenderDna(dnaItems[parseInt(slider.value)]);
+        }
+
+        function RenderDna(dna) {
+            var size = 512;
+
+            var paperDiv = document.createElement('div');
+            container.innerHTML = '';
+            container.appendChild(paperDiv);
+            var paper = Raphael(paperDiv, size, size);
+
+            for (var g = 0; g < dna.Genes.length; g++) {
+                var gene = dna.Genes[g];
+
+                var posString = 'M' + (gene.Pos[0] * size) + ' ' + (gene.Pos[1] * size) + 'L';
+
+                for (var p = 2; p < gene.Pos.length; p++) {
+                    posString += gene.Pos[p] * size;
+                    posString += ' ';
+                }
+
+                var path = paper.path(posString + 'Z');
+                path.attr('fill', 'rgba(' +
+                    gene.Color[0] * 255 + ',' +
+                    gene.Color[1] * 255 + ',' +
+                    gene.Color[2] * 255 + ',' +
+                    gene.Color[3] + ')');
+
+                path.attr('stroke-width', '0');
+            }
+        }
+    </script>
+</body>
+</html>

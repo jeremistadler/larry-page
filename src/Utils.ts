@@ -65,6 +65,9 @@ class Utils {
             0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), gl.STATIC_DRAW);
     }
 
+    static randomIndex(arr: any[]) {
+        return Math.floor(Math.random() * arr.length);
+    }
 
     static randomFromTo(from, to){
         return Math.floor(Math.random() * (to - from + 1) + from);
@@ -75,5 +78,13 @@ class Utils {
         for (var i = 0; i < length; i++)
             arr[i] = 0;
         return arr;
+    }
+
+    static ClampFloat(num: number) {
+        return Math.min(1, Math.max(num, 0));
+    }
+
+    static ClampByte(num: number) {
+        return Math.min(255, Math.max(num, 0));
     }
 }

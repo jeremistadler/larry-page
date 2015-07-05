@@ -1,5 +1,19 @@
 ///<reference path="references.ts" />
 
+var globalDna: Dna = null;
+
+var xhr = new XMLHttpRequest();
+xhr.open('GET', 'http://localhost:2270/api/latest', true);
+xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+xhr.onload = function (e) {
+    if (this.status == 200)
+        globalDna = JSON.parse(this.response);
+
+    if (!globalDna)
+        globalDna = DnaEvolver.CreateDna(100);
+};
+xhr.send();
+
 
 class Game {
     sourceImage: Texture;
@@ -11,7 +25,7 @@ class Game {
     init() {
         var game = this;
 
-        return Game.LoadTexture(this.webgl, 'cube.jpg', false).then(function (tex) {
+        return Game.LoadTexture(this.webgl, 'rainbow.png', false).then(function (tex) {
             game.vectorizer = new Vectorizer(game.webgl, tex);
             game.vectorizer.init();
         });
