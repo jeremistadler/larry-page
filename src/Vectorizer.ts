@@ -7,7 +7,7 @@ class Vectorizer {
     sourceProgram: WebGLProgram;
     triangleProgram: WebGLProgram;
     diffProgram: WebGLProgram;
-    Dna: Dna;
+    Evolver: DnaEvolver;
 
     TempBuffer: WebGLRenderbuffer;
     TempTexture: WebGLTexture;
@@ -15,8 +15,7 @@ class Vectorizer {
     SourceByteArray: Int8Array;
 
     constructor(public webgl: WebGLRenderingContext, public sourceTex: Texture) {
-        this.Dna = new Dna(webgl);
-        this.Dna.Fitness = 1e9;
+        this.Evolver = new DnaEvolver(webgl, DnaEvolver.CreateDna(20));
     }
 
     init() {
@@ -108,7 +107,6 @@ class Vectorizer {
     draw() {
         var gl = this.webgl;
         var canvas = this.webgl.canvas;
-        var evolved = this.Dna.Evolve();
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.clearColor(1, 0.5, 1, 1);
@@ -119,12 +117,13 @@ class Vectorizer {
         gl.bindTexture(gl.TEXTURE_2D, this.TempTexture);
         gl.clearColor(1, 1, 1, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        evolved.Draw(this.triangleProgram, 512, 512);
+        this.Evolver.StartEvolving();
+        this.Evolver.Draw(this.triangleProgram, 512, 512);
         
         var triPixels = new Uint8Array(512 * 512 * 4);
         gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, triPixels);
-        evolved.Fitness = this.calculateFitness(this.SourceByteArray, triPixels);
-        
+        var fitness = this.calculateFitness(this.SourceByteArray, triPixels);
+        this.Evolver.EndEvolving(fitness);
 
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -134,48 +133,25 @@ class Vectorizer {
         gl.clear(gl.COLOR_BUFFER_BIT);
         
 
-        var srcPreviewTex = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, srcPreviewTex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.SourceByteArray);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        this.drawSourceImg(srcPreviewTex, 512, 0, 512, 512);
-        this.drawSourceImg(this.TempTexture, 0, 0, 512, 512);
+        //var srcPreviewTex = gl.createTexture();
+        //gl.bindTexture(gl.TEXTURE_2D, srcPreviewTex);
+        //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.SourceByteArray);
+        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        //this.drawSourceImg(srcPreviewTex, 512, 0, 512, 512);
+        //this.drawSourceImg(this.TempTexture, 0, 0, 512, 512);
 
-        var triPreviewTex = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, triPreviewTex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, triPixels);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        this.drawSourceImg(triPreviewTex, 512, 512, 512, 512);
+        //var triPreviewTex = gl.createTexture();
+        //gl.bindTexture(gl.TEXTURE_2D, triPreviewTex);
+        //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, triPixels);
+        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        //this.drawSourceImg(triPreviewTex, 512, 512, 512, 512);
 
         this.drawSourceImg(this.sourceTex.texture, 0, 0, 512, 512);
-        this.drawSourceImg(srcPreviewTex, 512, 0, 512, 512);
+        //this.drawSourceImg(srcPreviewTex, 512, 0, 512, 512);
         this.drawSourceImg(this.TempTexture, 0, 512, 512, 512);
-        this.drawSourceImg(triPreviewTex, 512, 512, 512, 512);
-
-
-        if (evolved.Fitness < this.Dna.Fitness) {
-            this.Dna = evolved;
-            console.log('fitness', evolved.Fitness);
-        }
-
-        if (downloadImage) {
-            downloadImage = false;
-            this.downloadImg(triPixels);
-        }
-    }
-
-    downloadImg(buff: Uint8Array) {
-        var binaryString = new Array<string>(buff.length);
-        var i = buff.length;
-        while (i--) {
-            binaryString[i] = String.fromCharCode(buff[i]);
-        }
-
-        var data = binaryString.join('');
-        var q = "data:image/png;base64," + window.btoa(data);
-        window.open(q);
+        //this.drawSourceImg(triPreviewTex, 512, 512, 512, 512);
     }
 
     calculateFitness(buff1: ArrayBufferView, buff2: ArrayBufferView) {

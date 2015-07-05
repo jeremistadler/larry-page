@@ -1,111 +1,125 @@
 ﻿///<reference path="../references.ts" />
 
 
-class Triangle {
-    Pos: Vector3[];
-    Color: Color;
-}
+class DnaEvolver {
+    static PositionsPerGene: number = 3;
 
+    EvolvingGene: Gene;
+    EvolvingGeneIndex: number;
 
-// TODO
-// Have a fixed list if triangles with a isDelted property,
-// store the last triangle as a property for rollback
-// create a new triangle and replace random when trying to evolve
+    ColorBuffer: WebGLBuffer;
+    PosBuffer: WebGLBuffer;
 
-class Dna {
-    Triangles: Triangle[];
-    Age: number;
-    Fitness: number;
+    constructor(public webgl: WebGLRenderingContext, public Dna: Dna) {
+        this.PosBuffer = webgl.createBuffer();
+        this.ColorBuffer = webgl.createBuffer();
 
-    constructor(public webgl: WebGLRenderingContext, triangles?: Triangle[], age?: number) {
-        this.Triangles = triangles || [];
-        this.Age = age || 0;
+        var posArr = new Float32Array(this.Dna.Triangles.length * DnaEvolver.PositionsPerGene * 2);
+        var colorArr = new Float32Array(this.Dna.Triangles.length * DnaEvolver.PositionsPerGene * 4);
+
+        webgl.bindBuffer(webgl.ARRAY_BUFFER, this.PosBuffer);
+        webgl.bufferData(webgl.ARRAY_BUFFER, posArr, webgl.DYNAMIC_DRAW);
+
+        webgl.bindBuffer(webgl.ARRAY_BUFFER, this.ColorBuffer);
+        webgl.bufferData(webgl.ARRAY_BUFFER, colorArr, webgl.DYNAMIC_DRAW);
+
+        for (var i = 0; i < this.Dna.Triangles.length; i++)
+            this.SetTriangleToBuffers(this.Dna.Triangles[i], i);
     }
 
+    static CreateDna(numberOfGenes: number) {
+        var dna = new Dna();
+        dna.Fitness = 1e9;
+        dna.Triangles = new Array(numberOfGenes);
+        dna.Seed = Math.random();
+        dna.Generations = 0;
+        dna.Mutations = 0;
 
-    Evolve() : Dna {
-        var newTriangleList = this.Triangles.slice();
+        for (var i = 0; i < numberOfGenes; i++) {
+            dna.Triangles[i] = new Gene();
+            dna.Triangles[i].Pos = Utils.CreateNumberArray(DnaEvolver.PositionsPerGene * 2);
+            dna.Triangles[i].Color = Utils.CreateNumberArray(4);
+        }
 
-        var tri = new Triangle()
-        tri.Color = Color.Rgb(Math.random(), Math.random(), Math.random(), Math.random() * 0.5);
-        tri.Pos = [];
-        for (var i = 0; i < 3; i++)
-            tri.Pos.push(new Vector3(Math.random() * 1.2 - 0.1, Math.random() * 1.2 - 0.1, 0));
+        return dna;
+    }
 
-        newTriangleList.push(tri);
+    StartEvolving(): void {
+        var index = Utils.randomFromTo(0, this.Dna.Triangles.length - 1);
 
-        return new Dna(this.webgl, newTriangleList, this.Age + 1);
+        this.EvolvingGene = this.Dna.Triangles[index];
+        this.EvolvingGeneIndex = index;
+
+        var tri = this.Dna.Triangles[index] = new Gene();
+        tri.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.4 + 0.2];
+        tri.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+        for (var i = 0; i < tri.Pos.length; i++)
+            tri.Pos[i] = Math.random() * 1.2 - 0.1;
+
+        this.SetTriangleToBuffers(tri, index);
+
+    }
+
+    EndEvolving(fitness: number): void {
+        if (fitness < this.Dna.Fitness) {
+            this.Dna.Fitness = fitness;
+            this.Dna.Mutations++;
+            console.log('fitness', fitness, 'generation: ' + this.Dna.Generations);
+        }
+        else {
+            this.Dna.Triangles[this.EvolvingGeneIndex] = this.EvolvingGene;
+            this.SetTriangleToBuffers(this.EvolvingGene, this.EvolvingGeneIndex);
+        }
+
+        this.Dna.Generations++;
+        this.EvolvingGene = null;
+    }
+
+    SetTriangleToBuffers(tri: Gene, index: number) {
+        var posBuff = new Float32Array(tri.Pos);
+        var colorBuff = new Float32Array(tri.Color.length * DnaEvolver.PositionsPerGene);
+
+        for (var p = 0; p < DnaEvolver.PositionsPerGene; p++)
+            for (var i = 0; i < tri.Color.length; i++)
+                colorBuff[p * 4 + i] = tri.Color[i];
+
+
+        this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, this.PosBuffer);
+        this.webgl.bufferSubData(this.webgl.ARRAY_BUFFER, index * posBuff.length * 4, posBuff);
+
+        this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, this.ColorBuffer);
+        this.webgl.bufferSubData(this.webgl.ARRAY_BUFFER, index * colorBuff.length * 4, colorBuff);
     }
 
     Draw(program: WebGLProgram, imageWidth: number, imageHeight: number) {
-        if (this.Triangles.length == 0)
-            return;
-
         var gl = this.webgl;
         gl.useProgram(program);
 
-        var positions = [];
-        var colors = [];
-        for (var i = 0; i < this.Triangles.length; i++) {
-            var tri = this.Triangles[i];
-
-            positions.push(tri.Pos[0].x);
-            positions.push(tri.Pos[0].y);
-
-            positions.push(tri.Pos[1].x);
-            positions.push(tri.Pos[1].y);
-
-            positions.push(tri.Pos[2].x);
-            positions.push(tri.Pos[2].y);
-
-            colors.push(tri.Color.red);
-            colors.push(tri.Color.green);
-            colors.push(tri.Color.blue);
-            colors.push(tri.Color.alpha);
-            colors.push(tri.Color.red);
-            colors.push(tri.Color.green);
-            colors.push(tri.Color.blue);
-            colors.push(tri.Color.alpha);
-            colors.push(tri.Color.red);
-            colors.push(tri.Color.green);
-            colors.push(tri.Color.blue);
-            colors.push(tri.Color.alpha);
-        }
-
-
-        var colorBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.ColorBuffer);
         var colorLocation = gl.getAttribLocation(program, "a_color");
         gl.enableVertexAttribArray(colorLocation);
         gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
 
 
-        var posbuff = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, posbuff);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.PosBuffer);
         var positionLocation = gl.getAttribLocation(program, "a_position");
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-        gl.drawArrays(gl.TRIANGLES, 0, this.Triangles.length * 3);
+        gl.drawArrays(gl.TRIANGLES, 0, this.Dna.Triangles.length * 3);
     }
+}
 
 
-    setRectangle(x: number, y: number, width: number, height: number) {
-        var gl = this.webgl;
-        var x2 = x + width;
-        var y1 = y + height;
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            x, y1, x2, y1, x, y, x, y, x2, y1, x2, y]), gl.STATIC_DRAW);
-    }
+class Gene {
+    Pos: number[];
+    Color: number[];
+}
 
-    setRectangleTex() {
-        var gl = this.webgl;
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), gl.STATIC_DRAW);
-    }
-
+class Dna {
+    Triangles: Gene[];
+    Generations: number;
+    Mutations: number;
+    Fitness: number;
+    Seed: number;
 }

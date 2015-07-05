@@ -5,16 +5,11 @@ class Utils {
         var result = Q.defer();
         var oldTime = 0;
         var tickLoop = (time) => {
-            try {
-                var deltaTime = time - oldTime;
-                oldTime = time;
+            var deltaTime = time - oldTime;
+            oldTime = time;
 
-                tickMethod(deltaTime / 1000);
-                window.requestAnimationFrame(tickLoop);
-            }
-            catch (e) {
-                result.reject(e);
-            }
+            tickMethod(deltaTime / 1000);
+            window.requestAnimationFrame(tickLoop);
         };
         tickLoop(0);
         return result.promise;
@@ -56,5 +51,29 @@ class Utils {
             console.error("Shader compile failed", gl.getShaderInfoLog(shader));
 
         return shader;
+    }
+
+    static setRectangle(gl: WebGLRenderingContext, x: number, y: number, width: number, height: number) {
+        var x2 = x + width;
+        var y1 = y + height;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            x, y1, x2, y1, x, y, x, y, x2, y1, x2, y]), gl.STATIC_DRAW);
+    }
+
+    static setRectangleTex(gl: WebGLRenderingContext) {
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), gl.STATIC_DRAW);
+    }
+
+
+    static randomFromTo(from, to){
+        return Math.floor(Math.random() * (to - from + 1) + from);
+    }
+
+    static CreateNumberArray(length: number) {
+        var arr = new Array(length);
+        for (var i = 0; i < length; i++)
+            arr[i] = 0;
+        return arr;
     }
 }

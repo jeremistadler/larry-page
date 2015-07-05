@@ -46,13 +46,9 @@ class Game {
 
 }
 
-// -- Page --
-
-var downloadImage = false;
 
 function matchWindowSize(canvas: HTMLCanvasElement, sizeChanged?: () => any) {
     window.addEventListener('resize', resizeCanvas, false);
-    window.addEventListener('click', ev => downloadImage = true, false);
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
