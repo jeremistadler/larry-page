@@ -155,6 +155,10 @@ class DnaEvolver {
     }
 }
 
+class Species {
+    Id: number;
+    ImagePath: string;
+}
 
 class Gene {
     Pos: number[];
@@ -166,4 +170,5 @@ class Dna {
     Generation: number;
     Mutation: number;
     Fitness: number;
+    Species: Species;
 }

@@ -18,7 +18,7 @@ namespace server.Controllers
 
         public DnaContext() : base("mysql")
         {
-            Database.SetInitializer<DnaContext>(new CreateDatabaseIfNotExists<DnaContext>());
+            Database.SetInitializer(new CreateDatabaseIfNotExists<DnaContext>());
         }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -59,6 +59,7 @@ namespace server.Controllers
         public long Fitness { get; set; }
         public DateTime Date { get; set; }
         public GeneView[] Genes { get; set; }
+        public SpeciesView Species { get; set; }
 
         public DnaEntity ToEntity()
         {
@@ -70,7 +71,8 @@ namespace server.Controllers
                 Generation = this.Generation,
                 Mutation = this.Mutation,
                 Seed = this.Seed,
-                Genes = GeneView.Serialize(this.Genes)
+                Genes = GeneView.Serialize(this.Genes),
+                Species = this.Species.ToEntity()
             };
         }
     }
@@ -92,6 +94,9 @@ namespace server.Controllers
         public DateTime Date { get; set; }
         public byte[] Genes { get; set; }
 
+        [Required]
+        public SpeciesEntity Species { get; set; }
+
         public DnaView ToView()
         {
             return new DnaView
@@ -101,7 +106,51 @@ namespace server.Controllers
                 Generation = this.Generation,
                 Mutation = this.Mutation,
                 Seed = this.Seed,
-                Genes = GeneView.Deserialize(this.Genes)
+                Genes = GeneView.Deserialize(this.Genes),
+                Species = this.Species.ToView()
+            };
+        }
+    }
+
+    public class SpeciesView
+    {
+        public long Id { get; set; }
+        [StringLength(255)]
+        public string ImagePath { get; set; }
+
+        public SpeciesEntity ToEntity()
+        {
+            return new SpeciesEntity
+            {
+                Id = this.Id,
+                ImagePath = this.ImagePath
+            };
+        }
+    }
+
+    [Table("Species")]
+    public class SpeciesEntity
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public long Id { get; set; }
+
+        public string ImagePath { get; set; }
+        public DateTime Created { get; set; }
+
+        public virtual IEnumerable<DnaEntity> Dna { get; set; }
+
+        public SpeciesEntity()
+        {
+            Dna = new HashSet<DnaEntity>();
+        }
+
+        public SpeciesView ToView()
+        {
+            return new SpeciesView
+            {
+                Id = this.Id,
+                ImagePath = this.ImagePath
             };
         }
     }
