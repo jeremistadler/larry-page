@@ -25,7 +25,7 @@ class Game {
     init() {
         var game = this;
 
-        return Game.LoadTexture(this.webgl, 'rainbow.png', false).then(function (tex) {
+        return Game.LoadTexture(this.webgl, 'LarryPage.jpg', false).then(function (tex) {
             game.vectorizer = new Vectorizer(game.webgl, tex);
             game.vectorizer.init();
         });

@@ -19,6 +19,7 @@
     <Content Include=".gitignore" />
     <Content Include="app.css" />
     <Content Include="cube.jpg" />
+    <Content Include="LarryPage.jpg" />
     <Content Include="rainbow.png" />
     <Content Include="vendor\gl-matrix-min.js" />
     <Content Include="gulpfile.js" />
