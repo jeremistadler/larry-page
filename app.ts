@@ -3,14 +3,14 @@
 var globalDna: Dna = null;
 
 var xhr = new XMLHttpRequest();
-xhr.open('GET', 'http://localhost:2270/api/latest', true);
+xhr.open('GET', 'http://localhost:2270/api/fittest', true);
 xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 xhr.onload = function (e) {
     if (this.status == 200)
         globalDna = JSON.parse(this.response);
 
     if (!globalDna)
-        globalDna = DnaEvolver.CreateDna(100);
+        globalDna = DnaEvolver.CreateDna(40);
 };
 xhr.send();
 

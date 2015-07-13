@@ -43,7 +43,7 @@ class DnaEvolver {
 
     static CreateDna(numberOfGenes: number) {
         var dna = new Dna();
-        dna.Fitness = 1e9;
+        dna.Fitness = Infinity;
         dna.Genes = new Array(numberOfGenes);
         dna.Generation = 0;
         dna.Mutation = 0;
@@ -99,7 +99,8 @@ class DnaEvolver {
             console.log('fitness', fitness, 'generation: ' + this.Dna.Generation);
 
             var dateNow = new Date().getTime();
-            if (dateNow > this.LastSaved + 1000 * 20) {
+            var saveTime = this.Dna.Mutation > 1000 ? 5 : 20
+            if (dateNow > this.LastSaved + 1000 * saveTime) {
                 this.Save();
                 this.LastSaved = dateNow;
             }

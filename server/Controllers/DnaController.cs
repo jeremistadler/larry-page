@@ -72,7 +72,7 @@ namespace server.Controllers
                 Mutation = this.Mutation,
                 Seed = this.Seed,
                 Genes = GeneView.Serialize(this.Genes),
-                Species = this.Species.ToEntity()
+                Species = (this.Species ?? new SpeciesView()).ToEntity()
             };
         }
     }
@@ -107,7 +107,7 @@ namespace server.Controllers
                 Mutation = this.Mutation,
                 Seed = this.Seed,
                 Genes = GeneView.Deserialize(this.Genes),
-                Species = this.Species.ToView()
+                Species = (this.Species ?? new SpeciesEntity()).ToView()
             };
         }
     }
