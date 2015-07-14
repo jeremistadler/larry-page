@@ -35,7 +35,7 @@ namespace server.Api
         public long Fitness { get; set; }
         public DateTime Date { get; set; }
         public GeneView[] Genes { get; set; }
-        public OrganismView Species { get; set; }
+        public OrganismView Organism { get; set; }
 
         public DnaEntity ToEntity()
         {
@@ -47,7 +47,7 @@ namespace server.Api
                 Mutation = this.Mutation,
                 Seed = this.Seed,
                 Genes = GeneView.Serialize(this.Genes),
-                Organism = (this.Species ?? new OrganismView()).ToEntity()
+                Organism = (this.Organism ?? new OrganismView()).ToEntity()
             };
         }
     }
@@ -59,6 +59,16 @@ namespace server.Api
         public double[] Pos { get; set; }
         [ProtoMember(2)]
         public double[] Color { get; set; }
+
+        public static IEnumerable<GeneView> CreateDefault(int geneCount)
+        {
+            return Enumerable.Range(0, geneCount)
+                .Select(f => new GeneView 
+                { 
+                    Pos = new double[6], 
+                    Color = new double[12] 
+                });
+        }
 
         public static byte[] Serialize(GeneView[] genes)
         {
