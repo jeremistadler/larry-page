@@ -11,13 +11,11 @@ namespace server.Api
     public class DnaEntity
     {
         [Key]
-        [Column(Order = 1)]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public long Id { get; set; }
+
         public long Seed { get; set; }
-
-        [Key]
-        [Column(Order = 2)]
         public long Generation { get; set; }
-
         public long Mutation { get; set; }
         public long Fitness { get; set; }
         public DateTime Date { get; set; }

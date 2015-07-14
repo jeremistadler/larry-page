@@ -108,12 +108,15 @@ class DnaEvolver {
 
     Save() {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'http://localhost:2270/api/save', true);
+        xhr.open('POST', 'http://localhost:2270/api/dna/save', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.send(JSON.stringify(this.Dna));
     }
 
     SetTriangleToBuffers(tri: Gene, index: number) {
+        if (index > this.Dna.Genes.length - 1)
+            debugger;
+
         var posBuff = new Float32Array(tri.Pos);
         var colorBuff = new Float32Array(tri.Color.length * DnaEvolver.PositionsPerGene);
 

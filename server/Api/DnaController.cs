@@ -59,12 +59,13 @@ namespace server.Api
         {
             limit = Math.Min(limit, 200);
 
-            return Db.Organisms
-                .Where(f => f.Dna.Any())
-                .OrderByDescending(f => f.Created)
+            return Db.Dna
+                .OrderByDescending(f => f.Date)
+                .GroupBy(f => f.Organism)
+                .Select(f => f.FirstOrDefault())
+                .OrderByDescending(f => f.Date)
                 .Skip(skip)
                 .Take(limit)
-                .Select(f => f.Dna.OrderByDescending(a => a.Date).First())
                 .ToArray()
                 .Select(f => f.ToView());
         }
@@ -107,6 +108,7 @@ namespace server.Api
             {
                 Date = DateTime.Now,
                 Organism = organism.ToView(),
+                Fitness = long.MaxValue / 1000,
                 Genes = GeneView.CreateDefault(organism.GeneCount).ToArray()
             };
         }

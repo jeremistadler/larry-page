@@ -130,7 +130,7 @@ class Vectorizer {
         //gl.clear(gl.COLOR_BUFFER_BIT);
 
         var triPixels = new Uint8Array(globalWidth * globalHeight * 4);
-        for (var iterations = 0; iterations < 10; iterations++) {
+        //for (var iterations = 0; iterations < 10; iterations++) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.Temp.framebuffer);
             gl.bindTexture(gl.TEXTURE_2D, null);
             gl.clearColor(1, 1, 1, 1);
@@ -140,7 +140,7 @@ class Vectorizer {
 
             gl.readPixels(0, 0, globalWidth, globalHeight, gl.RGBA, gl.UNSIGNED_BYTE, triPixels);
 
-            var fitness = this.calculateFitness(this.sourceImageData.data, triPixels);
+            var fitness = this.calculateFitness(<Int8Array><any>this.sourceImageData.data, triPixels);
             this.Evolver.EndEvolving(fitness);
 
             //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -149,7 +149,7 @@ class Vectorizer {
             //gl.clear(gl.COLOR_BUFFER_BIT);
 
             //this.drawDiff(this.sourceTex.texture, this.TempTexture);
-        }
+        //}
 
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -188,7 +188,7 @@ class Vectorizer {
         ////this.drawSourceImg(triPreviewTex, 512, 512, 512, 512);
     }
 
-    calculateFitness(buff1: ArrayBufferView, buff2: ArrayBufferView) {
+    calculateFitness(buff1: Int8Array, buff2: Int8Array) {
         var diff = 0.0;
         
         for (var i = 0; i < buff1.byteLength; i++){

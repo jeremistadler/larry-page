@@ -36,7 +36,7 @@ var loadTexture = function (dna: Dna, onComplete: (image: ImageData) => void) {
     image.onerror = function () {
         alert('Could not load image');
     };
-    image.src = dna.Organism.ImagePath;
+    image.src = '/images/' + dna.Organism.ImagePath;
 }
 
 
@@ -49,7 +49,6 @@ loadDna(function (dna) {
 
 
 var loadedAll = function (dna, image) {
-
     var canvas = <HTMLCanvasElement>document.createElement('canvas');
     canvas.width = globalWidth;
     canvas.height = globalHeight;

@@ -39,6 +39,13 @@
             margin-bottom: 40px;
             color: #868686;
         }
+
+        .drag-active{
+            background: rgba(230, 230, 230, 0.07);
+            filter: blur(3px);
+            -webkit-filter: blur(3px);
+            transition: 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -58,7 +65,7 @@
         var container = document.getElementById('container');
 
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'http://localhost:2270/api/list/latest?limit=200', true);
+        xhr.open('GET', 'http://localhost:2270/api/organisms/top?limit=200', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function(e) {
             if (this.status != 200)
@@ -110,6 +117,54 @@
                 path.attr('stroke-width', '0');
             }
         }
+
+        var createOrganism = function(image) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://localhost:2270/api/organism/save', true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.onload = function(e) { alert('upload completed: ' + e) };
+            xhr.send(JSON.stringify({geneCount: 10, imagePath: image}));
+        }
+
+        document.body.addEventListener('dragstart', function(e) { e.preventDefault(); document.body.classList.add('drag-active') });
+        document.body.addEventListener('dragenter', function(e) { e.preventDefault(); document.body.classList.add('drag-active') });
+        document.body.addEventListener('dragover', function(e) { e.preventDefault(); });
+        document.body.addEventListener('dragleave', function(e) { e.preventDefault(); document.body.classList.remove('drag-active') });
+
+
+        document.body.addEventListener('drop', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            document.body.classList.remove('drag-active');
+
+            var files = e.dataTransfer.files; 
+            var formData = new FormData();
+
+            for (var i = 0, file; file = files[i]; i++) {
+                if (file.type.match(/image.*/)) {
+                    formData.append(file.name, file);
+                    var reader = new FileReader();
+                    reader.onload = function(e2) {
+                        var img = document.createElement('img');
+                        img.src = e2.target.result;
+                        img.style.width = '200px';
+                        img.style.height = '200px';
+                        document.body.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://localhost:2270/api/upload', true);
+            xhr.onload = function(e) {
+                var data = JSON.parse(xhr.response);
+                for (var i = 0; i < data.length; i++) {
+                    createOrganism(data[i]);
+                }
+            };
+            xhr.send(formData);
+        });
     </script>
 </body>
 </html>

@@ -126,7 +126,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Api\BaseController.cs" />
     <Compile Include="Api\DnaContext.cs" />
+    <Compile Include="Api\OrganismController.cs" />
     <Compile Include="Api\Entities.cs" />
     <Compile Include="Api\Views.cs" />
     <Compile Include="WebApiConfig.cs" />
@@ -141,7 +143,32 @@
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="gulpfile.js" />
-    <Content Include="index.html" />
+    <Content Include="icons\android-icon-144x144.png" />
+    <Content Include="icons\android-icon-192x192.png" />
+    <Content Include="icons\android-icon-36x36.png" />
+    <Content Include="icons\android-icon-48x48.png" />
+    <Content Include="icons\android-icon-72x72.png" />
+    <Content Include="icons\android-icon-96x96.png" />
+    <Content Include="icons\apple-icon-114x114.png" />
+    <Content Include="icons\apple-icon-120x120.png" />
+    <Content Include="icons\apple-icon-144x144.png" />
+    <Content Include="icons\apple-icon-152x152.png" />
+    <Content Include="icons\apple-icon-180x180.png" />
+    <Content Include="icons\apple-icon-57x57.png" />
+    <Content Include="icons\apple-icon-60x60.png" />
+    <Content Include="icons\apple-icon-72x72.png" />
+    <Content Include="icons\apple-icon-76x76.png" />
+    <Content Include="icons\apple-icon-precomposed.png" />
+    <Content Include="icons\apple-icon.png" />
+    <Content Include="icons\favicon-16x16.png" />
+    <Content Include="icons\favicon-32x32.png" />
+    <Content Include="icons\favicon-96x96.png" />
+    <Content Include="icons\favicon.ico" />
+    <Content Include="icons\ms-icon-144x144.png" />
+    <Content Include="icons\ms-icon-150x150.png" />
+    <Content Include="icons\ms-icon-310x310.png" />
+    <Content Include="icons\ms-icon-70x70.png" />
+    <Content Include="index.template.html" />
     <Content Include="list.html" />
     <Content Include="scripts\vendor\gl-matrix-min.js" />
     <Content Include="Web.config" />

@@ -3,14 +3,11 @@ var ts = require('gulp-typescript');
 var eventStream = require('event-stream');
 var connect = require('gulp-connect');
 var inject = require('gulp-inject');
-
+var rename = require("gulp-rename");
 
 
 gulp.task('scripts', ['index'], function() {
-    gulp.src(['app.css', './*.jpg', 'vendor/*.js'])
-        .pipe(gulp.dest('build'));
-
-    return gulp.src(['references.ts', 'app.ts', 'vendor/*.d.ts', 'src/**/*.ts'])
+    return gulp.src(['scripts/**/*.ts'])
                .pipe(ts({
                    target: 'ES6',
                    noExternalResolve: true
@@ -20,27 +17,29 @@ gulp.task('scripts', ['index'], function() {
 });
 
 gulp.task('index', function() {
-    var sources = gulp.src(['./build/**/*.js', './build/**/*.css'], { read: false, base: '.' });
+    var sources = gulp.src(['scripts/vendor/*', './build/**/*.js', './build/**/*.css'], { read: false, base: '.' });
 
-    return gulp.src('./index.html')
-               .pipe(inject(sources, { ignorePath: '/build', addRootSlash: false }))
-               .pipe(gulp.dest('./build'));
+    return gulp.src('./index.template.html')
+               .pipe(inject(sources))
+               .pipe(rename(function(path) {
+                   path.basename = "index";
+               }))
+               .pipe(gulp.dest('.'));
 });
 
 gulp.task('watch', function() {
-    gulp.watch(['app.ts', 'app.css', 'index.html', 'src/**/*.ts'], { debounceDelay: 200 }, ['scripts']);
-    gulp.watch(['build/**/*.*'], { debounceDelay: 500 }, ['reload']);
+    gulp.watch(['./index.template.html', 'scripts/**/*.ts'], { debounceDelay: 200 }, ['scripts']);
+    gulp.watch(['./index.html', 'build/**/*.*'], { debounceDelay: 500 }, ['reload']);
 });
 
 
 gulp.task('reload', function() {
-    gulp.src('build/index.html')
+    gulp.src('./index.html')
       .pipe(connect.reload());
 });
 
 gulp.task('serve', function() {
     connect.server({
-        root: 'build',
         livereload: true
     });
 });
