@@ -1,4 +1,8 @@
-﻿///<reference path="../references.ts" />
+﻿///<reference path="references.ts" />
+
+class FramebufferWrapper {
+    constructor(public tex: WebGLTexture, public framebuffer: WebGLFramebuffer) { }
+}
 
 class Utils {
     static StartTick(tickMethod: (dt: number) => void) {
@@ -51,6 +55,20 @@ class Utils {
         return shader;
     }
 
+    static createFramebuffer(gl: WebGLRenderingContext) {
+        var tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+        var buf = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, buf);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+
+        return new FramebufferWrapper(tex, buf);
+    }
+
     static setRectangle(gl: WebGLRenderingContext, x: number, y: number, width: number, height: number) {
         var x2 = x + width;
         var y1 = y + height;
@@ -60,7 +78,7 @@ class Utils {
 
     static setRectangleTex(gl: WebGLRenderingContext) {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), gl.STATIC_DRAW);
+            0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0]), gl.STATIC_DRAW);
     }
 
     static randomIndex(arr: any[]) {

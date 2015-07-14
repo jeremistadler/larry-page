@@ -5,7 +5,7 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "image-vectorizer", "image-vectorizer.csproj", "{BA939F02-3C41-4C40-B764-3D23095C0550}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "v-server", "server\v-server.csproj", "{737BE8CF-7BDE-45B4-A891-44343414631C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "larry-page", "server\larry-page.csproj", "{737BE8CF-7BDE-45B4-A891-44343414631C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

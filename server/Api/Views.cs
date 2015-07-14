@@ -14,6 +14,7 @@ namespace server.Api
         [StringLength(255)]
         public string ImagePath { get; set; }
         public DateTime Created { get; set; }
+        public int GeneCount { get; set; }
 
         public OrganismEntity ToEntity()
         {
@@ -21,7 +22,8 @@ namespace server.Api
             {
                 Id = this.Id,
                 ImagePath = this.ImagePath,
-                Created = this.Created
+                Created = this.Created,
+                GeneCount = this.GeneCount
             };
         }
     }

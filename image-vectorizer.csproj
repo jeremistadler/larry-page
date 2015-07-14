@@ -26,14 +26,10 @@
     <Content Include="index.html" />
     <Content Include="nature-photography-8.jpg" />
     <Content Include="vendor\Q.js" />
-    <Content Include="src\Color.ts" />
     <Content Include="src\Texture.ts" />
     <Content Include="references.ts" />
     <Content Include="src\Vectorizer.ts" />
     <Content Include="src\Utils.ts" />
-    <Content Include="src\MathHelper.ts" />
-    <Content Include="src\Matrix4.ts" />
-    <Content Include="src\Vector3.ts" />
     <Content Include="app.ts" />
     <Content Include="package.json" />
   </ItemGroup>

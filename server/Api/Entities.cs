@@ -65,7 +65,8 @@ namespace server.Api
             {
                 Id = this.Id,
                 ImagePath = this.ImagePath,
-                Created = this.Created
+                Created = this.Created,
+                GeneCount = this.GeneCount
             };
         }
     }

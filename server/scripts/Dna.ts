@@ -1,4 +1,4 @@
-﻿///<reference path="../references.ts" />
+﻿///<reference path="references.ts" />
 
 
 
@@ -148,9 +148,10 @@ class DnaEvolver {
     }
 }
 
-class Species {
+class Organism {
     Id: number;
     ImagePath: string;
+    GeneCount: number;
 }
 
 class Gene {
@@ -163,5 +164,5 @@ class Dna {
     Generation: number;
     Mutation: number;
     Fitness: number;
-    Species: Species;
+    Organism: Organism;
 }

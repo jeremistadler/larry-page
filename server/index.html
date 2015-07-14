@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Larry Page</title>
+
+    <link rel="apple-touch-icon" sizes="57x57" href="/icons/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/icons/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/icons/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/icons/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/icons/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/icons/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- inject:css -->
+    <!-- endinject -->
+
+    <!-- inject:js -->
+    <!-- endinject -->
+</head>
+<body>
+    <canvas id="canvas-element-id"></canvas>
+
+    <script id="source-fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D u_image;
+        varying vec2 v_texCoord;
+
+        void main() {
+            gl_FragColor = texture2D(u_image, v_texCoord);
+        }
+    </script>
+    <script id="source-vs" type="x-shader/x-vertex">
+        uniform vec2 u_resolution;
+        uniform mat3 u_matrix;
+
+        attribute vec2 a_texCoord;
+        attribute vec2 a_position;
+
+        varying vec2 v_texCoord;
+
+        void main() {
+           // Multiply the position by the matrix.
+          vec2 position = (u_matrix * vec3(a_position, 1)).xy;
+
+          // convert the position from pixels to 0.0 to 2.0
+          vec2 zeroToTwo = (position / u_resolution) * 2.0;
+
+          // convert from 0->2 to -1 -> +1 (clipspace)
+          vec2 clipSpace = zeroToTwo - 1.0;
+
+          gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+          v_texCoord = a_texCoord;
+        }
+    </script>
+
+    <script id="triangle-fs" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec4 v_color;
+
+        void main() {
+            gl_FragColor = v_color;
+        }
+    </script>
+    <script id="triangle-vs" type="x-shader/x-vertex">
+        attribute vec2 a_position;
+        attribute vec4 a_color;
+        varying vec4 v_color;
+
+        void main() {
+           gl_Position = vec4(a_position.x - 1.0, a_position.y - 1.0, 0, 1);
+           v_color = a_color;
+        }
+    </script>
+
+
+    <script id="diff-fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D u_image0;
+        uniform sampler2D u_image1;
+        varying vec2 v_texCoord;
+
+        void main() {
+            vec4 temp = abs(texture2D(u_image0, v_texCoord) - texture2D(u_image1, v_texCoord));
+            gl_FragColor = temp;
+        }
+    </script>
+    <script id="diff-vs" type="x-shader/x-vertex">
+        attribute vec2 a_position;
+        attribute vec2 a_texCoord;
+        uniform vec2 u_resolution;
+        varying vec2 v_texCoord;
+
+        void main() {
+           // convert pixel to -1 -> +1 (clipspace)
+           vec2 clipSpace = (a_position * 2.0) - 1.0;
+           gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+           v_texCoord = a_texCoord;
+        }
+    </script>
+    <!--<script id="mip-map-fs" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform sampler2D diff_image;
+
+        void main() {
+            float sum = 0f;
+            for(int x = 0; x < 512; x++)
+            {
+                for(int y = 0; y < 512; y++)
+                {
+                    sum += texture2D(diff_image, vec2(x, y));
+                }
+            }
+
+            gl_FragColor.r = sum;
+        }
+    </script>
+        <script id="mip-map-vs" type="x-shader/x-vertex">
+        attribute vec2 a_position;
+        attribute vec2 a_texCoord;
+        uniform vec2 u_resolution;
+        varying vec2 v_texCoord;
+
+        void main() {
+           // convert pixel to -1 -> +1 (clipspace)
+           vec2 clipSpace = ((a_position / u_resolution) * 2.0) - 1.0;
+           gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+        }
+    </script>-->
+</body>
+</html>

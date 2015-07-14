@@ -1,26 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace server.Api
 {
-    public abstract class ApiBase : ApiController
-    {
-        public DnaContext Db { get; set; }
-
-        public ApiBase()
-        {
-            Db = new DnaContext();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            Db.Dispose();
-            base.Dispose(disposing);
-        }
-    }
-
     public class DnaController : ApiBase
     {
         [HttpPost]
@@ -36,6 +23,22 @@ namespace server.Api
 
             return Ok();
         }
+
+        [HttpPost]
+        [Route("api/organism/save")]
+        public object Save(OrganismView organism)
+        {
+            if (organism == null || organism.GeneCount <= 0 || string.IsNullOrWhiteSpace(organism.ImagePath))
+                return BadRequest();
+
+            organism.Created = DateTime.Now;
+            organism.Id = 0;
+            Db.Organisms.Add(organism.ToEntity());
+            Db.SaveChanges();
+
+            return Ok();
+        }
+
 
         [HttpGet]
         [Route("api/dna/latest")]
