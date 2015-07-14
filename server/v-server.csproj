@@ -124,8 +124,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Api\DnaContext.cs" />
+    <Compile Include="Api\Entities.cs" />
+    <Compile Include="Api\Views.cs" />
     <Compile Include="WebApiConfig.cs" />
-    <Compile Include="Controllers\DnaController.cs" />
+    <Compile Include="Api\DnaController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -146,7 +149,7 @@
   <ItemGroup />
   <ItemGroup>
     <Content Include="packages.config" />
-    <None Include="Project_Readme.html" />
+    <Content Include="secrets.json" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
