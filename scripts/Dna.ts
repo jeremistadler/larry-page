@@ -114,11 +114,8 @@ class DnaEvolver {
     }
 
     SetTriangleToBuffers(tri: Gene, index: number) {
-        if (index > this.Dna.Genes.length - 1)
-            debugger;
-
         var posBuff = new Float32Array(tri.Pos);
-        var colorBuff = new Float32Array(tri.Color.length * DnaEvolver.PositionsPerGene);
+        var colorBuff = new Float32Array(4 * DnaEvolver.PositionsPerGene);
 
         for (var p = 0; p < DnaEvolver.PositionsPerGene; p++)
             for (var i = 0; i < tri.Color.length; i++)
@@ -126,10 +123,10 @@ class DnaEvolver {
 
 
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, this.PosBuffer);
-        this.webgl.bufferSubData(this.webgl.ARRAY_BUFFER, index * posBuff.length * 4, posBuff);
+        this.webgl.bufferSubData(this.webgl.ARRAY_BUFFER, index * posBuff.byteLength, posBuff);
 
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, this.ColorBuffer);
-        this.webgl.bufferSubData(this.webgl.ARRAY_BUFFER, index * colorBuff.length * 4, colorBuff);
+        this.webgl.bufferSubData(this.webgl.ARRAY_BUFFER, index * colorBuff.byteLength, colorBuff);
     }
 
     Draw(program: WebGLProgram, imageWidth: number, imageHeight: number) {

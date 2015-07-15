@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Web.Http;
 using Newtonsoft.Json.Serialization;
 using System.Web.Http.Cors;
+using System.Net.Http.Headers;
 
 namespace server
 {
@@ -12,6 +13,7 @@ namespace server
     {
         public static void Register(HttpConfiguration config)
         {
+            config.Formatters.JsonFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/html"));
             var cors = new EnableCorsAttribute("*", "*", "*");
             config.EnableCors(cors);
             config.MapHttpAttributeRoutes();
