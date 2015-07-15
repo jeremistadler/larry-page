@@ -182,7 +182,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
-    <Content Include="secrets.json" />
+    <Content Include="App_Data\secrets.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="scripts\references.ts" />

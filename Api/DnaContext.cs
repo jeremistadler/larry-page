@@ -14,7 +14,7 @@ namespace server.Api
         static JObject Secrets;
         static SecretsReader()
         {
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "secrets.json");
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data\\secrets.json");
             var text = File.ReadAllText(path);
             Secrets = JObject.Parse(text);
         }
