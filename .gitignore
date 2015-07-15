@@ -89,5 +89,5 @@ src/MathHelper.js
 src/Matrix4.js
 packages
 secrets.json
-server/images/
-server/index.html
+images
+index.html
