@@ -65,14 +65,11 @@ namespace server.Api
         {
             limit = Math.Min(limit, 200);
 
-            return Db.Dna
-                .OrderBy(f => f.Fitness)
-                .GroupBy(f => f.Organism)
-                .Select(f => f.FirstOrDefault())
-                .OrderBy(f => f.Fitness)
-                .Skip(skip)
-                .Take(limit)
-                .ToArray()
+            var organisms = Db.Organisms.OrderBy(f => f.Created).ToArray();
+
+            return organisms
+                .Select(f => Db.Dna.Where(d => d.Organism.Id == f.Id).OrderBy(d => d.Fitness).FirstOrDefault())
+                .Where(f => f != null)
                 .Select(f => f.ToView());
         }
 

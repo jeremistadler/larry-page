@@ -2,11 +2,12 @@
 
 var globalWidth = 512;
 var globalHeight = 512;
+var baseUrl = 'http://localhost:2270';
 
 
 var loadDna = function (onComplete: (dna: Dna) => void) {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/api/dna/random', true);
+    xhr.open('GET', baseUrl + '/api/dna/random', true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     xhr.onload = function (e) {
         if (this.status == 200)
@@ -47,7 +48,6 @@ loadDna(function (dna) {
 })
 
 
-
 var loadedAll = function (dna, image) {
     var canvas = <HTMLCanvasElement>document.createElement('canvas');
     canvas.width = globalWidth;
@@ -60,7 +60,6 @@ var loadedAll = function (dna, image) {
         game.draw();
     });
 }
-
 
 class WebGLRasterizer {
     vectorizer: Vectorizer;
