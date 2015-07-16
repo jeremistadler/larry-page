@@ -22,7 +22,7 @@ namespace server.Api
         public byte[] Genes { get; set; }
 
         [Required]
-        public OrganismEntity Organism { get; set; }
+        public virtual OrganismEntity Organism { get; set; }
 
         public DnaView ToView()
         {

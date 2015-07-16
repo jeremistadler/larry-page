@@ -66,10 +66,10 @@ namespace server.Api
             limit = Math.Min(limit, 200);
 
             return Db.Dna
-                .OrderByDescending(f => f.Date)
+                .OrderBy(f => f.Fitness)
                 .GroupBy(f => f.Organism)
                 .Select(f => f.FirstOrDefault())
-                .OrderByDescending(f => f.Date)
+                .OrderBy(f => f.Fitness)
                 .Skip(skip)
                 .Take(limit)
                 .ToArray()
