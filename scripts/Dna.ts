@@ -1,7 +1,5 @@
 ﻿///<reference path="references.ts" />
 
-
-
 class DnaEvolver {
     static PositionsPerGene: number = 3;
 
@@ -13,8 +11,7 @@ class DnaEvolver {
 
     LastSaved: number;
 
-    constructor(public webgl: WebGLRenderingContext, public Dna: Dna) {
-
+    constructor(public webgl: WebGLRenderingContext, public Dna: Dna, public program: WebGLProgram) {
         this.PosBuffer = webgl.createBuffer();
         this.ColorBuffer = webgl.createBuffer();
 
@@ -33,12 +30,15 @@ class DnaEvolver {
         this.LastSaved = new Date().getTime();
     }
 
-    static CreateDna(numberOfGenes: number) {
+    static CreateDna(numberOfGenes: number, image: string) {
         var dna = new Dna();
         dna.Fitness = Infinity;
         dna.Genes = new Array(numberOfGenes);
         dna.Generation = 0;
         dna.Mutation = 0;
+        dna.Organism = new Organism();
+        dna.Organism.ImagePath = image;
+        dna.Organism.GeneCount = numberOfGenes;
 
         for (var i = 0; i < numberOfGenes; i++) {
             dna.Genes[i] = new Gene();
@@ -49,6 +49,50 @@ class DnaEvolver {
         return dna;
     }
 
+    findBestGenePos(geneIndex: number, orginalImage: Int8Array){
+      var bestMatch = null;
+      var fitness = Infinity;
+
+      var triPixels = new Uint8Array(globalWidth * globalHeight * 4);
+      for (var iteration = 0; iteration < 100; iteration++) {
+        var tri = new Gene();
+
+          tri.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.4 + 0.2];
+          tri.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+          for (var i = 0; i < tri.Pos.length; i++)
+              tri.Pos[i] = Math.random() * 1.2 - 0.1;
+
+          this.SetTriangleToBuffers(tri, geneIndex);
+
+          this.Draw();
+
+          this.webgl.readPixels(0, 0, globalWidth, globalHeight, this.webgl.RGBA, this.webgl.UNSIGNED_BYTE, triPixels);
+          var newFitness = this.calculateFitness(orginalImage, triPixels);
+
+          if (newFitness < fitness){
+            bestMatch = tri;
+            fitness = newFitness;
+          }
+      }
+
+      this.Dna.Fitness = fitness;
+      this.Dna.Mutation++;
+      this.Dna.Generation++;
+      this.Dna.Genes[geneIndex] = bestMatch;
+      this.SetTriangleToBuffers(bestMatch, geneIndex);
+    }
+
+    calculateFitness(buff1: Int8Array, buff2: Int8Array) {
+        var diff = 0.0;
+
+        for (var i = 0; i < buff1.byteLength; i++){
+            var q = Math.abs(buff1[i] - buff2[i]);
+            diff += q * q;
+        }
+
+        return diff;
+    }
+
     StartEvolving(): void {
         var index = Utils.randomIndex(this.Dna.Genes);
 
@@ -57,7 +101,7 @@ class DnaEvolver {
 
         var tri = this.Dna.Genes[index] = new Gene();
 
-        if (Math.random() > 0.8) {
+        if (Math.random() > 0.9) {
             tri.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.4 + 0.2];
             tri.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
             for (var i = 0; i < tri.Pos.length; i++)
@@ -84,7 +128,6 @@ class DnaEvolver {
     }
 
     EndEvolving(fitness: number): void {
-
         if (fitness < this.Dna.Fitness) {
             this.Dna.Fitness = fitness;
             this.Dna.Mutation++;
@@ -129,18 +172,17 @@ class DnaEvolver {
         this.webgl.bufferSubData(this.webgl.ARRAY_BUFFER, index * colorBuff.byteLength, colorBuff);
     }
 
-    Draw(program: WebGLProgram, imageWidth: number, imageHeight: number) {
+    Draw() {
         var gl = this.webgl;
-        gl.useProgram(program);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.ColorBuffer);
-        var colorLocation = gl.getAttribLocation(program, "a_color");
+        var colorLocation = gl.getAttribLocation(this.program, "a_color");
         gl.enableVertexAttribArray(colorLocation);
         gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
 
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.PosBuffer);
-        var positionLocation = gl.getAttribLocation(program, "a_position");
+        var positionLocation = gl.getAttribLocation(this.program, "a_position");
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 

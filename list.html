@@ -57,7 +57,7 @@
         .homeButton{
             transition: 0.3s;
         }
-        
+
         .hidden{
             opacity: 0;
             transition: 0.3s;
@@ -168,7 +168,7 @@
             xhr.open('POST', url + '/api/organism/save', true);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
             xhr.onload = function(e) { };
-            xhr.send(JSON.stringify({ geneCount: 200, imagePath: image }));
+            xhr.send(JSON.stringify({ geneCount: 50, imagePath: image }));
         }
 
         document.body.addEventListener('dragstart', function(e) { e.preventDefault(); document.body.classList.add('drag-active') });

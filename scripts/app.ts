@@ -48,6 +48,7 @@ loadDna(function (dna) {
 })
 
 
+
 var loadedAll = function (dna, image) {
     var canvas = <HTMLCanvasElement>document.createElement('canvas');
     canvas.width = globalWidth;
@@ -60,6 +61,7 @@ var loadedAll = function (dna, image) {
         game.draw();
     });
 }
+
 
 class WebGLRasterizer {
     vectorizer: Vectorizer;
