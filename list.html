@@ -124,7 +124,7 @@
             xhr.open('POST', '/api/organism/save', true);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
             xhr.onload = function(e) {  };
-            xhr.send(JSON.stringify({geneCount: 10, imagePath: image}));
+            xhr.send(JSON.stringify({geneCount: 200, imagePath: image}));
         }
 
         document.body.addEventListener('dragstart', function(e) { e.preventDefault(); document.body.classList.add('drag-active') });

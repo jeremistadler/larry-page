@@ -130,7 +130,7 @@ class Vectorizer {
         //gl.clear(gl.COLOR_BUFFER_BIT);
 
         var triPixels = new Uint8Array(globalWidth * globalHeight * 4);
-        //for (var iterations = 0; iterations < 10; iterations++) {
+        for (var iterations = 0; iterations < 40; iterations++) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.Temp.framebuffer);
             gl.bindTexture(gl.TEXTURE_2D, null);
             gl.clearColor(1, 1, 1, 1);
@@ -149,7 +149,7 @@ class Vectorizer {
             //gl.clear(gl.COLOR_BUFFER_BIT);
 
             //this.drawDiff(this.sourceTex.texture, this.TempTexture);
-        //}
+        }
 
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
