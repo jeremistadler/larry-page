@@ -6,7 +6,7 @@ var globalHeight = 512;
 
 var loadDna = function (onComplete: (dna: Dna) => void) {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'http://localhost:2270/api/dna/random', true);
+    xhr.open('GET', '/api/dna/random', true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     xhr.onload = function (e) {
         if (this.status == 200)

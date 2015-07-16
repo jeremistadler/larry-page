@@ -65,8 +65,8 @@
         var container = document.getElementById('container');
 
         var xhr = new XMLHttpRequest();
-        //xhr.open('GET', 'http://localhost:2270/api/organisms/top?limit=200', true);
-        xhr.open('GET', 'http://localhost:2270/api/dna/latest?limit=200&organismId=35', true);
+        //xhr.open('GET', '/api/organisms/top?limit=200', true);
+        xhr.open('GET', '/api/dna/latest?limit=200&organismId=35', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function(e) {
             if (this.status != 200)
@@ -121,7 +121,7 @@
 
         var createOrganism = function(image) {
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'http://localhost:2270/api/organism/save', true);
+            xhr.open('POST', '/api/organism/save', true);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
             xhr.onload = function(e) {  };
             xhr.send(JSON.stringify({geneCount: 10, imagePath: image}));
@@ -157,7 +157,7 @@
             }
 
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'http://localhost:2270/api/upload', true);
+            xhr.open('POST', '/api/upload', true);
             xhr.onload = function(e) {
                 var data = JSON.parse(xhr.response);
                 for (var i = 0; i < data.length; i++) {
