@@ -1,7 +1,7 @@
 ///<reference path="references.ts" />
 
-var globalWidth = 512;
-var globalHeight = 512;
+var globalWidth = 128;
+var globalHeight = 128;
 
 
 var loadDna = function (onComplete: (dna: Dna) => void) {
