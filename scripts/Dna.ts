@@ -1,7 +1,5 @@
 ﻿///<reference path="references.ts" />
 
-
-
 class DnaEvolver {
     static PositionsPerGene: number = 3;
 
@@ -32,12 +30,15 @@ class DnaEvolver {
         this.LastSaved = new Date().getTime();
     }
 
-    static CreateDna(numberOfGenes: number) {
+    static CreateDna(numberOfGenes: number, image: string) {
         var dna = new Dna();
         dna.Fitness = Infinity;
         dna.Genes = new Array(numberOfGenes);
         dna.Generation = 0;
         dna.Mutation = 0;
+        dna.Organism = new Organism();
+        dna.Organism.ImagePath = image;
+        dna.Organism.GeneCount = numberOfGenes;
 
         for (var i = 0; i < numberOfGenes; i++) {
             dna.Genes[i] = new Gene();
@@ -53,7 +54,7 @@ class DnaEvolver {
       var fitness = Infinity;
 
       var triPixels = new Uint8Array(globalWidth * globalHeight * 4);
-      for (let i = 0; i < 100; i++) {
+      for (var iteration = 0; iteration < 100; iteration++) {
         var tri = new Gene();
 
           tri.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.4 + 0.2];
@@ -100,7 +101,7 @@ class DnaEvolver {
 
         var tri = this.Dna.Genes[index] = new Gene();
 
-        if (Math.random() > 0.8) {
+        if (Math.random() > 0.9) {
             tri.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.4 + 0.2];
             tri.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
             for (var i = 0; i < tri.Pos.length; i++)

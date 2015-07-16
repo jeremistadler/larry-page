@@ -5,8 +5,13 @@ var globalHeight = 512;
 
 
 var loadDna = function (onComplete: (dna: Dna) => void) {
+  window.setTimeout(function(){
+    onComplete(DnaEvolver.CreateDna(40, '31joc32d.ah2.jpg'));
+    }, 10)
+  return;
+
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/api/dna/random', true);
+    xhr.open('GET', 'http://larry.jeremi.se/api/dna/random', true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     xhr.onload = function (e) {
         if (this.status == 200)
