@@ -65,7 +65,8 @@
         var container = document.getElementById('container');
 
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'http://localhost:2270/api/organisms/top?limit=200', true);
+        //xhr.open('GET', 'http://localhost:2270/api/organisms/top?limit=200', true);
+        xhr.open('GET', 'http://localhost:2270/api/dna/latest?limit=200&organismId=35', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = function(e) {
             if (this.status != 200)

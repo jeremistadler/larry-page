@@ -17,8 +17,14 @@ namespace server.Api
             if (dna == null || dna.Generation <= 0 || dna.Mutation <= 0 || dna.Organism == null || dna.Organism.Id <= 0)
                 return BadRequest();
 
+            var organism = Db.Organisms.Find(dna.Organism.Id);
+            if (organism == null)
+                return BadRequest();
+
             dna.Date = DateTime.Now;
-            Db.Dna.Add(dna.ToEntity());
+            var dnaEntity = dna.ToEntity();
+            dnaEntity.Organism = organism;
+            Db.Dna.Add(dnaEntity);
             Db.SaveChanges();
 
             return Ok();
@@ -96,9 +102,10 @@ namespace server.Api
                 .OrderByDescending(f => f.Created)
                 .First();
 
-            if (organism.Dna.Any())
-                return organism.Dna
-                    .OrderByDescending(f => f.Date)
+            if (Db.Dna.Where(f => f.Organism.Id == organism.Id).Any())
+                return Db.Dna
+                    .Where(f => f.Organism.Id == organism.Id)
+                    .OrderBy(f => f.Fitness)
                     .Take(1)
                     .ToArray()
                     .Select(f => f.ToView())

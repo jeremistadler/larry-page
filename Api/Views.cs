@@ -49,7 +49,6 @@ namespace server.Api
                 Mutation = this.Mutation,
                 Seed = this.Seed,
                 Genes = GeneView.Serialize(this.Genes),
-                Organism = this.Organism.ToEntity()
             };
         }
     }
