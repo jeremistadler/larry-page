@@ -108,7 +108,7 @@ class DnaEvolver {
 
     Save() {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'http://localhost:2270/api/dna/save', true);
+        xhr.open('POST', '/api/dna/save', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.send(JSON.stringify(this.Dna));
     }
