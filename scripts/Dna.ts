@@ -9,11 +9,14 @@ class DnaEvolver {
     ColorBuffer: WebGLBuffer;
     PosBuffer: WebGLBuffer;
 
+    Risk: number;
     LastSaved: number;
 
     constructor(public webgl: WebGLRenderingContext, public Dna: Dna, public program: WebGLProgram) {
         this.PosBuffer = webgl.createBuffer();
         this.ColorBuffer = webgl.createBuffer();
+        this.Risk = 0;
+        
 
         var posArr = new Float32Array(this.Dna.Genes.length * DnaEvolver.PositionsPerGene * 2);
         var colorArr = new Float32Array(this.Dna.Genes.length * DnaEvolver.PositionsPerGene * 4);
@@ -24,8 +27,10 @@ class DnaEvolver {
         webgl.bindBuffer(webgl.ARRAY_BUFFER, this.ColorBuffer);
         webgl.bufferData(webgl.ARRAY_BUFFER, colorArr, webgl.DYNAMIC_DRAW);
 
-        for (var i = 0; i < this.Dna.Genes.length; i++)
+        for (var i = 0; i < this.Dna.Genes.length; i++) {
+            this.Dna.Genes[i].Color.length = 4;
             this.SetTriangleToBuffers(this.Dna.Genes[i], i);
+        }
 
         this.LastSaved = new Date().getTime();
     }
@@ -101,26 +106,26 @@ class DnaEvolver {
 
         var tri = this.Dna.Genes[index] = new Gene();
 
-        if (Math.random() > 0.9) {
+        if (true) {
             tri.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.4 + 0.2];
             tri.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
             for (var i = 0; i < tri.Pos.length; i++)
                 tri.Pos[i] = Math.random() * 1.2 - 0.1;
         }
-        else if (Math.random() > 0.3) {
-            var oldTri = this.EvolvingGene;
-            tri.Color = oldTri.Color.slice();
-            tri.Pos = oldTri.Pos.slice();
+        //else if (Math.random() > 0.3) {
+        //    var oldTri = this.EvolvingGene;
+        //    tri.Color = oldTri.Color.slice();
+        //    tri.Pos = oldTri.Pos.slice();
 
-            var indexToMove = Utils.randomIndex(tri.Pos);
-            tri.Pos[indexToMove] += (Math.random() - 0.5) * 0.1;
-        }
+        //    var indexToMove = Utils.randomIndex(tri.Pos);
+        //    tri.Pos[indexToMove] += (Math.random() - 0.5) * 0.1;
+        //}
         else {
             var oldTri = this.EvolvingGene;
             tri.Color = oldTri.Color.slice();
             tri.Pos = oldTri.Pos.slice();
 
-            var indexToChange = Utils.randomFromTo(0, 2);
+            var indexToChange = Utils.randomFromTo(0, 3);
             tri.Color[indexToChange] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + tri.Color[indexToChange]);
         }
 
@@ -128,10 +133,13 @@ class DnaEvolver {
     }
 
     EndEvolving(fitness: number): void {
-        if (fitness < this.Dna.Fitness) {
+        if (fitness < this.Dna.Fitness + this.Risk * 100) {
+
             this.Dna.Fitness = fitness;
             this.Dna.Mutation++;
-            console.log('fitness', fitness, 'generation: ' + this.Dna.Generation);
+            console.log('fitness', fitness, 'generation: ' + this.Dna.Generation, 'Risk', this.Risk, 'index', this.EvolvingGeneIndex);
+
+            this.Risk = 0;
 
             var dateNow = new Date().getTime();
             var saveTime = this.Dna.Mutation > 1000 ? 5 : 20
@@ -143,6 +151,7 @@ class DnaEvolver {
         else {
             this.Dna.Genes[this.EvolvingGeneIndex] = this.EvolvingGene;
             this.SetTriangleToBuffers(this.EvolvingGene, this.EvolvingGeneIndex);
+            this.Risk++;
         }
 
         this.Dna.Generation++;

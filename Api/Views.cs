@@ -67,7 +67,7 @@ namespace server.Api
                 .Select(f => new GeneView 
                 { 
                     Pos = new double[6], 
-                    Color = new double[12] 
+                    Color = new double[4] 
                 });
         }
 

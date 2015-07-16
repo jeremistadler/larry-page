@@ -29,7 +29,8 @@ class Vectorizer {
         if (dna.Mutation > 0)
           this.CurrentStartGene = 1000000;
         else
-          this.CurrentStartGene = 0;
+            this.CurrentStartGene = 0;
+
 
         this.SourceImgTexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.SourceImgTexBuffer);
