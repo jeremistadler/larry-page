@@ -13,16 +13,23 @@ class Vectorizer {
     Diff: FramebufferWrapper;
     Temp: FramebufferWrapper;
 
+    CurrentStartGene: number;
 
     constructor(public webgl: WebGLRenderingContext, public sourceImageData: ImageData, dna: Dna) {
         var gl = this.webgl;
         this.setState();
-        this.Evolver = new DnaEvolver(this.webgl, dna);
 
         this.sourceProgram = Utils.createProgram(gl, 'source');
         this.triangleProgram = Utils.createProgram(gl, 'triangle');
         this.diffProgram = Utils.createProgram(gl, 'diff');
         //this.mipMapProgram = Utils.createProgram(gl, 'mip-map');
+
+        this.Evolver = new DnaEvolver(this.webgl, dna, this.triangleProgram);
+
+        if (dna.Mutation > 0)
+          this.CurrentStartGene = 1000000;
+        else
+          this.CurrentStartGene = 0;
 
         this.SourceImgTexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.SourceImgTexBuffer);
@@ -125,19 +132,27 @@ class Vectorizer {
         var canvas = this.webgl.canvas;
         this.setState();
 
-        //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        //gl.clearColor(1, 0.5, 1, 1);
-        //gl.clear(gl.COLOR_BUFFER_BIT);
-
-        var triPixels = new Uint8Array(globalWidth * globalHeight * 4);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.Temp.framebuffer);
         gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.useProgram(this.triangleProgram);
 
+        if (this.CurrentStartGene < this.Evolver.Dna.Genes.length){
+          this.Evolver.findBestGenePos(this.CurrentStartGene, <Int8Array><any>this.sourceImageData.data);
+          this.CurrentStartGene++;
+          gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          gl.clearColor(1, 1, 1, 1);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          this.Evolver.Draw();
+          return;
+        }
+
+        var triPixels = new Uint8Array(globalWidth * globalHeight * 4);
         for (var iterations = 0; iterations < 40; iterations++) {
             gl.clearColor(1, 1, 1, 1);
             gl.clear(gl.COLOR_BUFFER_BIT);
             this.Evolver.StartEvolving();
-            this.Evolver.Draw(this.triangleProgram, globalWidth, globalHeight);
+            this.Evolver.Draw();
             gl.readPixels(0, 0, globalWidth, globalHeight, gl.RGBA, gl.UNSIGNED_BYTE, triPixels);
             var fitness = this.calculateFitness(<Int8Array><any>this.sourceImageData.data, triPixels);
             this.Evolver.EndEvolving(fitness);
@@ -150,7 +165,9 @@ class Vectorizer {
             //this.drawDiff(this.sourceTex.texture, this.TempTexture);
         }
 
-        this.Evolver.Draw(this.triangleProgram, globalWidth, globalHeight);
+        gl.clearColor(1, 1, 1, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        this.Evolver.Draw();
 
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -191,7 +208,7 @@ class Vectorizer {
 
     calculateFitness(buff1: Int8Array, buff2: Int8Array) {
         var diff = 0.0;
-        
+
         for (var i = 0; i < buff1.byteLength; i++){
             var q = Math.abs(buff1[i] - buff2[i]);
             diff += q * q;
@@ -200,4 +217,3 @@ class Vectorizer {
         return diff;
     }
 }
-
