@@ -1,7 +1,7 @@
 ///<reference path="references.ts" />
 
-var globalWidth = 512;
-var globalHeight = 512;
+var globalWidth = 256;
+var globalHeight = 256;
 var baseUrl = 'http://localhost:2270';
 
 
