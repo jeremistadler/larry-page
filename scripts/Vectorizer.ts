@@ -158,6 +158,10 @@ class Vectorizer {
             //this.drawDiff(this.sourceTex.texture, this.TempTexture);
         }
 
+        gl.clearColor(1, 1, 1, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        this.Evolver.Draw();
+
         console.log('Time per generation: ' + (new Date().getTime() - startTime) / 200);
 
         //gl.clearColor(1, 1, 1, 1);
