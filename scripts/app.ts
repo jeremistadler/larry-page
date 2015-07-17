@@ -2,7 +2,7 @@
 
 var globalWidth = 128;
 var globalHeight = 128;
-var baseUrl = 'http://localhost:2270';
+var baseUrl = '';
 
 
 var loadDna = function (onComplete: (dna: Dna) => void) {
