@@ -73,17 +73,6 @@ class Vectorizer {
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-        var resolutionLocation = gl.getUniformLocation(this.sourceProgram, "u_resolution");
-        gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-
-
-        var mat = mat3.create();
-        mat3.translate(mat, mat, [x, y, 0]);
-        mat3.scale(mat, mat, [width, height, 0]);
-
-        var posLoc = gl.getUniformLocation(this.sourceProgram, "u_matrix");
-        gl.uniformMatrix3fv(posLoc, false, <Float32Array>mat);
-
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
@@ -133,23 +122,26 @@ class Vectorizer {
         var canvas = this.webgl.canvas;
         this.setState();
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.Temp.framebuffer);
+        //gl.bindFramebuffer(gl.FRAMEBUFFER, this.Temp.framebuffer);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.useProgram(this.triangleProgram);
 
-        if (this.CurrentStartGene < this.Evolver.Dna.Genes.length){
-          this.Evolver.findBestGenePos(this.CurrentStartGene, <Int8Array><any>this.sourceImageData.data);
-          this.CurrentStartGene++;
-          gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-          gl.clearColor(1, 1, 1, 1);
-          gl.clear(gl.COLOR_BUFFER_BIT);
-          this.Evolver.Draw();
-          return;
-        }
+        //if (this.CurrentStartGene < this.Evolver.Dna.Genes.length){
+        //  this.Evolver.findBestGenePos(this.CurrentStartGene, <Int8Array><any>this.sourceImageData.data);
+        //  this.CurrentStartGene++;
+        //  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+        //  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        //  gl.clearColor(1, 1, 1, 1);
+        //  gl.clear(gl.COLOR_BUFFER_BIT);
+        //  this.Evolver.Draw();
+        //  return;
+        //}
+        
+        var startTime = new Date().getTime();
 
         var triPixels = new Uint8Array(globalWidth * globalHeight * 4);
-        for (var iterations = 0; iterations < 40; iterations++) {
+        for (var iterations = 0; iterations < 200; iterations++) {
             gl.clearColor(1, 1, 1, 1);
             gl.clear(gl.COLOR_BUFFER_BIT);
             this.Evolver.StartEvolving();
@@ -157,7 +149,7 @@ class Vectorizer {
             gl.readPixels(0, 0, globalWidth, globalHeight, gl.RGBA, gl.UNSIGNED_BYTE, triPixels);
             var fitness = this.calculateFitness(<Int8Array><any>this.sourceImageData.data, triPixels);
             this.Evolver.EndEvolving(fitness);
-
+            
             //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             //gl.bindTexture(gl.TEXTURE_2D, this.DiffTexture);
             //gl.clearColor(1, 1, 1, 1);
@@ -166,18 +158,20 @@ class Vectorizer {
             //this.drawDiff(this.sourceTex.texture, this.TempTexture);
         }
 
-        gl.clearColor(1, 1, 1, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        this.Evolver.Draw();
+        console.log('Time per generation: ' + (new Date().getTime() - startTime) / 200);
 
-        gl.bindTexture(gl.TEXTURE_2D, null);
-        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        //gl.clearColor(1, 1, 1, 1);
+        //gl.clear(gl.COLOR_BUFFER_BIT);
+        //this.Evolver.Draw();
 
-        gl.clearColor(0.2, 0.2, 0.2, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        this.drawSourceImg(this.Temp.tex, 0, 0, globalWidth, globalHeight);
+        //gl.bindTexture(gl.TEXTURE_2D, null);
+        //gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+        //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        //
+        //gl.clearColor(1, 1, 1, 1);
+        //gl.clear(gl.COLOR_BUFFER_BIT);
+        //
+        //this.drawSourceImg(this.Temp.tex, 0, 0, globalWidth, globalHeight);
 
         ////var srcPreviewTex = gl.createTexture();
         ////gl.bindTexture(gl.TEXTURE_2D, srcPreviewTex);
@@ -187,12 +181,12 @@ class Vectorizer {
         ////this.drawSourceImg(srcPreviewTex, 512, 0, 512, 512);
         ////this.drawSourceImg(this.TempTexture, 0, 0, 512, 512);
 
-        ////var triPreviewTex = gl.createTexture();
-        ////gl.bindTexture(gl.TEXTURE_2D, triPreviewTex);
-        ////gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, triPixels);
-        ////gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        ////gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        ////this.drawSourceImg(triPreviewTex, 512, 512, 512, 512);
+        //var triPreviewTex = gl.createTexture();
+        //gl.bindTexture(gl.TEXTURE_2D, triPreviewTex);
+        //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, globalWidth, globalHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, triPixels);
+        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        //this.drawSourceImg(triPreviewTex, 0, 0, globalWidth, globalHeight);
 
 
         //gl.bindFramebuffer(gl.FRAMEBUFFER, this.TempBuffer);

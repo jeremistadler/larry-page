@@ -3,9 +3,20 @@
 var globalWidth = 128;
 var globalHeight = 128;
 var baseUrl = '';
+var debug = false;
 
+if (debug) {
+    baseUrl = 'http://larry.jeremi.se';
+}
 
 var loadDna = function (onComplete: (dna: Dna) => void) {
+    if (debug) {
+        window.setTimeout(function () {
+            onComplete(DnaEvolver.CreateDna(30, 'blocks.jpg'));
+        });
+        return;
+    };
+
     var xhr = new XMLHttpRequest();
     xhr.open('GET', baseUrl + '/api/dna/random', true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");

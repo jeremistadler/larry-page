@@ -1,5 +1,25 @@
 ﻿///<reference path="references.ts" />
 
+class Organism {
+    Id: number;
+    ImagePath: string;
+    GeneCount: number;
+}
+
+class Gene {
+    Pos: number[];
+    Color: number[];
+}
+
+class Dna {
+    Genes: Gene[];
+    Generation: number;
+    Mutation: number;
+    Fitness: number;
+    Organism: Organism;
+}
+
+
 class DnaEvolver {
     static PositionsPerGene: number = 3;
 
@@ -104,40 +124,40 @@ class DnaEvolver {
         this.EvolvingGene = this.Dna.Genes[index];
         this.EvolvingGeneIndex = index;
 
-        var tri = this.Dna.Genes[index] = new Gene();
+        var gene = new Gene();
+        this.Dna.Genes[index] = gene;
 
-        if (true) {
-            tri.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.4 + 0.2];
-            tri.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
-            for (var i = 0; i < tri.Pos.length; i++)
-                tri.Pos[i] = Math.random() * 1.2 - 0.1;
+        if (Math.random() > 0.5) {
+            gene.Color = [Math.random(), Math.random(), Math.random(), 0.2];
+            gene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+            for (var i = 0; i < gene.Pos.length; i++)
+                gene.Pos[i] = Math.random() * 1.2 - 0.1;
         }
-        //else if (Math.random() > 0.3) {
-        //    var oldTri = this.EvolvingGene;
-        //    tri.Color = oldTri.Color.slice();
-        //    tri.Pos = oldTri.Pos.slice();
+       else if (Math.random() > 0.3) {
+           var oldGene = this.EvolvingGene;
+           gene.Color = oldGene.Color.slice();
+           gene.Pos = oldGene.Pos.slice();
 
-        //    var indexToMove = Utils.randomIndex(tri.Pos);
-        //    tri.Pos[indexToMove] += (Math.random() - 0.5) * 0.1;
-        //}
-        else {
-            var oldTri = this.EvolvingGene;
-            tri.Color = oldTri.Color.slice();
-            tri.Pos = oldTri.Pos.slice();
+           var indexToMove = Utils.randomIndex(gene.Pos);
+           gene.Pos[indexToMove] += (Math.random() - 0.5) * 0.1;
+       }
+       else {
+            var oldGene = this.EvolvingGene;
+            gene.Color = oldGene.Color.slice();
+            gene.Pos = oldGene.Pos.slice();
 
             var indexToChange = Utils.randomFromTo(0, 3);
-            tri.Color[indexToChange] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + tri.Color[indexToChange]);
+            gene.Color[indexToChange] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + gene.Color[indexToChange]);
         }
 
-        this.SetTriangleToBuffers(tri, index);
+        this.SetTriangleToBuffers(gene, index);
     }
 
     EndEvolving(fitness: number): void {
         if (fitness < this.Dna.Fitness + this.Risk * 100) {
-
             this.Dna.Fitness = fitness;
             this.Dna.Mutation++;
-            console.log('fitness', fitness, 'generation: ' + this.Dna.Generation, 'Risk', this.Risk, 'index', this.EvolvingGeneIndex);
+            //console.log('fitness', fitness, 'generation: ' + this.Dna.Generation, 'Risk', this.Risk, 'index', this.EvolvingGeneIndex);
 
             this.Risk = 0;
 
@@ -155,7 +175,6 @@ class DnaEvolver {
         }
 
         this.Dna.Generation++;
-        this.EvolvingGene = null;
     }
 
     Save() {
@@ -170,10 +189,9 @@ class DnaEvolver {
         var colorBuff = new Float32Array(4 * DnaEvolver.PositionsPerGene);
 
         for (var p = 0; p < DnaEvolver.PositionsPerGene; p++)
-            for (var i = 0; i < tri.Color.length; i++)
+            for (var i = 0; i < 4; i++)
                 colorBuff[p * 4 + i] = tri.Color[i];
-
-
+        
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, this.PosBuffer);
         this.webgl.bufferSubData(this.webgl.ARRAY_BUFFER, index * posBuff.byteLength, posBuff);
 
@@ -199,21 +217,3 @@ class DnaEvolver {
     }
 }
 
-class Organism {
-    Id: number;
-    ImagePath: string;
-    GeneCount: number;
-}
-
-class Gene {
-    Pos: number[];
-    Color: number[];
-}
-
-class Dna {
-    Genes: Gene[];
-    Generation: number;
-    Mutation: number;
-    Fitness: number;
-    Organism: Organism;
-}
