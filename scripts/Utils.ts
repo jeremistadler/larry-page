@@ -55,12 +55,12 @@ class Utils {
         return shader;
     }
 
-    static createFramebuffer(gl: WebGLRenderingContext) {
+    static createFramebuffer(gl: WebGLRenderingContext, width: number, height: number) {
         var tex = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, globalWidth, globalHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null);
 
         var buf = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, buf);
@@ -93,6 +93,13 @@ class Utils {
         var arr = new Array(length);
         for (var i = 0; i < length; i++)
             arr[i] = 0;
+        return arr;
+    }
+
+    static CreateNumberArrayRandom(length: number) {
+        var arr = new Array(length);
+        for (var i = 0; i < length; i++)
+            arr[i] = Math.random();
         return arr;
     }
 

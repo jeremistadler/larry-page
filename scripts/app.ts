@@ -3,10 +3,11 @@
 var globalWidth = 128;
 var globalHeight = 128;
 var baseUrl = '';
-var debug = false;
+var debug = true;
 
 if (debug) {
     baseUrl = 'http://larry.jeremi.se';
+    baseUrl = '';
 }
 
 var loadDna = function (onComplete: (dna: Dna) => void) {

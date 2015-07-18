@@ -57,7 +57,7 @@ class DnaEvolver {
 
     static CreateDna(numberOfGenes: number, image: string) {
         var dna = new Dna();
-        dna.Fitness = Infinity;
+        dna.Fitness = 1e9;
         dna.Genes = new Array(numberOfGenes);
         dna.Generation = 0;
         dna.Mutation = 0;
@@ -67,8 +67,8 @@ class DnaEvolver {
 
         for (var i = 0; i < numberOfGenes; i++) {
             dna.Genes[i] = new Gene();
-            dna.Genes[i].Pos = Utils.CreateNumberArray(DnaEvolver.PositionsPerGene * 2);
-            dna.Genes[i].Color = Utils.CreateNumberArray(4);
+            dna.Genes[i].Pos = Utils.CreateNumberArrayRandom(DnaEvolver.PositionsPerGene * 2);
+            dna.Genes[i].Color = Utils.CreateNumberArrayRandom(4);
         }
 
         return dna;
@@ -157,7 +157,7 @@ class DnaEvolver {
         if (fitness < this.Dna.Fitness + this.Risk * 100) {
             this.Dna.Fitness = fitness;
             this.Dna.Mutation++;
-            //console.log('fitness', fitness, 'generation: ' + this.Dna.Generation, 'Risk', this.Risk, 'index', this.EvolvingGeneIndex);
+            console.log('fitness', fitness, 'generation: ' + this.Dna.Generation, 'Risk', this.Risk, 'index', this.EvolvingGeneIndex);
 
             this.Risk = 0;
 
@@ -171,7 +171,7 @@ class DnaEvolver {
         else {
             this.Dna.Genes[this.EvolvingGeneIndex] = this.EvolvingGene;
             this.SetTriangleToBuffers(this.EvolvingGene, this.EvolvingGeneIndex);
-            this.Risk++;
+            //this.Risk++;
         }
 
         this.Dna.Generation++;

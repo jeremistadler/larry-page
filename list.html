@@ -89,7 +89,7 @@
     <footer class="footer">Drop images anywhere to give them to larry</footer>
 
     <script>
-        var baseUrl = '';
+        var baseUrl = 'http://larry.jeremi.se';
         var dnaItems = [];
         var imageContainer = document.getElementById('imageContainer');
         var homeButton = document.getElementsByClassName('homeButton')[0];
@@ -118,7 +118,7 @@
                 imageContainer.innerHTML = '';
                 for (var i = 0; i < dnaItems.length; i++) {
                     (function(dna) {
-                        var canvasWrapper = RenderDna(dna, imageContainer, 128);
+                        var canvasWrapper = RenderDna(dna, imageContainer, 512);
                         canvasWrapper.onclick = function() {
                             renderOrganism(dna.Organism.Id);
                         }
@@ -147,7 +147,7 @@
 
                 imageContainer.innerHTML = '';
                 for (var i = 0; i < dnaItems.length; i++) {
-                    RenderDna(dnaItems[i], imageContainer, 128);
+                    RenderDna(dnaItems[i], imageContainer, 512);
                 }
             };
             xhr.send();

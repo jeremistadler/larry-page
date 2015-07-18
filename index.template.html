@@ -87,44 +87,43 @@
     <script id="diff-vs" type="x-shader/x-vertex">
         attribute vec2 a_position;
         attribute vec2 a_texCoord;
-        uniform vec2 u_resolution;
         varying vec2 v_texCoord;
 
         void main() {
-           // convert pixel to -1 -> +1 (clipspace)
-           vec2 clipSpace = (a_position * 2.0) - 1.0;
-           gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+           gl_Position = vec4(a_position.x * 2.0 - 1.0, a_position.y * 2.0 - 1.0, 0.0, 1.0);
            v_texCoord = a_texCoord;
         }
     </script>
-    <!--<script id="mip-map-fs" type="x-shader/x-fragment">
+    <script id="mip-map-fs" type="x-shader/x-fragment">
         precision mediump float;
-        uniform sampler2D diff_image;
+        uniform sampler2D u_image0; // source
+        uniform sampler2D u_image1; // new
+        uniform sampler2D u_image2; // old
 
         void main() {
-            float sum = 0f;
-            for(int x = 0; x < 512; x++)
+            vec4 score = vec4(0, 0, 0, 0);
+            vec2 texPos = vec2(0, 0);
+
+            for(float x = 0.0; x < 1.0; x += 0.05)
             {
-                for(int y = 0; y < 512; y++)
+                for(float y = 0.0; y < 1.0; y += 0.05)
                 {
-                    sum += texture2D(diff_image, vec2(x, y));
+                    texPos = vec2(x, y);
+                    score += abs(texture2D(u_image1, texPos) - texture2D(u_image0, texPos)) -
+                             abs(texture2D(u_image2, texPos) - texture2D(u_image0, texPos));
                 }
             }
-
-            gl_FragColor.r = sum;
+            
+            gl_FragColor = score;
+            gl_FragColor.a = 1.0;
         }
     </script>
         <script id="mip-map-vs" type="x-shader/x-vertex">
         attribute vec2 a_position;
-        attribute vec2 a_texCoord;
-        uniform vec2 u_resolution;
-        varying vec2 v_texCoord;
 
         void main() {
-           // convert pixel to -1 -> +1 (clipspace)
-           vec2 clipSpace = ((a_position / u_resolution) * 2.0) - 1.0;
-           gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+           gl_Position = vec4(a_position.x * 2.0 - 1.0, a_position.y * 2.0 - 1.0, 0.0, 1.0);
         }
-    </script>-->
+    </script>
 </body>
 </html>
