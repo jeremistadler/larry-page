@@ -3,7 +3,7 @@
 var globalWidth = 128;
 var globalHeight = 128;
 var baseUrl = '';
-var debug = false;
+var debug = true;
 
 if (debug) {
     baseUrl = 'http://larry.jeremi.se';
@@ -51,14 +51,11 @@ var loadTexture = function (dna: Dna, onComplete: (image: ImageData) => void) {
     image.src = '/images/' + dna.Organism.ImagePath;
 }
 
-
 loadDna(function (dna) {
     loadTexture(dna, function (image) {
         loadedAll(dna, image);
     });
 })
-
-
 
 var loadedAll = function (dna, image) {
     var canvas = <HTMLCanvasElement>document.createElement('canvas');
@@ -71,17 +68,4 @@ var loadedAll = function (dna, image) {
     Utils.StartTick(dt => {
         game.draw();
     });
-}
-
-
-class WebGLRasterizer {
-    vectorizer: Vectorizer;
-
-    constructor(webgl: WebGLRenderingContext, image: ImageData, dna: Dna) {
-        this.vectorizer = new Vectorizer(webgl, image, dna);
-    }
-
-    draw() {
-        this.vectorizer.draw();
-    }
 }

@@ -1,7 +1,8 @@
 ﻿///<reference path="references.ts" />
 
 
-class Vectorizer {
+
+class WebGLRasterizer {
     SourceImgBuffer: WebGLBuffer;
     SourceImgTexBuffer: WebGLBuffer;
     sourceProgram: WebGLProgram;
