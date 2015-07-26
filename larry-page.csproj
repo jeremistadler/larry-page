@@ -197,7 +197,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="scripts\Dna.ts" />
-    <Content Include="scripts\Texture.ts" />
     <Content Include="scripts\Utils.ts" />
     <TypeScriptCompile Include="scripts\JsRasterizer.ts" />
     <Content Include="scripts\vendor\gl-matrix.d.ts" />
