@@ -33,9 +33,9 @@ var createDna = function(numberOfGenes: number, image: string) {
 var loadDna = function (onComplete: (dna: Dna) => void) {
     if (debug) {
         window.setTimeout(function () {
-            var dna = localStorage.getItem('dna6');
+            var dna = localStorage.getItem('dna13');
             if (!dna)
-                onComplete(createDna(3, 'cat.jpg'));
+                onComplete(createDna(3, 'cat2.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });
@@ -67,7 +67,7 @@ var loadTexture = function (dna: Dna, onComplete: (image: ImageData) => void) {
         ctx.fillStyle = 'white';
         ctx.drawImage(image, 0, 0, globalWidth, globalHeight);
         var data = ctx.getImageData(0, 0, globalWidth, globalHeight);
-        document.body.appendChild(canvas);
+        //document.body.appendChild(canvas);
         canvas.style.width = '200px';
         canvas.style.height = '200px';
         canvas.style.imageRendering = 'pixelated';

@@ -10,53 +10,53 @@ class JsRasterizer {
     allMutations: any[] = [];
 
     constructor(public sourceImageData: ImageData, public Dna: Dna) {
-        this.tempBuffer = new Uint8Array(globalWidth * globalHeight * 4);
-        var canvas = document.createElement('canvas');
-        canvas.width = globalWidth;
-        canvas.height = globalHeight;
-        canvas.style.width = '200px';
-        canvas.style.height = '200px';
-        canvas.style.imageRendering = 'pixelated';
-        this.pixelCtx = canvas.getContext('2d', { alpha: false });
-        document.body.appendChild(canvas);
+        //this.tempBuffer = new Uint8Array(globalWidth * globalHeight * 4);
+        //var canvas = document.createElement('canvas');
+        //canvas.width = globalWidth;
+        //canvas.height = globalHeight;
+        //canvas.style.width = '200px';
+        //canvas.style.height = '200px';
+        //canvas.style.imageRendering = 'pixelated';
+        //this.pixelCtx = canvas.getContext('2d', { alpha: false });
+        //document.body.appendChild(canvas);
 
         var canvas = document.createElement('canvas');
-        canvas.width = 200;
-        canvas.height = 200;
+        canvas.width = 1920;
+        canvas.height = 1200;
         this.triangleCtx = canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
 
         var workers = [];
 
-        for (var i = 0; i < 1; i++)
+        for (var i = 0; i < 2; i++)
             this.createThread();
     }
 
     drawPreview() {
-        for (var i = 0; i < this.tempBuffer.length; i++) {
-            this.tempBuffer[i] = 255;
-        }
+        //for (var i = 0; i < this.tempBuffer.length; i++) {
+        //    this.tempBuffer[i] = 255;
+        //}
 
-        var posBuffer = new Array(6);
-        var colorBuffer = new Array(6);
+        //var posBuffer = new Array(6);
+        //var colorBuffer = new Array(6);
 
-        for (var i = 0; i < this.Dna.Genes.length; i++) {
-            var gene = this.Dna.Genes[i];
+        //for (var i = 0; i < this.Dna.Genes.length; i++) {
+        //    var gene = this.Dna.Genes[i];
 
-            for (var c = 0; c < 3; c++)
-                colorBuffer[c] = Math.floor(gene.Color[c] * 255);
-            colorBuffer[3] = gene.Color[3];
+        //    for (var c = 0; c < 3; c++)
+        //        colorBuffer[c] = Math.floor(gene.Color[c] * 255);
+        //    colorBuffer[3] = gene.Color[3];
 
-            for (var c = 0; c < gene.Pos.length; c++)
-                posBuffer[c] = Math.floor(gene.Pos[c] * globalHeight);
+        //    for (var c = 0; c < gene.Pos.length; c++)
+        //        posBuffer[c] = Math.floor(gene.Pos[c] * globalHeight);
 
-            Raster.drawPolygon(this.tempBuffer, globalWidth, posBuffer, colorBuffer);
-        }
+        //    Raster.drawPolygon(this.tempBuffer, globalWidth, posBuffer, colorBuffer);
+        //}
 
-        var data = this.pixelCtx.createImageData(globalWidth, globalHeight);
-        for (var i = 0; i < data.data.length; i++)
-            data.data[i] = this.tempBuffer[i];
-        this.pixelCtx.putImageData(data, 0, 0);
+        //var data = this.pixelCtx.createImageData(globalWidth, globalHeight);
+        //for (var i = 0; i < data.data.length; i++)
+        //    data.data[i] = this.tempBuffer[i];
+        //this.pixelCtx.putImageData(data, 0, 0);
 
 
         //var div = document.createElement('div');
@@ -67,7 +67,7 @@ class JsRasterizer {
         //document.body.appendChild(div);
         
         this.triangleCtx.fillStyle = 'white';
-        this.triangleCtx.fillRect(0, 0, 200, 200);
+        this.triangleCtx.fillRect(0, 0, 1920, 1200);
 
         for (var g = 0; g < this.Dna.Genes.length; g++) {
             var gene = this.Dna.Genes[g];
@@ -78,9 +78,9 @@ class JsRasterizer {
             gene.Color[3] + ')';
 
             this.triangleCtx.beginPath();
-            this.triangleCtx.moveTo(gene.Pos[0] * 200, gene.Pos[1] * 200);
-            this.triangleCtx.lineTo(gene.Pos[2] * 200, gene.Pos[3] * 200);
-            this.triangleCtx.lineTo(gene.Pos[4] * 200, gene.Pos[5] * 200);
+            this.triangleCtx.moveTo(gene.Pos[0] * 1920, gene.Pos[1] * 1200);
+            this.triangleCtx.lineTo(gene.Pos[2] * 1920, gene.Pos[3] * 1200);
+            this.triangleCtx.lineTo(gene.Pos[4] * 1920, gene.Pos[5] * 1200);
             this.triangleCtx.closePath();
             this.triangleCtx.fill();
         }
@@ -88,37 +88,34 @@ class JsRasterizer {
 
     onMessage(e: MessageEvent) {
         var dna = <Dna>e.data.dna;
-        var mutations = e.data.mutations;
-        this.allMutations.push(mutations);
-
-
         this.completedWorkers++;
 
-        if (this.allMutations.length % 500 == 0 && this.allMutations.length > 0) {
-            var csv = '';
+        //this.allMutations.push(e.data.mutations);
+        //if (this.allMutations.length % 500 == 0 && this.allMutations.length > 0) {
+        //    var csv = '';
 
-            for (var g = 0; g < this.allMutations[0].length; g++) {
-                csv += this.allMutations[0][g].name;
-                if (g != this.allMutations[0].length - 1)
-                    csv += ',';
-            }
+        //    for (var g = 0; g < this.allMutations[0].length; g++) {
+        //        csv += this.allMutations[0][g].name;
+        //        if (g != this.allMutations[0].length - 1)
+        //            csv += ',';
+        //    }
 
-            csv += '\r\n';
+        //    csv += '\r\n';
 
-            for (var g = 0; g < this.allMutations.length; g++) {
-                var sum = this.allMutations[g].map(f => f.eff).reduce((a, b) => a + b);
+        //    for (var g = 0; g < this.allMutations.length; g++) {
+        //        var sum = this.allMutations[g].map(f => f.eff).reduce((a, b) => a + b);
 
-                for (var j = 0; j < this.allMutations[g].length; j++) {
-                    csv += (this.allMutations[g][j].eff / sum);
-                    if (j != this.allMutations[g].length - 1)
-                        csv += ',';
-                }
-                csv += '\r\n';
-            }
+        //        for (var j = 0; j < this.allMutations[g].length; j++) {
+        //            csv += (this.allMutations[g][j].eff / sum);
+        //            if (j != this.allMutations[g].length - 1)
+        //                csv += ',';
+        //        }
+        //        csv += '\r\n';
+        //    }
 
-            csv = "data:text/csv," + encodeURIComponent(csv);
-            window.open(csv, 'Mutations num ' + this.Dna.Generation + '.csv');
-        }
+        //    csv = "data:text/csv," + encodeURIComponent(csv);
+        //    window.open(csv, 'Mutations num ' + this.Dna.Generation + '.csv');
+        //}
 
         if (dna.Fitness < this.Dna.Fitness) {
             this.Dna = dna;
@@ -131,7 +128,7 @@ class JsRasterizer {
             this.completedWorkers = 0;
             this.drawPreview();
 
-            localStorage.setItem('dna5', JSON.stringify(this.Dna));
+            localStorage.setItem('dna13', JSON.stringify(this.Dna));
         }
     }
 

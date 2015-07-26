@@ -120,7 +120,7 @@ class GeneMutator {
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = state.oldGene.Pos.slice();
 
-                var indexToChange = Utils.randomFromTo(0, 3);
+                var indexToChange = Utils.randomFromTo(0, 4);
                 state.newGene.Color[indexToChange] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + state.newGene.Color[indexToChange]);
                 return state;
             },
@@ -160,7 +160,7 @@ class GeneMutator {
             func: function (dna: Dna) {
                 var state = GeneMutator.DefaultMutateGene(dna);
 
-                state.newGene.Color = [Math.random(), Math.random(), Math.random(), 0.2];
+                state.newGene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)];
                 state.newGene.Pos = new Array(6);
                 for (var i = 0; i < state.newGene.Pos.length; i++)
                     state.newGene.Pos[i] = Math.random() * 1.2 - 0.1;
@@ -169,11 +169,28 @@ class GeneMutator {
             undo: (dna, state) => dna.Genes[state.index] = state.oldGene
         },
         {
+            name: 'Add Small Triangle',
+            effectiveness: 2000,
+            func: function (dna: Dna) {
+                var gene = new Gene();
+                gene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)];
+                gene.Pos = [Math.random(), Math.random(), 0, 0, 0, 0];
+                gene.Pos[2] = gene.Pos[0] + Math.random() * 0.1 - 0.05;
+                gene.Pos[3] = gene.Pos[1] + Math.random() * 0.1 - 0.05;
+                gene.Pos[4] = gene.Pos[0] + Math.random() * 0.1 - 0.05;
+                gene.Pos[5] = gene.Pos[1] + Math.random() * 0.1 - 0.05;
+
+                dna.Genes.push(gene);
+                return { index: dna.Genes.length - 1, oldGene: null, newGene: gene };
+            },
+            undo: (dna, state) => dna.Genes.splice(state.index, 1)
+        },
+        {
             name: 'Add Triangle',
             effectiveness: 2000000,
             func: function (dna: Dna) {
                 var gene = new Gene();
-                gene.Color = [Math.random(), Math.random(), Math.random(), 0.2];
+                gene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)];
                 gene.Pos = new Array(6);
                 for (var i = 0; i < gene.Pos.length; i++)
                     gene.Pos[i] = Math.random() * 1.2 - 0.1;
