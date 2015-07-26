@@ -100,7 +100,7 @@ class JsRasterizer {
             this.completedWorkers = 0;
             this.drawPreview();
 
-            localStorage.setItem('dna', JSON.stringify(this.Dna));
+            localStorage.setItem('dna2', JSON.stringify(this.Dna));
         }
     }
 

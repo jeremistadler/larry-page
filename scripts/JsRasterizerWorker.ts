@@ -560,7 +560,7 @@ class Raster {
         };
     }
 
-    private static scanline(x1: number, y1: number, x2: number, y2: number, startY: number, edges: any[]) {
+    private static scanline(x1: number, y1: number, x2: number, y2: number, startY: number, rows: any[]) {
         var x, y;
 
         if (y1 > y2) {
@@ -572,57 +572,54 @@ class Raster {
             x2 = tempX;
         }
 
-        y1 = Math.floor(y1) + 1;
+        y1 = Math.floor(y1);
         y2 = Math.floor(y2);
 
         //if ( y2 < y1 ) { y2++ }
 
         x = x1; 					// start at the start
         var dx = (x2 - x1) / (y2 - y1); 		// change in x over change in y will give us the gradient
-        var index = Math.min(Math.round(y1 - startY), 0); 		// the offset the start writing at (into the array)
+        var row = Math.round(y1 - startY); 		// the offset the start writing at (into the array)
 
         for (y = y1; y <= y2; y++) { 		// cover all y co-ordinates in the line
-            var xi = Math.floor(x) + 1;
+            var xi = Math.floor(x);
 
-            // check if we've gone over/under the max/min
-            //
-            if (edges[index].minx > xi) { edges[index].minx = xi; }
-            if (edges[index].maxx < xi) { edges[index].maxx = xi; }
+            if (row >= 0 && row < rows.length - 1 && rows[row].minx > xi)
+                rows[row].minx = xi;
+
+            if (row >= 0 && row < rows.length - 1 && rows[row].maxx < xi)
+                rows[row].maxx = xi;
 
             x += dx; 					// move along the gradient
-            index++; 					// move along the buffer
+            row++; 					// move along the buffer
         }
     }
 
     private static _drawPolygon(buffer: Uint8Array, width: number, points: number[], color: number[]) {
-        var i;
         var miny = points[1]; 			// work out the minimum and maximum y values
         var maxy = points[1];
 
-        for (i = 1; i < points.length; i += 2) {
+        for (var i = 1; i < points.length; i += 2) {
             if (points[i] < miny) { miny = points[i]; }
             if (points[i] > maxy) { maxy = points[i]; }
         }
 
         var h = maxy - miny; 				// the height is the size of our edges array
-        var edges = [];
+        var rows = [];
 
-        for (i = 0; i <= h + 1; i++) { 			// build the array with unreasonable limits
-            edges.push({ minx: 1000000, maxx: -1000000 });
+        for (var i = 0; i <= h - 1; i++) { 			// build the array with unreasonable limits
+            rows.push({ minx: 1000000, maxx: -1000000 });
         }
 
-        for (i = 0; i < points.length - 3; i += 2) { 	// process each line in the polygon
-            this.scanline(points[i], points[i + 1],
-                points[i + 2], points[i + 3], miny, edges);
-        }
-
-        this.scanline(points[points.length - 2] - 1, points[points.length - 1] - 1, points[0] - 1, points[1] - 1, miny, edges);
+        this.scanline(points[0], points[1], points[2], points[3], miny, rows);
+        this.scanline(points[4], points[5], points[0], points[1], miny, rows);
+        this.scanline(points[2], points[3], points[4], points[5], miny, rows);
 
         // draw each horizontal line
-        for (i = 0; i < edges.length; i++) {
+        for (i = 0; i < rows.length; i++) {
             this.drawHLine(buffer, width
-                , Math.floor(edges[i].minx)
-                , Math.floor(edges[i].maxx)
+                , Math.floor(rows[i].minx)
+                , Math.floor(rows[i].maxx)
                 , Math.floor(i + miny), color);
         }
     }
@@ -683,3 +680,4 @@ class Raster {
         this._drawPolygon(buffer, width, this.rotPoints(this.polyBox(x, y, h, w), rot, { x: x, y: y }), color);
     }
 }
+
