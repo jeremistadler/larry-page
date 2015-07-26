@@ -7,6 +7,7 @@ class JsRasterizer {
     tempBuffer: Uint8Array;
     workers: Worker[] = [];
     completedWorkers: number = 0;
+    allMutations: any[] = [];
 
     constructor(public sourceImageData: ImageData, public Dna: Dna) {
         this.tempBuffer = new Uint8Array(globalWidth * globalHeight * 4);
@@ -27,7 +28,7 @@ class JsRasterizer {
 
         var workers = [];
 
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 1; i++)
             this.createThread();
     }
 
@@ -86,8 +87,31 @@ class JsRasterizer {
     }
 
     onMessage(e: MessageEvent) {
-        var dna = <Dna>e.data;
+        var dna = <Dna>e.data.dna;
+        var mutations = e.data.mutations;
+        this.allMutations.push(mutations);
+
+
         this.completedWorkers++;
+
+        if (this.allMutations.length % 3000 == 0 && this.allMutations.length > 0) {
+            var csv = '';
+
+            for (var g = 0; g < this.allMutations.length; g++) {
+                csv += this.allMutations[g].name;
+                if (g != this.allMutations.length - 1)
+                    csv += ',';
+            }
+
+            for (var g = 0; g < this.allMutations.length; g++) {
+                csv += this.allMutations[g].eff;
+                if (g != this.allMutations.length - 1)
+                    csv += ',';
+            }
+
+            csv = "data:application/octet-stream," + encodeURIComponent(csv);
+            window.open(csv, 'Mutations num ' + this.Dna.Generation + '.csv');
+        }
 
         if (dna.Fitness < this.Dna.Fitness) {
             this.Dna = dna;
@@ -100,7 +124,7 @@ class JsRasterizer {
             this.completedWorkers = 0;
             this.drawPreview();
 
-            localStorage.setItem('dna2', JSON.stringify(this.Dna));
+            localStorage.setItem('dna5', JSON.stringify(this.Dna));
         }
     }
 
@@ -113,7 +137,10 @@ class JsRasterizer {
         worker.postMessage(this.Dna);
     }
 
-    draw() {
-
+    Save() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', baseUrl + '/api/dna/save', true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.send(JSON.stringify(this.Dna));
     }
 }

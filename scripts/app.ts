@@ -1,7 +1,7 @@
 ///<reference path="references.ts" />
 
-var globalWidth = 64;
-var globalHeight = 64;
+var globalWidth = 256;
+var globalHeight = 256;
 var baseUrl = '';
 var debug = true;
 
@@ -12,9 +12,9 @@ if (debug) {
 var loadDna = function (onComplete: (dna: Dna) => void) {
     if (debug) {
         window.setTimeout(function () {
-            var dna = localStorage.getItem('dna2');
+            var dna = localStorage.getItem('dna5');
             if (!dna)
-                onComplete(DnaEvolver.CreateDna(10, 'me.jpg'));
+                onComplete(DnaEvolver.CreateDna(3, 'happy.bmp'));
             else
                 onComplete(JSON.parse(dna));
         });
