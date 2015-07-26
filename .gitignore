@@ -92,3 +92,4 @@ secrets.json
 images
 index.html
 larry-page.csproj.user
+scripts/*.js

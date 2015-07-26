@@ -18,7 +18,7 @@ gulp.task('scripts', ['index'], function() {
 
 gulp.task('index', function() {
     var sources = gulp.src(['scripts/vendor/*', './build/**/*.js', './build/**/*.css'], { read: false, base: '.' });
-
+    
     return gulp.src('./index.template.html')
                .pipe(inject(sources))
                .pipe(rename(function(path) {

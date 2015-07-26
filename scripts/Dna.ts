@@ -66,9 +66,11 @@ class DnaEvolver {
         dna.Organism.GeneCount = numberOfGenes;
 
         for (var i = 0; i < numberOfGenes; i++) {
-            dna.Genes[i] = new Gene();
-            dna.Genes[i].Pos = Utils.CreateNumberArray(DnaEvolver.PositionsPerGene * 2);
-            dna.Genes[i].Color = Utils.CreateNumberArray(4);
+            var gene = dna.Genes[i] = new Gene();
+            gene.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.8 + 0.2];
+            gene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+            for (var q = 0; q < gene.Pos.length; q++)
+                gene.Pos[q] = Math.random();
         }
 
         return dna;

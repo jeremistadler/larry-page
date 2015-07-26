@@ -1,7 +1,6 @@
 ﻿///<reference path="references.ts" />
 
 
-
 class WebGLRasterizer {
     SourceImgBuffer: WebGLBuffer;
     SourceImgTexBuffer: WebGLBuffer;

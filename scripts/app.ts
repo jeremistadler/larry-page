@@ -1,7 +1,7 @@
 ///<reference path="references.ts" />
 
-var globalWidth = 128;
-var globalHeight = 128;
+var globalWidth = 256;
+var globalHeight = 256;
 var baseUrl = '';
 var debug = true;
 
@@ -12,7 +12,7 @@ if (debug) {
 var loadDna = function (onComplete: (dna: Dna) => void) {
     if (debug) {
         window.setTimeout(function () {
-            onComplete(DnaEvolver.CreateDna(30, 'blocks.jpg'));
+            onComplete(DnaEvolver.CreateDna(200, 'me.jpg'));
         });
         return;
     };
@@ -43,6 +43,9 @@ var loadTexture = function (dna: Dna, onComplete: (image: ImageData) => void) {
         ctx.drawImage(image, 0, 0, globalWidth, globalHeight);
         var data = ctx.getImageData(0, 0, globalWidth, globalHeight);
         document.body.appendChild(canvas);
+        canvas.style.width = '200px';
+        canvas.style.height = '200px';
+        canvas.style.imageRendering = 'pixelated';
         onComplete(data);
     };
     image.onerror = function () {
@@ -58,14 +61,45 @@ loadDna(function (dna) {
 })
 
 var loadedAll = function (dna, image) {
-    var canvas = <HTMLCanvasElement>document.createElement('canvas');
-    canvas.width = globalWidth;
-    canvas.height = globalHeight;
+    //var canvas = <HTMLCanvasElement>document.createElement('canvas');
+    //canvas.width = globalWidth;
+    //canvas.height = globalHeight;
+    //document.body.appendChild(canvas);
+    //var webgl = <WebGLRenderingContext>canvas.getContext('webgl', { alpha: false, preserveDrawingBuffer: true, premultipliedAlpha: false });
+    //var game = new WebGLRasterizer(webgl, image, dna);
+
+    var rasterizer = new JsRasterizer(image, dna);
+
+    var buffer = new Uint8Array(10 * 10 * 4);
+    for (var i = 0; i < buffer.length; i++)
+        buffer[i] = 255;
+
+    //Raster.drawPolygon(buffer, 10, [-100, -100,  -10, 20,  20, 20], [255, 0, 0, 0.3]);
+    Raster.drawPolygon(buffer, 10, [-10, 20, -100, -100, 20, 20], [255, 0, 0, 0.3]);
+    //Raster.drawPolygon(buffer, 10, [5, -10, -10, 20, 20, 20], [0, 255, 0, 0.3]);
+    //Raster.drawPolygon(buffer, 10, [-1, 1, 1, 9, 9, 9], [0, 128, 0, 0.1]);
+    //Raster.drawPolygon(buffer, 10, [10, 0,  10, 10,  0, 10], [0, 100, 0, 1]);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = 10;
+    canvas.height = 10;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'purple';
+    ctx.fillRect(0, 0, 10, 10);
+    var data = ctx.createImageData(10, 10);
+
+    for (var i = 0; i < data.data.length; i++) {
+        data.data[i] = buffer[i];
+    }
+
+    ctx.putImageData(data, 0, 0);
     document.body.appendChild(canvas);
-    var webgl = <WebGLRenderingContext>canvas.getContext('webgl', { alpha: false, preserveDrawingBuffer: true, premultipliedAlpha: false });
-    var game = new WebGLRasterizer(webgl, image, dna);
+    canvas.style.width = '200px';
+    canvas.style.height = '200px';
+    canvas.style.imageRendering = 'pixelated';
+
 
     Utils.StartTick(dt => {
-        game.draw();
+        rasterizer.draw();
     });
 }

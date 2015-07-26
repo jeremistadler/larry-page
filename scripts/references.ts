@@ -1,5 +1,7 @@
 ﻿///<reference path="vendor/gl-matrix.d.ts" />
 ///<reference path="Texture.ts" />
 ///<reference path="Utils.ts" />
-///<reference path="Vectorizer.ts" />
+///<reference path="WebGLRasterizer.ts" />
+///<reference path="JsRasterizer.ts" />
 ///<reference path="Dna.ts" />
+///<reference path="raster.ts" />
