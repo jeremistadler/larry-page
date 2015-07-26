@@ -65,12 +65,5 @@ loadDna(function (dna) {
 })
 
 var loadedAll = function (dna, image) {
-    //var canvas = <HTMLCanvasElement>document.createElement('canvas');
-    //canvas.width = globalWidth;
-    //canvas.height = globalHeight;
-    //document.body.appendChild(canvas);
-    //var webgl = <WebGLRenderingContext>canvas.getContext('webgl', { alpha: false, preserveDrawingBuffer: true, premultipliedAlpha: false });
-    //var game = new WebGLRasterizer(webgl, image, dna);
-
     var rasterizer = new JsRasterizer(image, dna);
 }

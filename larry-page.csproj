@@ -200,7 +200,6 @@
     <Content Include="scripts\Texture.ts" />
     <Content Include="scripts\Utils.ts" />
     <TypeScriptCompile Include="scripts\JsRasterizer.ts" />
-    <TypeScriptCompile Include="scripts\WebGLRasterizer.ts" />
     <Content Include="scripts\vendor\gl-matrix.d.ts" />
   </ItemGroup>
   <ItemGroup>
