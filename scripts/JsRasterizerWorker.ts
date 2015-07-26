@@ -1,5 +1,5 @@
-﻿var globalWidth = 256;
-var globalHeight = 256;
+﻿var globalWidth = 64;
+var globalHeight = 64;
 
 class JsRasterizerWorker {
     tempBuffer: Uint8Array;
@@ -22,23 +22,17 @@ class JsRasterizerWorker {
         var fitnessDiff = (fitness - dna.Fitness) / iterations;
         GeneMutator.UpdateEffectiveness(fitnessDiff, mutator);
 
-        console.log('Generation time: ', (new Date().getTime() - startTime) / iterations, 'ms', 'fittness', dna.Fitness, 'Mutations: ', dna.Mutation, 'Generations: ', dna.Generation);
+        console.log('Generation time: ', (new Date().getTime() - startTime) / iterations, 'ms', 'fittness', dna.Fitness, 'Mutations: ', dna.Mutation, 'Generations: ', dna.Generation, 'Genes: ', dna.Genes.length);
         console.log('Mutators: ', GeneMutator.GeneMutators.map(f => f.name + ': ' + Math.round(f.effectiveness)).join(', '));
 
         self.postMessage(dna);
     }
 
     doIteration(mutator, dna: Dna) {
-        var index = Utils.randomIndex(dna.Genes);
-        var evolvingGene = dna.Genes[index];
+        var mutatorState = mutator.func(dna);
 
-        var gene = new Gene();
-        mutator.func(gene, evolvingGene);
-        dna.Genes[index] = gene;
-
-        for (var i = 0; i < this.tempBuffer.length; i++) {
+        for (var i = 0; i < this.tempBuffer.length; i++)
             this.tempBuffer[i] = 255;
-        }
 
         var posBuffer = new Array(6);
         var colorBuffer = new Array(6);
@@ -63,7 +57,7 @@ class JsRasterizerWorker {
             dna.Mutation++;
         }
         else {
-            dna.Genes[index] = evolvingGene;
+            mutator.undo(dna, mutatorState);
         }
 
         dna.Generation++;
@@ -73,7 +67,7 @@ class JsRasterizerWorker {
         var diff = 0.0;
         for (var i = 0; i < buff1.length; i++) {
             var q = Math.abs(buff1[i] - buff2[i]);
-            diff += q * q;
+            diff += q;
         }
         return diff;
     }
@@ -94,7 +88,7 @@ self.onmessage = function (e) {
 interface IGeneMutator {
     name: string;
     effectiveness: number;
-    func: (gene: Gene, oldGene: Gene) => void;
+    func: (dna: Dna) => any;
 }
 
 class GeneMutator {
@@ -102,48 +96,96 @@ class GeneMutator {
     static EffectivenessChangeRate = 0.2;
     static MinimumEffectiveness = 0.001;
 
+    public static DefaultMutateGene(dna: Dna) {
+        var gene = new Gene();
+        var index = Utils.randomIndex(dna.Genes);
+        var oldGene = dna.Genes[index];
+        dna.Genes[index] = gene;
+        return { index: index, oldGene: oldGene, newGene: gene };
+    }
+
     public static GeneMutators: IGeneMutator[] = [
         {
             name: 'ColorOnly',
             effectiveness: 100000,
-            func: function (gene: Gene, oldGene: Gene) {
-                gene.Color = oldGene.Color.slice();
-                gene.Pos = oldGene.Pos.slice();
+            func: function (dna: Dna) {
+                var state = GeneMutator.DefaultMutateGene(dna);
+                state.newGene.Color = state.oldGene.Color.slice();
+                state.newGene.Pos = state.oldGene.Pos.slice();
 
                 var indexToChange = Utils.randomFromTo(0, 3);
-                gene.Color[indexToChange] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + gene.Color[indexToChange]);
-            }
+                state.newGene.Color[indexToChange] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + state.newGene.Color[indexToChange]);
+                return state;
+            },
+            undo: (dna, state) => dna.Genes[state.index] = state.oldGene
         },
         {
             name: 'MoveGene',
             effectiveness: 100000,
-            func: function (gene: Gene, oldGene: Gene) {
-                gene.Color = oldGene.Color.slice();
-                gene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
-                for (var i = 0; i < gene.Pos.length; i++)
-                    gene.Pos[i] = Math.random() * 1.2 - 0.1;
-            }
+            func: function (dna: Dna) {
+                var state = GeneMutator.DefaultMutateGene(dna);
+           
+                state.newGene.Color = state.oldGene.Color.slice();
+                state.newGene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+                for (var i = 0; i < state.newGene.Pos.length; i++)
+                    state.newGene.Pos[i] = Math.random() * 1.2 - 0.1;
+                return state;
+            },
+            undo: (dna, state) => dna.Genes[state.index] = state.oldGene
         },
         {
             name: 'MoveGenePart',
             effectiveness: 100000,
-            func: function (gene: Gene, oldGene: Gene) {
-                gene.Color = oldGene.Color.slice();
-                gene.Pos = oldGene.Pos.slice();
+            func: function (dna: Dna) {
+                var state = GeneMutator.DefaultMutateGene(dna);
+                state.newGene.Color = state.oldGene.Color.slice();
+                state.newGene.Pos = state.oldGene.Pos.slice();
 
-                var indexToMove = Utils.randomIndex(gene.Pos);
-                gene.Pos[indexToMove] += (Math.random() - 0.5) * 0.1;
-            }
+                var indexToMove = Utils.randomIndex(state.newGene.Pos);
+                state.newGene.Pos[indexToMove] += (Math.random() - 0.5) * 0.1;
+                return state;
+            },
+            undo: (dna, state) => dna.Genes[state.index] = state.oldGene
         },
         {
             name: 'All Random',
             effectiveness: 100000,
-            func: function (gene: Gene) {
+            func: function (dna: Dna) {
+                var state = GeneMutator.DefaultMutateGene(dna);
+
+                state.newGene.Color = [Math.random(), Math.random(), Math.random(), 0.2];
+                state.newGene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+                for (var i = 0; i < state.newGene.Pos.length; i++)
+                    state.newGene.Pos[i] = Math.random() * 1.2 - 0.1;
+                return state;
+            },
+            undo: (dna, state) => dna.Genes[state.index] = state.oldGene
+        },
+        {
+            name: 'Add Triangle',
+            effectiveness: 200000,
+            func: function (dna: Dna) {
+                var gene = new Gene();
                 gene.Color = [Math.random(), Math.random(), Math.random(), 0.2];
                 gene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
                 for (var i = 0; i < gene.Pos.length; i++)
                     gene.Pos[i] = Math.random() * 1.2 - 0.1;
-            }
+
+                dna.Genes.push(gene);
+                return { index: dna.Genes.length - 1, oldGene: null, newGene: gene };
+            },
+            undo: (dna, state) => dna.Genes.splice(state.index, 1)
+        },
+        {
+            name: 'Remove Triangle',
+            effectiveness: 100000,
+            func: function (dna: Dna) {
+                var index = Utils.randomIndex(dna.Genes);
+                var oldGene = dna.Genes[index];
+                dna.Genes.splice(index, 1);
+                return { index: index, oldGene: oldGene, newGene: null };
+            },
+            undo: (dna, state) => dna.Genes.splice(state.index, 0, state.oldGene)
         }];
 
     public static GetMutator(): IGeneMutator {

@@ -20,7 +20,7 @@ class JsRasterizer {
 
         var workers = [];
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 2; i++)
             this.createThread();
     }
 

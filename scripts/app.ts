@@ -1,7 +1,7 @@
 ///<reference path="references.ts" />
 
-var globalWidth = 256;
-var globalHeight = 256;
+var globalWidth = 64;
+var globalHeight = 64;
 var baseUrl = '';
 var debug = true;
 
@@ -12,7 +12,7 @@ if (debug) {
 var loadDna = function (onComplete: (dna: Dna) => void) {
     if (debug) {
         window.setTimeout(function () {
-            onComplete(DnaEvolver.CreateDna(200, 'me.jpg'));
+            onComplete(DnaEvolver.CreateDna(1, 'me.jpg'));
         });
         return;
     };
