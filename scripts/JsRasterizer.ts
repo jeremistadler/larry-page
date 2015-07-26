@@ -2,7 +2,8 @@
 
 
 class JsRasterizer {
-    Canvas: CanvasRenderingContext2D;
+    pixelCtx: CanvasRenderingContext2D;
+    triangleCtx: CanvasRenderingContext2D;
     tempBuffer: Uint8Array;
     workers: Worker[] = [];
     completedWorkers: number = 0;
@@ -15,7 +16,13 @@ class JsRasterizer {
         canvas.style.width = '200px';
         canvas.style.height = '200px';
         canvas.style.imageRendering = 'pixelated';
-        this.Canvas= canvas.getContext('2d');
+        this.pixelCtx = canvas.getContext('2d', { alpha: false });
+        document.body.appendChild(canvas);
+
+        var canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 200;
+        this.triangleCtx = canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
 
         var workers = [];
@@ -45,10 +52,37 @@ class JsRasterizer {
             Raster.drawPolygon(this.tempBuffer, globalWidth, posBuffer, colorBuffer);
         }
 
-        var data = this.Canvas.createImageData(globalWidth, globalHeight);
+        var data = this.pixelCtx.createImageData(globalWidth, globalHeight);
         for (var i = 0; i < data.data.length; i++)
             data.data[i] = this.tempBuffer[i];
-        this.Canvas.putImageData(data, 0, 0);
+        this.pixelCtx.putImageData(data, 0, 0);
+
+
+        //var div = document.createElement('div');
+        //div.style.width = '1px';
+        //div.style.height = (this.Dna.Fitness / 10000) + 'px';
+        //div.style.display = 'inline-block';
+        //div.style.backgroundColor = 'cornflowerblue';
+        //document.body.appendChild(div);
+        
+        this.triangleCtx.fillStyle = 'white';
+        this.triangleCtx.fillRect(0, 0, 200, 200);
+
+        for (var g = 0; g < this.Dna.Genes.length; g++) {
+            var gene = this.Dna.Genes[g];
+            this.triangleCtx.fillStyle = 'rgba(' +
+            Math.floor(gene.Color[0] * 255) + ',' +
+            Math.floor(gene.Color[1] * 255) + ',' +
+            Math.floor(gene.Color[2] * 255) + ',' +
+            gene.Color[3] + ')';
+
+            this.triangleCtx.beginPath();
+            this.triangleCtx.moveTo(gene.Pos[0] * 200, gene.Pos[1] * 200);
+            this.triangleCtx.lineTo(gene.Pos[2] * 200, gene.Pos[3] * 200);
+            this.triangleCtx.lineTo(gene.Pos[4] * 200, gene.Pos[5] * 200);
+            this.triangleCtx.closePath();
+            this.triangleCtx.fill();
+        }
     }
 
     onMessage(e: MessageEvent) {
@@ -65,6 +99,8 @@ class JsRasterizer {
 
             this.completedWorkers = 0;
             this.drawPreview();
+
+            localStorage.setItem('dna', JSON.stringify(this.Dna));
         }
     }
 

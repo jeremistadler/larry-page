@@ -23,7 +23,9 @@ class JsRasterizerWorker {
         GeneMutator.UpdateEffectiveness(fitnessDiff, mutator);
 
         console.log('Generation time: ', (new Date().getTime() - startTime) / iterations, 'ms', 'fittness', dna.Fitness, 'Mutations: ', dna.Mutation, 'Generations: ', dna.Generation, 'Genes: ', dna.Genes.length);
-        console.log('Mutators: ', GeneMutator.GeneMutators.map(f => f.name + ': ' + Math.round(f.effectiveness)).join(', '));
+
+        var sum = GeneMutator.GeneMutators.map(f => f.effectiveness).reduce((a, b) => a + b);
+        console.log('Mutators: ', GeneMutator.GeneMutators.map(f => f.name + ': ' + Math.round(f.effectiveness / sum * 100)).join('%, ') + '%');
 
         self.postMessage(dna);
     }
