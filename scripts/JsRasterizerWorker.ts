@@ -133,7 +133,7 @@ class GeneMutator {
                 var state = GeneMutator.DefaultMutateGene(dna);
            
                 state.newGene.Color = state.oldGene.Color.slice();
-                state.newGene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+                state.newGene.Pos = new Array(6);
                 for (var i = 0; i < state.newGene.Pos.length; i++)
                     state.newGene.Pos[i] = Math.random() * 1.2 - 0.1;
                 return state;
@@ -161,7 +161,7 @@ class GeneMutator {
                 var state = GeneMutator.DefaultMutateGene(dna);
 
                 state.newGene.Color = [Math.random(), Math.random(), Math.random(), 0.2];
-                state.newGene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+                state.newGene.Pos = new Array(6);
                 for (var i = 0; i < state.newGene.Pos.length; i++)
                     state.newGene.Pos[i] = Math.random() * 1.2 - 0.1;
                 return state;
@@ -174,7 +174,7 @@ class GeneMutator {
             func: function (dna: Dna) {
                 var gene = new Gene();
                 gene.Color = [Math.random(), Math.random(), Math.random(), 0.2];
-                gene.Pos = new Array(DnaEvolver.PositionsPerGene * 2);
+                gene.Pos = new Array(6);
                 for (var i = 0; i < gene.Pos.length; i++)
                     gene.Pos[i] = Math.random() * 1.2 - 0.1;
 

@@ -9,12 +9,33 @@ if (debug) {
     baseUrl = 'http://larry.jeremi.se';
 }
 
+var createDna = function(numberOfGenes: number, image: string) {
+    var dna = new Dna();
+    dna.Fitness = Infinity;
+    dna.Genes = new Array(numberOfGenes);
+    dna.Generation = 0;
+    dna.Mutation = 0;
+    dna.Organism = new Organism();
+    dna.Organism.ImagePath = image;
+    dna.Organism.GeneCount = numberOfGenes;
+
+    for (var i = 0; i < numberOfGenes; i++) {
+        var gene = dna.Genes[i] = new Gene();
+        gene.Color = [Math.random(), Math.random(), Math.random(), Math.random() * 0.8 + 0.2];
+        gene.Pos = new Array(6);
+        for (var q = 0; q < gene.Pos.length; q++)
+            gene.Pos[q] = Math.random();
+    }
+
+    return dna;
+}
+
 var loadDna = function (onComplete: (dna: Dna) => void) {
     if (debug) {
         window.setTimeout(function () {
-            var dna = localStorage.getItem('dna5');
+            var dna = localStorage.getItem('dna6');
             if (!dna)
-                onComplete(DnaEvolver.CreateDna(3, 'happy.bmp'));
+                onComplete(createDna(3, 'happy.bmp'));
             else
                 onComplete(JSON.parse(dna));
         });
