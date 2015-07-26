@@ -35,7 +35,7 @@ var loadDna = function (onComplete: (dna: Dna) => void) {
         window.setTimeout(function () {
             var dna = localStorage.getItem('dna6');
             if (!dna)
-                onComplete(createDna(3, 'happy.bmp'));
+                onComplete(createDna(3, 'cat.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });

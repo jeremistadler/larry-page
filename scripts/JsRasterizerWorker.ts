@@ -100,7 +100,7 @@ interface IGeneMutator {
 
 class GeneMutator {
     static StartingEffectiveness = 1000000;
-    static EffectivenessChangeRate = 0.005;
+    static EffectivenessChangeRate = 0.03;
     static MinimumEffectiveness = 0.00001;
 
     public static DefaultMutateGene(dna: Dna) {
@@ -128,7 +128,7 @@ class GeneMutator {
         },
         {
             name: 'MoveGene',
-            effectiveness: 100000,
+            effectiveness: 1000000,
             func: function (dna: Dna) {
                 var state = GeneMutator.DefaultMutateGene(dna);
            
@@ -156,7 +156,7 @@ class GeneMutator {
         },
         {
             name: 'All Random',
-            effectiveness: 100000,
+            effectiveness: 1000000,
             func: function (dna: Dna) {
                 var state = GeneMutator.DefaultMutateGene(dna);
 
@@ -170,7 +170,7 @@ class GeneMutator {
         },
         {
             name: 'Add Triangle',
-            effectiveness: 200000,
+            effectiveness: 2000000,
             func: function (dna: Dna) {
                 var gene = new Gene();
                 gene.Color = [Math.random(), Math.random(), Math.random(), 0.2];
@@ -185,7 +185,7 @@ class GeneMutator {
         },
         {
             name: 'Remove Triangle',
-            effectiveness: 100000,
+            effectiveness: 10000,
             func: function (dna: Dna) {
                 var index = Utils.randomIndex(dna.Genes);
                 var oldGene = dna.Genes[index];

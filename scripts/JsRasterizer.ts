@@ -94,22 +94,29 @@ class JsRasterizer {
 
         this.completedWorkers++;
 
-        if (this.allMutations.length % 3000 == 0 && this.allMutations.length > 0) {
+        if (this.allMutations.length % 500 == 0 && this.allMutations.length > 0) {
             var csv = '';
 
-            for (var g = 0; g < this.allMutations.length; g++) {
-                csv += this.allMutations[g].name;
-                if (g != this.allMutations.length - 1)
+            for (var g = 0; g < this.allMutations[0].length; g++) {
+                csv += this.allMutations[0][g].name;
+                if (g != this.allMutations[0].length - 1)
                     csv += ',';
             }
 
+            csv += '\r\n';
+
             for (var g = 0; g < this.allMutations.length; g++) {
-                csv += this.allMutations[g].eff;
-                if (g != this.allMutations.length - 1)
-                    csv += ',';
+                var sum = this.allMutations[g].map(f => f.eff).reduce((a, b) => a + b);
+
+                for (var j = 0; j < this.allMutations[g].length; j++) {
+                    csv += (this.allMutations[g][j].eff / sum);
+                    if (j != this.allMutations[g].length - 1)
+                        csv += ',';
+                }
+                csv += '\r\n';
             }
 
-            csv = "data:application/octet-stream," + encodeURIComponent(csv);
+            csv = "data:text/csv," + encodeURIComponent(csv);
             window.open(csv, 'Mutations num ' + this.Dna.Generation + '.csv');
         }
 
