@@ -58,7 +58,7 @@ var loadTexture = function (dna: Dna, onComplete: (image: ImageData) => void) {
         ctx.fillStyle = 'white';
         ctx.drawImage(image, 0, 0, globalWidth, globalHeight);
         var data = ctx.getImageData(0, 0, globalWidth, globalHeight);
-        //document.body.appendChild(canvas);
+        document.body.appendChild(canvas);
         canvas.style.width = '200px';
         canvas.style.height = '200px';
         canvas.style.imageRendering = 'pixelated';
@@ -77,70 +77,6 @@ loadDna(function (dna) {
 })
 
 
-var runTest = function () {
-    var buffer = new Uint8ClampedArray(10 * 10 * 4);
-    for (var i = 3; i < buffer.length; i += 4)
-        buffer[i] = 255;
-
-
-    var startTime = new Date().getTime();
-    for (var i = 0; i < 1000000; i++)
-        Raster.drawPolygon(buffer, 10, 10, [1.5, 1.6, 9, 1, 5, 9], [255, 150, 150, 0.7]);
-        //Raster.drawPolygon(buffer, 10, 10, [0, 2.5, 2.5, 0, 10, 10], [10, 150, 250, 0.7]);
-    var timing1 = new Date().getTime() - startTime;
-
-    var startTime = new Date().getTime();
-    //for (var i = 0; i < 3000; i++)
-    //    Raster.drawPolygon(buffer, 200, 200, [1, 1, 200, 1, 100, 200], [255, 0, 0, 1]);
-    var timing2 = new Date().getTime() - startTime;
-
-    // Baseline:    660, 510
-    // Shared rows: 640, 520
-    
-    console.log('Small triangles:', timing1, 'Big triangles:', timing2);
-
-    var canvas = document.createElement('canvas');
-    canvas.width = 10;
-    canvas.height = 10;
-    var ctx = canvas.getContext('2d');
-    var data = ctx.createImageData(10, 10);
-
-    for (var i = 0; i < data.data.length; i++) {
-        data.data[i] = buffer[i];
-    }
-
-    ctx.putImageData(data, 0, 0);
-    document.body.appendChild(canvas);
-    canvas.style.width = '200px';
-    canvas.style.height = '200px';
-    canvas.style.imageRendering = 'pixelated';
-
-
-
-    var canvas = document.createElement('canvas');
-    canvas.width = 10;
-    canvas.height = 10;
-    var ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, 10, 10);
-    document.body.appendChild(canvas);
-    canvas.style.width = '200px';
-    canvas.style.height = '200px';
-    canvas.style.imageRendering = 'pixelated';
-
-    ctx.fillStyle = 'rgba(10, 150, 250, 0.7)';
-    ctx.beginPath();
-    ctx.moveTo(0, 2.5);
-    ctx.lineTo(2.5, 0);
-    ctx.lineTo(10, 10);
-    ctx.closePath();
-    ctx.fill();
-}
-
-
 var loadedAll = function (dna, image) {
-    //var rasterizer = new JsRasterizer(image, dna);
-
-    runTest();
-    window.setInterval(runTest, 1000);
+    var rasterizer = new JsRasterizer(image, dna);
 }
