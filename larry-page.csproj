@@ -171,9 +171,9 @@
     <Content Include="icons\ms-icon-70x70.png" />
     <Content Include="index.template.html" />
     <Content Include="list.html" />
-    <Content Include="scripts\vendor\gl-matrix-min.js" />
-    <TypeScriptCompile Include="scripts\JsRasterizerWorker.ts" />
-    <TypeScriptCompile Include="scripts\raster.ts" />
+    <None Include="scripts\vendor\gl-matrix-min.js" />
+    <None Include="scripts\JsRasterizerWorker.ts" />
+    <None Include="scripts\raster.ts" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -190,16 +190,16 @@
     <Content Include="App_Data\secrets.json" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="scripts\references.ts" />
+    <None Include="scripts\references.ts" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="scripts\app.ts" />
+    <None Include="scripts\app.ts" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="scripts\Dna.ts" />
-    <Content Include="scripts\Utils.ts" />
-    <TypeScriptCompile Include="scripts\JsRasterizer.ts" />
-    <Content Include="scripts\vendor\gl-matrix.d.ts" />
+    <None Include="scripts\Dna.ts" />
+    <None Include="scripts\Utils.ts" />
+    <None Include="scripts\JsRasterizer.ts" />
+    <None Include="scripts\vendor\gl-matrix.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />

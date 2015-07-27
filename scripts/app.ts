@@ -33,9 +33,9 @@ var createDna = function(numberOfGenes: number, image: string) {
 var loadDna = function (onComplete: (dna: Dna) => void) {
     if (debug) {
         window.setTimeout(function () {
-            var dna = localStorage.getItem('dna13');
+            var dna = localStorage.getItem('dna18');
             if (!dna)
-                onComplete(createDna(3, 'cat2.jpg'));
+                onComplete(createDna(3, 'bubbles.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });

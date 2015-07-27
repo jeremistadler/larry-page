@@ -21,8 +21,8 @@ class JsRasterizer {
         //document.body.appendChild(canvas);
 
         var canvas = document.createElement('canvas');
-        canvas.width = 1920;
-        canvas.height = 1200;
+        canvas.width = 1280;
+        canvas.height = 800;
         this.triangleCtx = canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
 
@@ -67,7 +67,7 @@ class JsRasterizer {
         //document.body.appendChild(div);
         
         this.triangleCtx.fillStyle = 'white';
-        this.triangleCtx.fillRect(0, 0, 1920, 1200);
+        this.triangleCtx.fillRect(0, 0, 1280, 800);
 
         for (var g = 0; g < this.Dna.Genes.length; g++) {
             var gene = this.Dna.Genes[g];
@@ -78,9 +78,9 @@ class JsRasterizer {
             gene.Color[3] + ')';
 
             this.triangleCtx.beginPath();
-            this.triangleCtx.moveTo(gene.Pos[0] * 1920, gene.Pos[1] * 1200);
-            this.triangleCtx.lineTo(gene.Pos[2] * 1920, gene.Pos[3] * 1200);
-            this.triangleCtx.lineTo(gene.Pos[4] * 1920, gene.Pos[5] * 1200);
+            this.triangleCtx.moveTo(gene.Pos[0] * 1280, gene.Pos[1] * 800);
+            this.triangleCtx.lineTo(gene.Pos[2] * 1280, gene.Pos[3] * 800);
+            this.triangleCtx.lineTo(gene.Pos[4] * 1280, gene.Pos[5] * 800);
             this.triangleCtx.closePath();
             this.triangleCtx.fill();
         }
@@ -128,7 +128,7 @@ class JsRasterizer {
             this.completedWorkers = 0;
             this.drawPreview();
 
-            localStorage.setItem('dna13', JSON.stringify(this.Dna));
+            localStorage.setItem('dna18', JSON.stringify(this.Dna));
         }
     }
 
