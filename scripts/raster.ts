@@ -1,26 +1,29 @@
 ﻿"use strict";
 
 class Raster {
-    private static drawHLine(buffer: Uint8Array, width: number, x1: number, x2: number, y: number, color: number[]) {
-        if (x1 < 0) x1 = 0;
-        if (x2 > width) x2 = width;
-        if (y < 0 || y > globalHeight - 1) return;
+    static _rowMin: number[] = Utils.CreateNumberArray(1024);
+    static _rowMax: number[] = Utils.CreateNumberArray(1024);
 
-        var index = x1 + y * width; 			// calculate the offset into the buffer
-        var x;
+    private static drawHLine(buffer: Uint8Array, width: number, height: number, x1: number, x2: number, y: number, color: number[]) {
+        if (y < 0 || y > height - 1) return;
+        if (x1 == x2) return;
 
-        for (x = x1; x < x2; x++) {
-            buffer[index * 4 + 0] = Utils.ClampByte(color[3] * color[0] + buffer[index * 4 + 0] * (1 - color[3]));
-            buffer[index * 4 + 1] = Utils.ClampByte(color[3] * color[1] + buffer[index * 4 + 1] * (1 - color[3]));
-            buffer[index * 4 + 2] = Utils.ClampByte(color[3] * color[2] + buffer[index * 4 + 2] * (1 - color[3]));
-            buffer[index * 4 + 3] = 255;
+        x1 = Math.max(x1, 0);
+        x2 = Math.min(x2, width);
+
+        var alpha = color[3];
+        var inverseAlpha = 1 - alpha;
+
+        var index = Math.floor((y * width) + x1);
+        for (; x1 < x2; x1++) {
+            buffer[index * 4 + 0] = alpha * color[0] + buffer[index * 4 + 0] * inverseAlpha;
+            buffer[index * 4 + 1] = alpha * color[1] + buffer[index * 4 + 1] * inverseAlpha;
+            buffer[index * 4 + 2] = alpha * color[2] + buffer[index * 4 + 2] * inverseAlpha;
             index++;
         };
     }
 
-    private static scanline(x1: number, y1: number, x2: number, y2: number, startY: number, rows: any[]) {
-        var x, y;
-
+    private static scanline(x1: number, y1: number, x2: number, y2: number, startY: number, endY: number) {
         if (y1 > y2) {
             var tempY = y1;
             var tempX = x1;
@@ -31,54 +34,50 @@ class Raster {
         }
 
         y1 = Math.floor(y1);
-        y2 = Math.floor(y2);
+        y2 = Math.min(Math.floor(y2), endY);
 
         //if ( y2 < y1 ) { y2++ }
 
-        x = x1; 					// start at the start
         var dx = (x2 - x1) / (y2 - y1); 		// change in x over change in y will give us the gradient
         var row = Math.round(y1 - startY); 		// the offset the start writing at (into the array)
 
-        for (y = y1; y <= y2; y++) { 		// cover all y co-ordinates in the line
-            var xi = Math.floor(x);
+        for (; y1 <= y2; y1++) {
+            if (this._rowMin[row] > x1) this._rowMin[row] = x1;
+            if (this._rowMax[row] < x1) this._rowMax[row] = x1;
 
-            if (row >= 0 && row < rows.length - 1 && rows[row].minx > xi)
-                rows[row].minx = xi;
-
-            if (row >= 0 && row < rows.length - 1 && rows[row].maxx < xi)
-                rows[row].maxx = xi;
-
-            x += dx; 					// move along the gradient
-            row++; 					// move along the buffer
+            x1 += dx;
+            row++;
         }
     }
 
-    private static _drawPolygon(buffer: Uint8Array, width: number, points: number[], color: number[]) {
-        var miny = points[1]; 			// work out the minimum and maximum y values
-        var maxy = points[1];
+    private static _drawPolygon(buffer: Uint8Array, width: number, height: number, points: number[], color: number[]) {
+        var minY = points[1];
+        var maxY = points[1];
 
         for (var i = 1; i < points.length; i += 2) {
-            if (points[i] < miny) { miny = points[i]; }
-            if (points[i] > maxy) { maxy = points[i]; }
+            minY = Math.min(minY, points[i]);
+            maxY = Math.max(maxY, points[i]);
         }
 
-        var h = maxy - miny; 				// the height is the size of our edges array
-        var rows = [];
+        var polygonHeight = maxY - minY;
 
-        for (var i = 0; i <= h - 1; i++) { 			// build the array with unreasonable limits
-            rows.push({ minx: 1000000, maxx: -1000000 });
-        }
+        for (var i = 0; i < polygonHeight + 10; i++) this._rowMin[i] = 100000.0;
+        for (var i = 0; i < polygonHeight + 10; i++) this._rowMax[i] = -100000.0;
 
-        this.scanline(points[0], points[1], points[2], points[3], miny, rows);
-        this.scanline(points[4], points[5], points[0], points[1], miny, rows);
-        this.scanline(points[2], points[3], points[4], points[5], miny, rows);
+        this.scanline(points[0], points[1], points[2], points[3], minY, maxY);
+        this.scanline(points[4], points[5], points[0], points[1], minY, maxY);
+        this.scanline(points[2], points[3], points[4], points[5], minY, maxY);
 
-        // draw each horizontal line
-        for (i = 0; i < rows.length; i++) {
-            this.drawHLine(buffer, width
-                , Math.floor(rows[i].minx)
-                , Math.floor(rows[i].maxx)
-                , Math.floor(i + miny), color);
+        //console.group('polygon rows: ', polygonHeight);
+        //console.log('min: ', this._rowMin.slice(0, polygonHeight).map(f => f.toFixed(2)).join(', '));
+        //console.log('max: ', this._rowMax.slice(0, polygonHeight).map(f => f.toFixed(2)).join(', '));
+        //console.log('diff: ', this._rowMax.map((f, i) => (f - this._rowMin[i]).toFixed(2)).slice(0, polygonHeight).join(', '));
+        //console.groupEnd();
+
+        for (var i = 0; i < polygonHeight; i++) {
+            this.drawHLine(buffer, width, height,
+                this._rowMin[i], this._rowMax[i],
+                Math.floor(i + minY), color);
         }
     }
 
@@ -122,20 +121,20 @@ class Raster {
             , { x: x + w / 2, y: y - h / 2 }];
     }
 
-    static drawPolygon(buffer: Uint8Array, width: number, points: number[], color: number[]) {
-        this._drawPolygon(buffer, width, points, color);
+    static drawPolygon(buffer: Uint8Array, width: number, height: number, points: number[], color: number[]) {
+        this._drawPolygon(buffer, width, height, points, color);
     }
 
-    static drawCircle(buffer, width, x, y, rad, color) {
-        this._drawPolygon(buffer, width, this.polyEllipse(x, y, rad, rad), color);
+    static drawCircle(buffer, width, height, x, y, rad, color) {
+        this._drawPolygon(buffer, width, height, this.polyEllipse(x, y, rad, rad), color);
     }
 
-    static drawEllipse(buffer, width, x, y, h, w, rot: number, color) {
-        this._drawPolygon(buffer, width, this.rotPoints(this.polyEllipse(x, y, h, w), rot, { x: x, y: y }), color);
+    static drawEllipse(buffer, width, height, x, y, h, w, rot: number, color) {
+        this._drawPolygon(buffer, width, height, this.rotPoints(this.polyEllipse(x, y, h, w), rot, { x: x, y: y }), color);
     }
 
-    static drawBox(buffer: Uint8Array, width: number, x, y, h, w, rot: number, color) {
-        this._drawPolygon(buffer, width, this.rotPoints(this.polyBox(x, y, h, w), rot, { x: x, y: y }), color);
+    static drawBox(buffer: Uint8Array, width: number, height: number, x, y, h, w, rot: number, color) {
+        this._drawPolygon(buffer, width, height, this.rotPoints(this.polyBox(x, y, h, w), rot, { x: x, y: y }), color);
     }
 }
 

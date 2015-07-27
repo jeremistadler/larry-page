@@ -85,25 +85,33 @@ loadDna(function (dna) {
     });
 })
 
-var loadedAll = function (dna, image) {
-    //var rasterizer = new JsRasterizer(image, dna);
 
-    var buffer = new Uint8Array(10 * 10 * 4);
-    for (var i = 0; i < buffer.length; i++)
+var runTest = function () {
+    var buffer = new Uint8ClampedArray(10 * 10 * 4);
+    for (var i = 3; i < buffer.length; i += 4)
         buffer[i] = 255;
 
-    //Raster.drawPolygon(buffer, 10, [-100, -100,  -10, 20,  20, 20], [255, 0, 0, 0.3]);
-    Raster.drawPolygon(buffer, 10, [0, 0, 5, 5, 0, 10], [255, 0, 0, 0.3]);
-    //Raster.drawPolygon(buffer, 10, [5, -10, -10, 20, 20, 20], [0, 255, 0, 0.3]);
-    //Raster.drawPolygon(buffer, 10, [-1, 1, 1, 9, 9, 9], [0, 128, 0, 0.1]);
-    //Raster.drawPolygon(buffer, 10, [10, 0,  10, 10,  0, 10], [0, 100, 0, 1]);
+
+    var startTime = new Date().getTime();
+    for (var i = 0; i < 1000000; i++)
+        Raster.drawPolygon(buffer, 10, 10, [1.5, 1.6, 9, 1, 5, 9], [255, 150, 150, 0.7]);
+        //Raster.drawPolygon(buffer, 10, 10, [0, 2.5, 2.5, 0, 10, 10], [10, 150, 250, 0.7]);
+    var timing1 = new Date().getTime() - startTime;
+
+    var startTime = new Date().getTime();
+    //for (var i = 0; i < 3000; i++)
+    //    Raster.drawPolygon(buffer, 200, 200, [1, 1, 200, 1, 100, 200], [255, 0, 0, 1]);
+    var timing2 = new Date().getTime() - startTime;
+
+    // Baseline:    660, 510
+    // Shared rows: 640, 520
+    
+    console.log('Small triangles:', timing1, 'Big triangles:', timing2);
 
     var canvas = document.createElement('canvas');
     canvas.width = 10;
     canvas.height = 10;
     var ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, 10, 10);
     var data = ctx.createImageData(10, 10);
 
     for (var i = 0; i < data.data.length; i++) {
@@ -122,26 +130,25 @@ var loadedAll = function (dna, image) {
     canvas.width = 10;
     canvas.height = 10;
     var ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, 10, 10);
     document.body.appendChild(canvas);
     canvas.style.width = '200px';
     canvas.style.height = '200px';
     canvas.style.imageRendering = 'pixelated';
 
-    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+    ctx.fillStyle = 'rgba(10, 150, 250, 0.7)';
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(5, 5);
-    ctx.lineTo(0, 10);
+    ctx.moveTo(0, 2.5);
+    ctx.lineTo(2.5, 0);
+    ctx.lineTo(10, 10);
     ctx.closePath();
     ctx.fill();
+}
+// 0, -2.5, 2.5, 0, 10, 10
+var loadedAll = function (dna, image) {
+    //var rasterizer = new JsRasterizer(image, dna);
 
-    //ctx.fillStyle = 'rgba(0, 100, 0, 0.3)';
-    //ctx.beginPath();
-    //ctx.moveTo(1, 1);
-    //ctx.lineTo(10, 5);
-    //ctx.lineTo(3, 6);
-    //ctx.closePath();
-    //ctx.fill();
+    runTest();
+    window.setInterval(runTest, 1000);
 }
