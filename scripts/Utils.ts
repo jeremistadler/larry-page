@@ -1,4 +1,4 @@
-﻿///<reference path="references.ts" />
+﻿"use strict";
 
 class Utils {
     static StartTick(tickMethod: (dt: number) => void) {

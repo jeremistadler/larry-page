@@ -1,4 +1,5 @@
-﻿///<reference path="references.ts" />
+﻿///<reference path="../references.ts" />
+"use strict";
 
 
 class JsRasterizer {
@@ -23,7 +24,7 @@ class JsRasterizer {
         var canvas = document.createElement('canvas');
         canvas.width = 1280;
         canvas.height = 800;
-        this.triangleCtx = canvas.getContext('2d', { alpha: false });
+        this.triangleCtx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
 
         var workers = [];
@@ -133,7 +134,7 @@ class JsRasterizer {
     }
 
     createThread() {
-        var worker = new Worker('build/JsRasterizerWorker.js');
+        var worker = new Worker('build-worker/worker.js');
         this.workers.push(worker);
         worker.onmessage = f => this.onMessage(f);
 

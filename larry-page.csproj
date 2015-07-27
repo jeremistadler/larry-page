@@ -171,8 +171,7 @@
     <Content Include="icons\ms-icon-70x70.png" />
     <Content Include="index.template.html" />
     <Content Include="list.html" />
-    <None Include="scripts\vendor\gl-matrix-min.js" />
-    <None Include="scripts\JsRasterizerWorker.ts" />
+    <None Include="main\js-rasterizer-worker.ts" />
     <None Include="scripts\raster.ts" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
@@ -190,19 +189,21 @@
     <Content Include="App_Data\secrets.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="scripts\references.ts" />
+    <None Include="references.ts" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="scripts\app.ts" />
+    <None Include="main\app.ts" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="scripts\Dna.ts" />
-    <None Include="scripts\Utils.ts" />
-    <None Include="scripts\JsRasterizer.ts" />
-    <None Include="scripts\vendor\gl-matrix.d.ts" />
+    <None Include="scripts\dna.ts" />
+    <None Include="scripts\utils.ts" />
+    <None Include="scripts\js-rasterizer.ts" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="scripts\shared.ts" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

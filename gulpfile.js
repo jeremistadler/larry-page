@@ -4,27 +4,33 @@ var eventStream = require('event-stream');
 var connect = require('gulp-connect');
 var inject = require('gulp-inject');
 var rename = require("gulp-rename");
+var concat = require("gulp-concat");
+var addsrc = require('gulp-add-src');
 
-
-gulp.task('scripts', ['index'], function() {
-    return gulp.src(['scripts/**/*.ts'])
+gulp.task('scripts', function () {
+    var scripts = gulp.src(['references.ts', , 'scripts/**/*.ts', 'main/app.ts'])
                .pipe(ts({
                    target: 'ES6',
                    noExternalResolve: true
                }))
                 .js
                 .pipe(gulp.dest('build'));
-});
 
-gulp.task('index', function() {
-    var sources = gulp.src(['scripts/vendor/*', './build/**/*.js', './build/**/*.css'], { read: false, base: '.' });
-    
-    return gulp.src('./index.template.html')
-               .pipe(inject(sources))
-               .pipe(rename(function(path) {
+    gulp.src('./index.template.html')
+               .pipe(inject(scripts))
+               .pipe(rename(function (path) {
                    path.basename = "index";
                }))
                .pipe(gulp.dest('.'));
+
+    return gulp.src(['references.ts', 'scripts/**/*.ts', 'main/js-rasterizer-worker.ts'])
+               .pipe(ts({
+                   target: 'ES6',
+                   noExternalResolve: true
+               }))
+                .js
+                .pipe(concat('worker.js'))
+                .pipe(gulp.dest('build-worker'));
 });
 
 gulp.task('watch', function() {
@@ -44,4 +50,4 @@ gulp.task('serve', function() {
     });
 });
 
-gulp.task('default', ['scripts', 'serve', 'watch', 'index'], function() { });
+gulp.task('default', ['scripts', 'serve', 'watch'], function() { });
