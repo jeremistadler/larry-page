@@ -1,4 +1,5 @@
 ﻿"use strict";
+///<reference path="../references.ts" />
 
 class Organism {
     Id: number;
@@ -24,12 +25,65 @@ interface IGeneMutator {
     name: string;
     effectiveness: number;
     func: (dna: Dna) => any;
+    undo: (dna: Dna, any) => void;
 }
 
 class GeneMutator {
     static StartingEffectiveness = 1000000;
     static EffectivenessChangeRate = 0.03;
     static MinimumEffectiveness = 0.00001;
+
+    static Buffer: Uint8Array;
+    static posBuffer: number[] = new Array(6);
+    static colorBuffer: number[] = new Array(6);
+
+    static MutateDna(mutator: IGeneMutator, dna: Dna, source: number[]) {
+        var mutatorState = mutator.func(dna);
+        var fitness = this.GetFitness(dna, source);
+
+        if (fitness < dna.Fitness) {
+            dna.Fitness = fitness;
+            dna.Mutation++;
+        }
+        else {
+            mutator.undo(dna, mutatorState);
+        }
+
+        dna.Generation++;
+    }
+
+
+    static GetFitness(dna: Dna, source: number[]) {
+        if (!this.Buffer)
+            this.Buffer = new Uint8ClampedArray(globalWidth * globalHeight * 4);
+
+        for (var i = 0; i < this.Buffer.length; i++)
+            this.Buffer[i] = 255;
+
+        for (var i = 0; i < dna.Genes.length; i++) {
+            var gene = dna.Genes[i];
+
+            for (var c = 0; c < 3; c++)
+                this.colorBuffer[c] = Math.floor(gene.Color[c] * 255);
+            this.colorBuffer[3] = gene.Color[3];
+
+            for (var c = 0; c < gene.Pos.length; c++)
+                this.posBuffer[c] = Math.floor(gene.Pos[c] * globalHeight);
+
+            Raster.drawPolygon(this.Buffer, globalWidth, globalHeight, this.posBuffer, this.colorBuffer);
+        }
+
+        return this.calculateFitness(source, this.Buffer);
+    }
+
+    static calculateFitness(buff1: number[], buff2: Int8Array) {
+        var diff = 0.0;
+        for (var i = 0; i < buff1.length; i++) {
+            var q = Math.abs(buff1[i] - buff2[i]);
+            diff += q * q;
+        }
+        return diff;
+    }
 
     public static DefaultMutateGene(dna: Dna) {
         var gene = new Gene();

@@ -8,7 +8,7 @@ var concat = require("gulp-concat");
 var addsrc = require('gulp-add-src');
 
 gulp.task('scripts', function () {
-    var scripts = gulp.src(['references.ts', , 'scripts/**/*.ts', 'main/app.ts'])
+    var scripts = gulp.src(['references.ts', 'scripts/**/*.ts', 'main/app.ts'])
                .pipe(ts({
                    target: 'ES6',
                    noExternalResolve: true
@@ -34,7 +34,7 @@ gulp.task('scripts', function () {
 });
 
 gulp.task('watch', function() {
-    gulp.watch(['./index.template.html', 'scripts/**/*.ts'], { debounceDelay: 200 }, ['scripts']);
+    gulp.watch(['./index.template.html', 'scripts/**/*.ts', 'main/**/*.ts', 'references.ts'], { debounceDelay: 200 }, ['scripts']);
     gulp.watch(['./index.html', 'build/**/*.*'], { debounceDelay: 500 }, ['reload']);
 });
 

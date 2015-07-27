@@ -22,12 +22,12 @@ class JsRasterizer {
         //document.body.appendChild(canvas);
 
         var canvas = document.createElement('canvas');
-        canvas.width = 1280;
-        canvas.height = 800;
+        canvas.width = globalWidth;
+        canvas.height = globalHeight;
         this.triangleCtx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
 
-        var workers = [];
+        Dna.Fitness = GeneMutator.GetFitness(Dna, sourceImageData.data);
 
         for (var i = 0; i < 2; i++)
             this.createThread();
@@ -68,7 +68,7 @@ class JsRasterizer {
         //document.body.appendChild(div);
         
         this.triangleCtx.fillStyle = 'white';
-        this.triangleCtx.fillRect(0, 0, 1280, 800);
+        this.triangleCtx.fillRect(0, 0, globalWidth, globalHeight);
 
         for (var g = 0; g < this.Dna.Genes.length; g++) {
             var gene = this.Dna.Genes[g];
@@ -79,9 +79,9 @@ class JsRasterizer {
             gene.Color[3] + ')';
 
             this.triangleCtx.beginPath();
-            this.triangleCtx.moveTo(gene.Pos[0] * 1280, gene.Pos[1] * 800);
-            this.triangleCtx.lineTo(gene.Pos[2] * 1280, gene.Pos[3] * 800);
-            this.triangleCtx.lineTo(gene.Pos[4] * 1280, gene.Pos[5] * 800);
+            this.triangleCtx.moveTo(gene.Pos[0] * globalWidth, gene.Pos[1] * globalHeight);
+            this.triangleCtx.lineTo(gene.Pos[2] * globalWidth, gene.Pos[3] * globalHeight);
+            this.triangleCtx.lineTo(gene.Pos[4] * globalWidth, gene.Pos[5] * globalHeight);
             this.triangleCtx.closePath();
             this.triangleCtx.fill();
         }
