@@ -1,35 +1,26 @@
 ﻿///<reference path="../references.ts" />
 "use strict";
 
-
 class JsRasterizer {
     pixelCtx: CanvasRenderingContext2D;
-    triangleCtx: CanvasRenderingContext2D;
-    tempBuffer: Uint8Array;
+    previewCtx: CanvasRenderingContext2D;
     workers: Worker[] = [];
     completedWorkers: number = 0;
     allMutations: any[] = [];
 
     constructor(public sourceImageData: ImageData, public Dna: Dna) {
-        //this.tempBuffer = new Uint8Array(globalWidth * globalHeight * 4);
-        //var canvas = document.createElement('canvas');
-        //canvas.width = globalWidth;
-        //canvas.height = globalHeight;
-        //canvas.style.width = '200px';
-        //canvas.style.height = '200px';
-        //canvas.style.imageRendering = 'pixelated';
-        //this.pixelCtx = canvas.getContext('2d', { alpha: false });
-        //document.body.appendChild(canvas);
-
         var canvas = document.createElement('canvas');
         canvas.width = globalWidth;
         canvas.height = globalHeight;
-        this.triangleCtx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
+        canvas.style.width = '200px';
+        canvas.style.height = '200px';
+        canvas.style.imageRendering = 'pixelated';
+        this.previewCtx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
 
         Dna.Fitness = GeneMutator.GetFitness(Dna, sourceImageData.data);
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 2; i++)
             this.createThread();
 
         this.startLocalizedDraws();
@@ -56,7 +47,6 @@ class JsRasterizer {
             this.Dna.Genes[i] = gene;
         }
 
-        console.info('Removing random stuff');
         list.sort((a, b) => a.fitness - b.fitness);
         var removed = 0;
         for (var i = 0; i < list.length / 10; i++) {
@@ -66,7 +56,8 @@ class JsRasterizer {
             }
         }
 
-        console.info('Removed ', removed, 'items in ', new Date().getTime() - startTime, 'ms');
+        this.Dna.Fitness = GeneMutator.GetFitness(this.Dna, this.sourceImageData.data);
+        DebugView.SetMessage('Removed genes', new Date().getTime() - startTime, 'ms(' + removed + ' items)');
     }
 
 
@@ -104,35 +95,36 @@ class JsRasterizer {
         //div.style.backgroundColor = 'cornflowerblue';
         //document.body.appendChild(div);
         
-        this.triangleCtx.fillStyle = 'white';
-        this.triangleCtx.fillRect(0, 0, globalWidth, globalHeight);
+        this.previewCtx.fillStyle = 'white';
+        this.previewCtx.fillRect(0, 0, globalWidth, globalHeight);
 
         for (var g = 0; g < this.Dna.Genes.length; g++) {
             var gene = this.Dna.Genes[g];
-            this.triangleCtx.fillStyle = 'rgba(' +
+            this.previewCtx.fillStyle = 'rgba(' +
             Math.floor(gene.Color[0] * 255) + ',' +
             Math.floor(gene.Color[1] * 255) + ',' +
             Math.floor(gene.Color[2] * 255) + ',' +
             gene.Color[3] + ')';
 
-            this.triangleCtx.beginPath();
-            this.triangleCtx.moveTo(gene.Pos[0] * globalWidth, gene.Pos[1] * globalHeight);
-            this.triangleCtx.lineTo(gene.Pos[2] * globalWidth, gene.Pos[3] * globalHeight);
-            this.triangleCtx.lineTo(gene.Pos[4] * globalWidth, gene.Pos[5] * globalHeight);
-            this.triangleCtx.closePath();
-            this.triangleCtx.fill();
+            this.previewCtx.beginPath();
+            this.previewCtx.moveTo(gene.Pos[0] * globalWidth, gene.Pos[1] * globalHeight);
+            this.previewCtx.lineTo(gene.Pos[2] * globalWidth, gene.Pos[3] * globalHeight);
+            this.previewCtx.lineTo(gene.Pos[4] * globalWidth, gene.Pos[5] * globalHeight);
+            this.previewCtx.closePath();
+            this.previewCtx.fill();
         }
     }
 
     startLocalizedDraws() {
-        console.log('Max grid size: ', Math.round(Math.log(this.Dna.Generation + 1) / 4) + 2);
-        var gridSize = Utils.randomFromTo(1, Math.round(Math.log(this.Dna.Generation + 1) / 10) + 2);
+        var maxGridSize = (Math.log(this.Dna.Generation + 1) / 2) + 2;
+        DebugView.SetMessage('Max grid size', maxGridSize, '(' + Math.round(maxGridSize) + ')');
+        var gridSize = Utils.randomFromTo(1, Math.round(maxGridSize));
         var gridSlotWidth = globalWidth / gridSize;
         var gridSlotHeight = globalHeight / gridSize;
         var usedSlots = [];
-        var gridOffsetX = (Math.random() - 0.5) * gridSlotWidth / 4;
-        var gridOffsetY = (Math.random() - 0.5) * gridSlotHeight / 4;
-
+        var gridOffsetX = (Math.random() - 0.5) * gridSlotWidth / 2;
+        var gridOffsetY = (Math.random() - 0.5) * gridSlotHeight / 2;
+        
         for (var i = 0; i < this.workers.length; i++)
         {
             if (usedSlots.length == this.workers.length)
@@ -194,10 +186,14 @@ class JsRasterizer {
     }
 
     onMessage(e: MessageEvent) {
-        var mutations = <IMutatorState[]>e.data.mutations;
         this.completedWorkers++;
+        var mutations = <IMutatorState[]>e.data.mutations;
         this.Dna.Generation += e.data.generations;
         this.Dna.Mutation += mutations.length;
+
+        DebugView.SetMessage('Mutations', mutations.length, '');
+        for (var i = 0; i < e.data.mutators.length; i++)
+            DebugView.SetMessage('Mutator: ' + e.data.mutators[i].name, e.data.mutators[i].effectiveness, '');
 
         for (var i = 0; i < mutations.length; i++) {
             if (mutations[i].oldGene == null)
@@ -205,7 +201,7 @@ class JsRasterizer {
             else
                 this.Dna.Genes[mutations[i].index] = mutations[i].newGene;
         }
-
+        
         if (this.completedWorkers == this.workers.length) {
             this.completedWorkers = 0;
 
@@ -214,6 +210,16 @@ class JsRasterizer {
 
             this.startLocalizedDraws();
             this.drawPreview();
+
+            var fitnessAfter = GeneMutator.GetFitness(this.Dna, this.sourceImageData.data);
+            DebugView.SetMessage('Genes', this.Dna.Genes.length, '');
+            DebugView.SetMessage('Fitness improvement', this.Dna.Fitness - fitnessAfter, '');
+            if (fitnessAfter > this.Dna.Fitness)
+                console.warn('GLOBAL: fitness diff: ' + (this.Dna.Fitness - fitnessAfter));
+            this.Dna.Fitness = fitnessAfter;
+            DebugView.SetMessage('Fitness Squared', Math.round(Math.sqrt(this.Dna.Fitness) / 10), '');
+            DebugView.SetMessage('Generation', this.Dna.Mutation, '');
+            DebugView.SetMessage('Mutations', this.Dna.Generation, '');
             
             //localStorage.setItem(tempName, JSON.stringify(this.Dna));
         }

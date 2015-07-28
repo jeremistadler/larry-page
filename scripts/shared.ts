@@ -1,7 +1,7 @@
 ﻿"use strict";
 
-var globalWidth = 256;
-var globalHeight = 256;
+var globalWidth = 128;
+var globalHeight = 128;
 var baseUrl = '';
 var debug = true;
 var tempName = 'dnaLocalized1';
