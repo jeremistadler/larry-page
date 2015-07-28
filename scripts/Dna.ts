@@ -169,6 +169,8 @@ class GeneMutator {
                 diff += q * q;
                 q = Math.abs(buff1[(y * width + x) * 4 + 2] - buff2[(y * width + x) * 4 + 2]);
                 diff += q * q;
+                q = Math.abs(buff1[(y * width + x) * 4 + 3] - buff2[(y * width + x) * 4 + 3]);
+                diff += q * q;
             }
         }
 
