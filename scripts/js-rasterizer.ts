@@ -33,6 +33,41 @@ class JsRasterizer {
             this.createThread();
     }
 
+    removeWorst() {
+        var list = [];
+        var startTime = new Date().getTime();
+        var originalFitness = GeneMutator.GetFitness(this.Dna, this.sourceImageData.data);
+
+        for (var i = 0; i < this.Dna.Genes.length; i++) {
+            var gene = this.Dna.Genes[i];
+            this.Dna.Genes[i] = new Gene();
+            this.Dna.Genes[i].Color = [0, 0, 0, 0];
+            this.Dna.Genes[i].Pos = Utils.CreateNumberArray(6);
+
+            var fitness = GeneMutator.GetFitness(this.Dna, this.sourceImageData.data);
+            list.push({
+                fitness: fitness,
+                index: i,
+                fitnessDiff: fitness - originalFitness
+            });
+
+            this.Dna.Genes[i] = gene;
+        }
+
+        console.info('Removing random stuff');
+        list.sort((a, b) => a.fitness - b.fitness);
+        var removed = 0;
+        for (var i = 0; i < list.length / 10; i++) {
+            if (list[i].fitnessDiff < 500) {
+                removed++;
+                this.Dna.Genes.splice(list[i].index, 1);
+            }
+        }
+
+        console.info('Removed ', removed, 'items in ', new Date().getTime() - startTime, 'ms');
+    }
+
+
     drawPreview() {
         //for (var i = 0; i < this.tempBuffer.length; i++) {
         //    this.tempBuffer[i] = 255;
@@ -123,13 +158,17 @@ class JsRasterizer {
         }
 
         if (this.completedWorkers == this.workers.length) {
+
+            if (Math.random() > 0.99)
+                this.removeWorst();
+
             for (var q = 0; q < this.workers.length; q++)
                 this.workers[q].postMessage(this.Dna);
 
             this.completedWorkers = 0;
             this.drawPreview();
 
-            localStorage.setItem('dna18', JSON.stringify(this.Dna));
+            localStorage.setItem('dna181', JSON.stringify(this.Dna));
         }
     }
 

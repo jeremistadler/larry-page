@@ -24,9 +24,9 @@ var createDna = function(numberOfGenes: number, image: string) {
 var loadDna = function (onComplete: (dna: Dna) => void) {
     if (debug) {
         window.setTimeout(function () {
-            var dna = localStorage.getItem('dna18');
+            var dna = localStorage.getItem('dna181');
             if (!dna)
-                onComplete(createDna(3, 'bubbles.jpg'));
+                onComplete(createDna(10, 'wolf.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });

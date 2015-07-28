@@ -10,7 +10,7 @@ class JsRasterizerWorker {
     draw(dna: Dna) {
         var startTime = new Date().getTime();
 
-        var iterations = 10;
+        var iterations = 40;
         var fitness = dna.Fitness;
         var mutator = GeneMutator.GetMutator();
 
