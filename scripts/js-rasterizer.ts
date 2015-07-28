@@ -7,6 +7,7 @@ class JsRasterizer {
     workers: Worker[] = [];
     completedWorkers: number = 0;
     allMutations: any[] = [];
+    startTime: number;
 
     constructor(public sourceImageData: ImageData, public Dna: Dna) {
         var canvas = document.createElement('canvas');
@@ -18,9 +19,9 @@ class JsRasterizer {
         this.previewCtx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
 
-        Dna.Fitness = GeneMutator.GetFitness(Dna, sourceImageData.data);
+        Dna.Fitness = FitnessCalculator.GetFitness(Dna, sourceImageData);
 
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 1; i++)
             this.createThread();
 
         this.startLocalizedDraws();
@@ -29,15 +30,16 @@ class JsRasterizer {
     removeWorst() {
         var list = [];
         var startTime = new Date().getTime();
-        var originalFitness = GeneMutator.GetFitness(this.Dna, this.sourceImageData.data);
+        var originalFitness = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
 
         for (var i = 0; i < this.Dna.Genes.length; i++) {
             var gene = this.Dna.Genes[i];
-            this.Dna.Genes[i] = new Gene();
-            this.Dna.Genes[i].Color = [0, 0, 0, 0];
-            this.Dna.Genes[i].Pos = Utils.CreateNumberArray(6);
+            this.Dna.Genes[i] = {
+                Color: [0, 0, 0, 0],
+                Pos: Utils.CreateNumberArray(6),
+            };
 
-            var fitness = GeneMutator.GetFitness(this.Dna, this.sourceImageData.data);
+            var fitness = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
             list.push({
                 fitness: fitness,
                 index: i,
@@ -49,14 +51,14 @@ class JsRasterizer {
 
         list.sort((a, b) => a.fitness - b.fitness);
         var removed = 0;
-        for (var i = 0; i < list.length / 10; i++) {
-            if (list[i].fitnessDiff < 500) {
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].fitnessDiff <= 30) {
                 removed++;
                 this.Dna.Genes.splice(list[i].index, 1);
             }
         }
 
-        this.Dna.Fitness = GeneMutator.GetFitness(this.Dna, this.sourceImageData.data);
+        this.Dna.Fitness = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
         DebugView.SetMessage('Removed genes', new Date().getTime() - startTime, 'ms(' + removed + ' items)');
     }
 
@@ -124,7 +126,8 @@ class JsRasterizer {
         var usedSlots = [];
         var gridOffsetX = (Math.random() - 0.5) * gridSlotWidth / 2;
         var gridOffsetY = (Math.random() - 0.5) * gridSlotHeight / 2;
-        
+        this.startTime = new Date().getTime();
+
         for (var i = 0; i < this.workers.length; i++)
         {
             if (usedSlots.length == this.workers.length)
@@ -201,17 +204,22 @@ class JsRasterizer {
             else
                 this.Dna.Genes[mutations[i].index] = mutations[i].newGene;
         }
+
+        if (this.completedWorkers == 1)
+            DebugView.SetMessage('Duration - First worker', (new Date().getTime() - this.startTime), 'ms');
         
         if (this.completedWorkers == this.workers.length) {
             this.completedWorkers = 0;
 
-            if (Math.random() > 0.99)
-                this.removeWorst();
+            DebugView.SetMessage('Duration - Last worker', (new Date().getTime() - this.startTime), 'ms');
+
+            //if (Math.random() > 0.99)
+            //    this.removeWorst();
 
             this.startLocalizedDraws();
             this.drawPreview();
 
-            var fitnessAfter = GeneMutator.GetFitness(this.Dna, this.sourceImageData.data);
+            var fitnessAfter = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
             DebugView.SetMessage('Genes', this.Dna.Genes.length, '');
             DebugView.SetMessage('Fitness improvement', this.Dna.Fitness - fitnessAfter, '');
             if (fitnessAfter > this.Dna.Fitness)
@@ -229,7 +237,7 @@ class JsRasterizer {
         var worker = new Worker('build-worker/worker.js');
         this.workers.push(worker);
         worker.onmessage = f => this.onMessage(f);
-        worker.postMessage(this.sourceImageData.data);
+        worker.postMessage(this.sourceImageData);
     }
 
     Save() {

@@ -34,7 +34,7 @@ interface IDnaRenderContext {
     dna: Dna;
     mutations: IMutatorState[];
     geneStates: IGeneRectangleState[];
-    source: number[];
+    source: ImageData;
     partialFitness: number;
 }
 
@@ -52,8 +52,8 @@ interface IMutatorState {
 interface IGeneMutator {
     name: string;
     effectiveness: number;
-    func: (dna: Dna, rect: IRectangle) => IMutatorState;
-    undo: (dna: Dna, state: IMutatorState) => void;
+    func: (ctx: IDnaRenderContext) => IMutatorState;
+    undo: (ctx: IDnaRenderContext, state: IMutatorState) => void;
 }
 
 class GeneHelper {
@@ -78,61 +78,31 @@ class GeneHelper {
         return {
             IsContained: isContained,
             IsIntersecting: isContained || (
-                ((minX <= rect.x && maxX >= rect.x) || (minX <= rect.x2 && maxX >= rect.x2)) &&
-                ((minY <= rect.y && maxY >= rect.y) || (minY <= rect.y2 && maxY >= rect.y2)) &&
+                (((minX <= rect.x && maxX >= rect.x) || (minX <= rect.x2 && maxX >= rect.x2)) &&
+                ((minY <= rect.y && maxY >= rect.y) || (minY <= rect.y2 && maxY >= rect.y2))) ||
                 ((minX <= rect.x && maxX >= rect.x2) && (minY <= rect.y && maxY >= rect.y2)))
         }
     }
 }
 
-class GeneMutator {
-    static StartingEffectiveness = 1000000;
-    static EffectivenessChangeRate = 0.03;
-    static MinimumEffectiveness = 0.00001;
+class FitnessCalculator{
+    static Buffers: Uint8Array[] = [];
 
-    static Buffer: Uint8Array;
     static posBuffer: number[] = new Array(6);
     static colorBuffer: number[] = new Array(6);
 
-    static MutateDna(ctx: IDnaRenderContext) {
-        var mutatorState = ctx.mutator.func(ctx.dna, ctx.rect);
-        if (mutatorState == null)
-            return;
-
-        for (var i = 0; i < mutatorState.newGene.Pos.length; i += 2)
-            if (mutatorState.newGene.Pos[i] < ctx.rect.x || mutatorState.newGene.Pos[i] > ctx.rect.x2) {
-                console.warn('Mutator ' + ctx.mutator.name + ' returned out of bounds x triangle');
-                ctx.mutator.undo(ctx.dna, mutatorState); return null;
-            }
-
-        for (var i = 1; i < mutatorState.newGene.Pos.length; i += 2)
-            if (mutatorState.newGene.Pos[i] < ctx.rect.y || mutatorState.newGene.Pos[i] > ctx.rect.y2) {
-                console.warn('Mutator ' + ctx.mutator.name + ' returned out of bounds y triangle');
-                ctx.mutator.undo(ctx.dna, mutatorState); return null;
-            }
-
-        var fitness = this.GetFitness(ctx.dna, ctx.source);
-
-        if (fitness < ctx.dna.Fitness) {
-            ctx.dna.Fitness = fitness;
-            ctx.dna.Mutation++;
-            ctx.mutations.push(mutatorState);
-        }
-        else {
-            ctx.mutator.undo(ctx.dna, mutatorState);
-        }
-
-        dna.Generation++;
-        return mutatorState;
+    static GetBuffer(width: number, height: number) {
+        var buffer = this.Buffers[width + ':' + height];
+        if (buffer) return buffer;
+        buffer = new Uint8ClampedArray(width * height * 4);
+        this.Buffers[width + ':' + height] = buffer;
+        return buffer;
     }
 
-
-    static GetFitness(dna: Dna, source: number[]) {
-        if (!this.Buffer)
-            this.Buffer = new Uint8ClampedArray(globalWidth * globalHeight * 4);
-
-        for (var i = 0; i < this.Buffer.length; i++)
-            this.Buffer[i] = 255;
+    static GetFitness(dna: Dna, image: ImageData) {
+        var buffer = this.GetBuffer(image.width, image.height);
+        for (var i = 0; i < buffer.length; i++)
+            buffer[i] = 255;
 
         for (var i = 0; i < dna.Genes.length; i++) {
             var gene = dna.Genes[i];
@@ -142,12 +112,36 @@ class GeneMutator {
             this.colorBuffer[3] = gene.Color[3];
 
             for (var c = 0; c < gene.Pos.length; c++)
-                this.posBuffer[c] = Math.floor(gene.Pos[c] * globalHeight);
+                this.posBuffer[c] = gene.Pos[c] * globalHeight;
 
-            Raster.drawPolygon(this.Buffer, globalWidth, globalHeight, this.posBuffer, this.colorBuffer);
+            Raster.drawPolygon(buffer, globalWidth, globalHeight, this.posBuffer, this.colorBuffer);
         }
 
-        return this.calculateFitness(source, this.Buffer);
+        return this.calculateFitness(image.data, buffer);
+    }
+
+    static GetConstrainedFitness(dna: Dna, image: ImageData, rect: IRectangle, geneStates: IGeneRectangleState[]) {
+        var buffer = this.GetBuffer(image.width, image.height);
+        for (var i = 0; i < buffer.length; i++)
+            buffer[i] = 255;
+
+        for (var i = 0; i < dna.Genes.length; i++) {
+            if (!geneStates[i].IsIntersecting)
+                continue;
+
+            var gene = dna.Genes[i];
+
+            for (var c = 0; c < 3; c++)
+                this.colorBuffer[c] = Math.floor(gene.Color[c] * 255);
+            this.colorBuffer[3] = gene.Color[3];
+
+            for (var c = 0; c < gene.Pos.length; c++)
+                this.posBuffer[c] = gene.Pos[c] * globalHeight;
+
+            Raster.drawPolygon(buffer, globalWidth, globalHeight, this.posBuffer, this.colorBuffer);
+        }
+
+        return this.calculateConstrainedFitness(image.data, buffer, rect, image.width, image.height);
     }
 
     static calculateConstrainedFitness(buff1: number[], buff2: Int8Array, rect: IRectangle, width: number, height: number) {
@@ -185,20 +179,60 @@ class GeneMutator {
         }
         return diff;
     }
+}
 
-    public static DefaultMutateGene(dna: Dna) {
-        if (dna.Genes.length == 0)
+class GeneMutator {
+    static StartingEffectiveness = 1000000;
+    static EffectivenessChangeRate = 0.03;
+    static MinimumEffectiveness = 0.00001;
+
+    static MutateDna(ctx: IDnaRenderContext) {
+        var mutatorState = ctx.mutator.func(ctx);
+        if (mutatorState == null)
+            return;
+
+        // REMOVE WHEN COMPLETE
+        // Its just fail safe checks
+        var geneState = GeneHelper.CalculateState(mutatorState.newGene, ctx.rect);
+        if (geneState.IsContained == false) {
+            console.warn('Mutator ' + ctx.mutator.name + ' returned out of bounds x triangle');
+            ctx.mutator.undo(ctx, mutatorState);
+            return;
+        }
+        if (geneState.IsIntersecting == false) {
+            console.warn('IsIntersection gene calculator is broken');
+            geneState.IsIntersecting = true;
+        }
+        // END OF REMOVE
+
+        // this is to cover up for new genes
+        ctx.geneStates[mutatorState.index] = geneState;
+
+        var partialFitness = FitnessCalculator.GetConstrainedFitness(ctx.dna, ctx.source, ctx.rect, ctx.geneStates);
+
+        if (partialFitness < ctx.partialFitness) {
+            ctx.partialFitness = partialFitness;
+            ctx.mutations.push(mutatorState);
+            ctx.dna.Mutation++;
+        }
+        else
+            ctx.mutator.undo(ctx, mutatorState);
+
+        ctx.dna.Generation++;
+    }
+
+    public static DefaultMutateGene(ctx: IDnaRenderContext) {
+        if (ctx.dna.Genes.length == 0)
             return null;
 
         var oldGene: Gene = null;
 
         for (var i = 0; i < 100; i++) {
-            var index = Utils.randomIndex(dna.Genes);
-            oldGene = dna.Genes[index];
-            if (oldGene.Contained)
+            var index = Utils.randomIndex(ctx.geneStates);
+            if (ctx.geneStates[index].IsContained) {
+                oldGene = ctx.dna.Genes[index];
                 break;
-            else
-                oldGene = null;
+            }
         }
 
         if (oldGene == null)
@@ -208,7 +242,7 @@ class GeneMutator {
             Pos: null,
             Color: null
         };
-        dna.Genes[index] = gene;
+        ctx.dna.Genes[index] = gene;
         return { index: index, oldGene: oldGene, newGene: gene };
     }
 
@@ -216,8 +250,8 @@ class GeneMutator {
         {
             name: 'ColorOnly',
             effectiveness: 10000000,
-            func: function (dna: Dna, rect: IRectangle) {
-                var state = GeneMutator.DefaultMutateGene(dna);
+            func: function (ctx: IDnaRenderContext) {
+                var state = GeneMutator.DefaultMutateGene(ctx);
                 if (state == null) return null;
 
                 state.newGene.Color = state.oldGene.Color.slice();
@@ -227,30 +261,30 @@ class GeneMutator {
                 state.newGene.Color[indexToChange] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + state.newGene.Color[indexToChange]);
                 return state;
             },
-            undo: (dna, state) => dna.Genes[state.index] = state.oldGene
+            undo: (ctx, state) => ctx.dna.Genes[state.index] = state.oldGene
         },
         {
             name: 'MoveGene',
             effectiveness: 10000000,
-            func: function (dna: Dna, rect: IRectangle) {
-                var state = GeneMutator.DefaultMutateGene(dna);
+            func: function (ctx: IDnaRenderContext) {
+                var state = GeneMutator.DefaultMutateGene(ctx);
                 if (state == null) return null;
 
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = new Array(6);
                 for (var i = 0; i < state.newGene.Pos.length; i += 2)
-                    state.newGene.Pos[i] = Math.random() * rect.width + rect.x;
+                    state.newGene.Pos[i] = Math.random() * ctx.rect.width + ctx.rect.x;
                 for (var i = 1; i < state.newGene.Pos.length; i += 2)
-                    state.newGene.Pos[i] = Math.random() * rect.height + rect.y;
+                    state.newGene.Pos[i] = Math.random() * ctx.rect.height + ctx.rect.y;
                 return state;
             },
-            undo: (dna, state) => dna.Genes[state.index] = state.oldGene
+            undo: (ctx, state) => ctx.dna.Genes[state.index] = state.oldGene
         },
         {
             name: 'MoveGenePoint',
             effectiveness: 10000000,
-            func: function (dna: Dna, rect: IRectangle) {
-                var state = GeneMutator.DefaultMutateGene(dna);
+            func: function (ctx: IDnaRenderContext) {
+                var state = GeneMutator.DefaultMutateGene(ctx);
                 if (state == null) return null;
 
                 state.newGene.Color = state.oldGene.Color.slice();
@@ -258,71 +292,71 @@ class GeneMutator {
 
                 var indexToMove = Utils.randomIndex(state.newGene.Pos);
                 if (indexToMove % 2 == 0)
-                    state.newGene.Pos[indexToMove] = Utils.Clamp(state.newGene.Pos[indexToMove] + (Math.random() - 0.5) * 0.1 * rect.width, rect.x, rect.x2);
+                    state.newGene.Pos[indexToMove] = Utils.Clamp(state.newGene.Pos[indexToMove] + (Math.random() - 0.5) * 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
                 else
-                    state.newGene.Pos[indexToMove] = Utils.Clamp(state.newGene.Pos[indexToMove] + (Math.random() - 0.5) * 0.1 * rect.height, rect.y, rect.y2);
+                    state.newGene.Pos[indexToMove] = Utils.Clamp(state.newGene.Pos[indexToMove] + (Math.random() - 0.5) * 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
                 return state;
             },
-            undo: (dna, state) => dna.Genes[state.index] = state.oldGene
+            undo: (ctx, state) => ctx.dna.Genes[state.index] = state.oldGene
         },
         {
             name: 'All Random',
             effectiveness: 10000000,
-            func: function (dna: Dna, rect: IRectangle) {
-                var state = GeneMutator.DefaultMutateGene(dna);
+            func: function (ctx: IDnaRenderContext) {
+                var state = GeneMutator.DefaultMutateGene(ctx);
                 if (state == null) return null;
 
-                state.newGene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)];
+                state.newGene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)];
                 state.newGene.Pos = new Array(6);
 
                 for (var i = 0; i < state.newGene.Pos.length; i += 2)
-                    state.newGene.Pos[i] = Math.random() * rect.width + rect.x;
+                    state.newGene.Pos[i] = Math.random() * ctx.rect.width + ctx.rect.x;
 
                 for (var i = 1; i < state.newGene.Pos.length; i += 2)
-                    state.newGene.Pos[i] = Math.random() * rect.height + rect.y;
+                    state.newGene.Pos[i] = Math.random() * ctx.rect.height + ctx.rect.y;
 
                 return state;
             },
-            undo: (dna, state) => dna.Genes[state.index] = state.oldGene
+            undo: (ctx, state) => ctx.dna.Genes[state.index] = state.oldGene
         },
         {
             name: 'Add Small Triangle',
-            effectiveness: 2000,
-            func: function (dna: Dna, rect: IRectangle) {
+            effectiveness: 0,
+            func: function (ctx: IDnaRenderContext) {
                 var gene = {
-                    Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)],
-                    Pos: [Math.random() * rect.width + rect.x, Math.random() * rect.height + rect.y, 0, 0, 0, 0]
+                    Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)],
+                    Pos: [Math.random() * ctx.rect.width + ctx.rect.x, Math.random() * ctx.rect.height + ctx.rect.y, 0, 0, 0, 0]
                 };
-                gene.Pos[2] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * rect.width - 0.1 * rect.width, rect.x, rect.x2);
-                gene.Pos[3] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * rect.height - 0.1 * rect.height, rect.y, rect.y2);
-                gene.Pos[4] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * rect.width - 0.1 * rect.width, rect.x, rect.x2);
-                gene.Pos[5] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * rect.height - 0.1 * rect.height, rect.y, rect.y2);
+                gene.Pos[2] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * ctx.rect.width - 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
+                gene.Pos[3] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * ctx.rect.height - 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
+                gene.Pos[4] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * ctx.rect.width - 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
+                gene.Pos[5] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * ctx.rect.height - 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
 
-                dna.Genes.push(gene);
-                return { index: dna.Genes.length - 1, oldGene: null, newGene: gene };
+                ctx.dna.Genes.push(gene);
+                return { index: ctx.dna.Genes.length - 1, oldGene: null, newGene: gene };
             },
-            undo: (dna, state) => dna.Genes.splice(state.index, 1)
+            undo: (ctx, state) => ctx.dna.Genes.splice(state.index, 1)
         },
         {
             name: 'Add Big Triangle',
-            effectiveness: 1000000,
-            func: function (dna: Dna, rect: IRectangle) {
+            effectiveness: 0,
+            func: function (ctx: IDnaRenderContext) {
                 var gene = {
-                    Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)],
+                    Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)],
                     Pos: new Array(6)
                 }
 
                 for (var i = 0; i < gene.Pos.length; i += 2)
-                    gene.Pos[i] = Math.random() * rect.width + rect.x;
+                    gene.Pos[i] = Math.random() * ctx.rect.width + ctx.rect.x;
 
                 for (var i = 1; i < gene.Pos.length; i += 2)
-                    gene.Pos[i] = Math.random() * rect.height + rect.y;
+                    gene.Pos[i] = Math.random() * ctx.rect.height + ctx.rect.y;
 
 
-                dna.Genes.push(gene);
-                return { index: dna.Genes.length - 1, oldGene: null, newGene: gene };
+                ctx.dna.Genes.push(gene);
+                return { index: ctx.dna.Genes.length - 1, oldGene: null, newGene: gene };
             },
-            undo: (dna, state) => dna.Genes.splice(state.index, 1)
+            undo: (ctx, state) => ctx.dna.Genes.splice(state.index, 1)
         }
     ];
 

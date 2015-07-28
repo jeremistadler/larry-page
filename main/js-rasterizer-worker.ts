@@ -1,33 +1,40 @@
 ﻿
 
 class JsRasterizerWorker {
-    tempBuffer: Uint8Array;
-
-    constructor(public sourceImageData: number[]) {
-        this.tempBuffer = new Uint8Array(globalWidth * globalHeight * 4);
-    }
+    constructor(public sourceImageData: ImageData) { }
     
     go(dna: Dna, rect: IRectangle) {
         var startTime = new Date().getTime();
 
-        var iterations = 100;
+        var iterations = 200;
         var mutator = GeneMutator.GetMutator();
-        var mutations: IMutatorState[] = [];
+        var geneStates = dna.Genes.map(f => GeneHelper.CalculateState(f, rect));
+        var ctx: IDnaRenderContext = {
+            dna: dna,
+            rect: rect,
+            mutations: [],
+            geneStates: geneStates,
+            mutator: mutator,
+            source: this.sourceImageData,
+            partialFitness: FitnessCalculator.GetConstrainedFitness(dna, this.sourceImageData, rect, geneStates)
+        };
 
-        // TODO Create FitnessCalculator with rectangle and only draw intersecting triangles,
-        // Test triangle instersection and refactor so the genes gets clean of rectange state
-
-        dna.Genes.forEach(f => GeneHelper.CalculateIntersections(f, rect));
-
-        dna.Fitness = GeneMutator.GetFitness(dna, this.sourceImageData);
-        var fitness = dna.Fitness;
+        var originalFullFitness = dna.Fitness;
+        var originalPartialFitness = ctx.partialFitness;
 
         for (var i = 0; i < iterations; i++)
-            GeneMutator.MutateDna(mutator, dna, this.sourceImageData, rect, mutations);
+            GeneMutator.MutateDna(ctx);
 
-        var fitnessDiff = (fitness - dna.Fitness) / iterations;
-        if (dna.Genes.length > 0)
-            GeneMutator.UpdateEffectiveness(fitnessDiff, mutator);
+        var fitnessDiff = (originalPartialFitness - ctx.partialFitness) / iterations;
+        GeneMutator.UpdateEffectiveness(fitnessDiff, mutator);
+
+        dna.Fitness = FitnessCalculator.GetFitness(dna, this.sourceImageData);
+
+        if (originalPartialFitness < ctx.partialFitness)
+            debugger;
+
+        if (originalFullFitness < dna.Fitness)
+            debugger;
 
         //var sum = GeneMutator.GeneMutators.map(f => f.effectiveness).reduce((a, b) => a + b);
         //console.log('Mutators: ', GeneMutator.GeneMutators.map(f => f.name + ': ' + Math.round(f.effectiveness / sum * 1000)).join('%, ') + '%');
@@ -37,7 +44,7 @@ class JsRasterizerWorker {
             return { effectiveness: f.effectiveness, name: f.name }
         });
         mut.sort((a, b) => a.name.localeCompare(b.name));
-        self.postMessage({ generations: iterations, mutators: mut, mutations: mutations }, null);
+        self.postMessage({ generations: iterations, mutators: mut, mutations: ctx.mutations }, null);
     }
 }
 
