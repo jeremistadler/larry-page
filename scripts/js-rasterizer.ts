@@ -29,8 +29,10 @@ class JsRasterizer {
 
         Dna.Fitness = GeneMutator.GetFitness(Dna, sourceImageData.data);
 
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 4; i++)
             this.createThread();
+
+        this.startLocalizedDraws();
     }
 
     removeWorst() {
@@ -122,11 +124,47 @@ class JsRasterizer {
         }
     }
 
-    onMessage(e: MessageEvent) {
-        var dna = <Dna>e.data.dna;
-        this.completedWorkers++;
+    startLocalizedDraws() {
+        console.log('Max grid size: ', Math.round(Math.log(this.Dna.Generation + 1) / 4) + 2);
+        var gridSize = Utils.randomFromTo(1, Math.round(Math.log(this.Dna.Generation + 1) / 10) + 2);
+        var gridSlotWidth = globalWidth / gridSize;
+        var gridSlotHeight = globalHeight / gridSize;
+        var usedSlots = [];
+        var gridOffsetX = (Math.random() - 0.5) * gridSlotWidth / 4;
+        var gridOffsetY = (Math.random() - 0.5) * gridSlotHeight / 4;
 
-        //this.allMutations.push(e.data.mutations);
+        for (var i = 0; i < this.workers.length; i++)
+        {
+            if (usedSlots.length == this.workers.length)
+                return;
+
+            var x = 0;
+            var y = 0;
+
+            while (true) {
+                x = Utils.randomFromTo(0, gridSize);
+                y = Utils.randomFromTo(0, gridSize);
+                var key = x + ':' + y;
+                if (usedSlots.indexOf(key) == -1)
+                    break;
+            }
+
+            this.workers[i].postMessage({
+                dna: this.Dna,
+                rect: {
+                    x: (x * gridSlotWidth + gridOffsetX) / globalWidth,
+                    y: (y * gridSlotHeight + gridOffsetY) / globalHeight,
+                    x2: (x * gridSlotWidth + gridSlotWidth + gridOffsetX) / globalWidth,
+                    y2: (y * gridSlotHeight + gridSlotHeight + gridOffsetY) / globalHeight,
+                    width: gridSlotHeight / globalHeight,
+                    height: gridSlotHeight/ globalHeight,
+                }
+            });
+        }
+    }
+
+    saveMutators(mutators) {
+        //this.allMutations.push(e.data.mutators);
         //if (this.allMutations.length % 500 == 0 && this.allMutations.length > 0) {
         //    var csv = '';
 
@@ -153,22 +191,31 @@ class JsRasterizer {
         //    window.open(csv, 'Mutations num ' + this.Dna.Generation + '.csv');
         //}
 
-        if (dna.Fitness < this.Dna.Fitness) {
-            this.Dna = dna;
+    }
+
+    onMessage(e: MessageEvent) {
+        var mutations = <IMutatorState[]>e.data.mutations;
+        this.completedWorkers++;
+        this.Dna.Generation += e.data.generations;
+        this.Dna.Mutation += mutations.length;
+
+        for (var i = 0; i < mutations.length; i++) {
+            if (mutations[i].oldGene == null)
+                this.Dna.Genes.push(mutations[i].newGene);
+            else
+                this.Dna.Genes[mutations[i].index] = mutations[i].newGene;
         }
 
         if (this.completedWorkers == this.workers.length) {
+            this.completedWorkers = 0;
 
             if (Math.random() > 0.99)
                 this.removeWorst();
 
-            for (var q = 0; q < this.workers.length; q++)
-                this.workers[q].postMessage(this.Dna);
-
-            this.completedWorkers = 0;
+            this.startLocalizedDraws();
             this.drawPreview();
-
-            localStorage.setItem('dna181', JSON.stringify(this.Dna));
+            
+            //localStorage.setItem(tempName, JSON.stringify(this.Dna));
         }
     }
 
@@ -176,9 +223,7 @@ class JsRasterizer {
         var worker = new Worker('build-worker/worker.js');
         this.workers.push(worker);
         worker.onmessage = f => this.onMessage(f);
-
         worker.postMessage(this.sourceImageData.data);
-        worker.postMessage(this.Dna);
     }
 
     Save() {
