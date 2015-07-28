@@ -53,12 +53,21 @@ var Dna = (function () {
 var GeneMutator = (function () {
     function GeneMutator() {
     }
-    GeneMutator.MutateDna = function (mutator, dna, source) {
-        var mutatorState = mutator.func(dna);
+    GeneMutator.MutateDna = function (mutator, dna, source, rect, mutations) {
+        var mutatorState = mutator.func(dna, rect);
+        if (mutatorState == null)
+            return;
+        for (var i = 0; i < mutatorState.newGene.Pos.length; i += 2)
+            if (mutatorState.newGene.Pos[i] < rect.x || mutatorState.newGene.Pos[i] > rect.x2)
+                return mutator.undo(dna, mutatorState);
+        for (var i = 1; i < mutatorState.newGene.Pos.length; i += 2)
+            if (mutatorState.newGene.Pos[i] < rect.y || mutatorState.newGene.Pos[i] > rect.y2)
+                return mutator.undo(dna, mutatorState);
         var fitness = this.GetFitness(dna, source);
         if (fitness < dna.Fitness) {
             dna.Fitness = fitness;
             dna.Mutation++;
+            mutations.push(mutatorState);
         }
         else {
             mutator.undo(dna, mutatorState);
@@ -90,6 +99,8 @@ var GeneMutator = (function () {
         return diff;
     };
     GeneMutator.DefaultMutateGene = function (dna) {
+        if (dna.Genes.length == 0)
+            return null;
         var gene = new Gene();
         var index = Utils.randomIndex(dna.Genes);
         var oldGene = dna.Genes[index];
@@ -126,9 +137,11 @@ var GeneMutator = (function () {
     GeneMutator.GeneMutators = [
         {
             name: 'ColorOnly',
-            effectiveness: 100000,
-            func: function (dna) {
+            effectiveness: 10000000,
+            func: function (dna, rect) {
                 var state = GeneMutator.DefaultMutateGene(dna);
+                if (state == null)
+                    return null;
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = state.oldGene.Pos.slice();
                 var indexToChange = Utils.randomFromTo(0, 4);
@@ -139,39 +152,52 @@ var GeneMutator = (function () {
         },
         {
             name: 'MoveGene',
-            effectiveness: 1000000,
-            func: function (dna) {
+            effectiveness: 10000000,
+            func: function (dna, rect) {
                 var state = GeneMutator.DefaultMutateGene(dna);
+                if (state == null)
+                    return null;
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = new Array(6);
-                for (var i = 0; i < state.newGene.Pos.length; i++)
-                    state.newGene.Pos[i] = Math.random() * 1.2 - 0.1;
+                for (var i = 0; i < state.newGene.Pos.length; i += 2)
+                    state.newGene.Pos[i] = Math.random() * 1.2 * rect.width - 0.1 * rect.width;
+                for (var i = 1; i < state.newGene.Pos.length; i += 2)
+                    state.newGene.Pos[i] = Math.random() * 1.2 * rect.height - 0.1 * rect.height;
                 return state;
             },
             undo: function (dna, state) { return dna.Genes[state.index] = state.oldGene; }
         },
         {
             name: 'MoveGenePart',
-            effectiveness: 100000,
-            func: function (dna) {
+            effectiveness: 10000000,
+            func: function (dna, rect) {
                 var state = GeneMutator.DefaultMutateGene(dna);
+                if (state == null)
+                    return null;
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = state.oldGene.Pos.slice();
                 var indexToMove = Utils.randomIndex(state.newGene.Pos);
-                state.newGene.Pos[indexToMove] += (Math.random() - 0.5) * 0.1;
+                if (indexToMove % 2 == 0)
+                    state.newGene.Pos[indexToMove] += (Math.random() - 0.5) * 0.1 * rect.width;
+                else
+                    state.newGene.Pos[indexToMove] += (Math.random() - 0.5) * 0.1 * rect.height;
                 return state;
             },
             undo: function (dna, state) { return dna.Genes[state.index] = state.oldGene; }
         },
         {
             name: 'All Random',
-            effectiveness: 1000000,
-            func: function (dna) {
+            effectiveness: 10000000,
+            func: function (dna, rect) {
                 var state = GeneMutator.DefaultMutateGene(dna);
+                if (state == null)
+                    return null;
                 state.newGene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)];
                 state.newGene.Pos = new Array(6);
-                for (var i = 0; i < state.newGene.Pos.length; i++)
-                    state.newGene.Pos[i] = Math.random() * 1.2 - 0.1;
+                for (var i = 0; i < state.newGene.Pos.length; i += 2)
+                    state.newGene.Pos[i] = Math.random() * 1.2 * rect.width + rect.x - 0.1 * rect.width;
+                for (var i = 1; i < state.newGene.Pos.length; i += 2)
+                    state.newGene.Pos[i] = Math.random() * 1.2 * rect.height + rect.y - 0.1 * rect.height;
                 return state;
             },
             undo: function (dna, state) { return dna.Genes[state.index] = state.oldGene; }
@@ -179,43 +205,34 @@ var GeneMutator = (function () {
         {
             name: 'Add Small Triangle',
             effectiveness: 2000,
-            func: function (dna) {
+            func: function (dna, rect) {
                 var gene = new Gene();
                 gene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)];
-                gene.Pos = [Math.random(), Math.random(), 0, 0, 0, 0];
-                gene.Pos[2] = gene.Pos[0] + Math.random() * 0.1 - 0.05;
-                gene.Pos[3] = gene.Pos[1] + Math.random() * 0.1 - 0.05;
-                gene.Pos[4] = gene.Pos[0] + Math.random() * 0.1 - 0.05;
-                gene.Pos[5] = gene.Pos[1] + Math.random() * 0.1 - 0.05;
+                gene.Pos = [Math.random() * rect.width + rect.x, Math.random() * rect.height + rect.y, 0, 0, 0, 0];
+                gene.Pos[2] = gene.Pos[0] + Math.random() * 0.2 * rect.width - 0.1 * rect.width;
+                gene.Pos[3] = gene.Pos[1] + Math.random() * 0.2 * rect.height - 0.1 * rect.height;
+                gene.Pos[4] = gene.Pos[0] + Math.random() * 0.2 * rect.width - 0.1 * rect.width;
+                gene.Pos[5] = gene.Pos[1] + Math.random() * 0.2 * rect.height - 0.1 * rect.height;
                 dna.Genes.push(gene);
                 return { index: dna.Genes.length - 1, oldGene: null, newGene: gene };
             },
             undo: function (dna, state) { return dna.Genes.splice(state.index, 1); }
         },
         {
-            name: 'Add Triangle',
-            effectiveness: 2000000,
-            func: function (dna) {
+            name: 'Add Big Triangle',
+            effectiveness: 1000000,
+            func: function (dna, rect) {
                 var gene = new Gene();
                 gene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + dna.Generation * 0.0002)];
                 gene.Pos = new Array(6);
-                for (var i = 0; i < gene.Pos.length; i++)
-                    gene.Pos[i] = Math.random() * 1.2 - 0.1;
+                for (var i = 0; i < gene.Pos.length; i += 2)
+                    gene.Pos[i] = Math.random() * rect.width + rect.x;
+                for (var i = 1; i < gene.Pos.length; i += 2)
+                    gene.Pos[i] = Math.random() * rect.height + rect.y;
                 dna.Genes.push(gene);
                 return { index: dna.Genes.length - 1, oldGene: null, newGene: gene };
             },
             undo: function (dna, state) { return dna.Genes.splice(state.index, 1); }
-        },
-        {
-            name: 'Remove Triangle',
-            effectiveness: 10000,
-            func: function (dna) {
-                var index = Utils.randomIndex(dna.Genes);
-                var oldGene = dna.Genes[index];
-                dna.Genes.splice(index, 1);
-                return { index: index, oldGene: oldGene, newGene: null };
-            },
-            undo: function (dna, state) { return dna.Genes.splice(state.index, 0, state.oldGene); }
         }
     ];
     return GeneMutator;
@@ -333,6 +350,7 @@ var globalWidth = 256;
 var globalHeight = 256;
 var baseUrl = '';
 var debug = true;
+var tempName = 'dna88';
 if (debug) {
     baseUrl = 'http://larry.jeremi.se';
 }
@@ -361,8 +379,9 @@ var JsRasterizer = (function () {
         this.triangleCtx = canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
         Dna.Fitness = GeneMutator.GetFitness(Dna, sourceImageData.data);
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 4; i++)
             this.createThread();
+        this.startLocalizedDraws();
     }
     JsRasterizer.prototype.drawPreview = function () {
         //for (var i = 0; i < this.tempBuffer.length; i++) {
@@ -402,10 +421,41 @@ var JsRasterizer = (function () {
             this.triangleCtx.fill();
         }
     };
-    JsRasterizer.prototype.onMessage = function (e) {
-        var dna = e.data.dna;
-        this.completedWorkers++;
-        //this.allMutations.push(e.data.mutations);
+    JsRasterizer.prototype.startLocalizedDraws = function () {
+        console.log('Max grid size: ', Math.round(Math.log(this.Dna.Generation + 1) / 4) + 2);
+        var gridSize = Utils.randomFromTo(1, Math.round(Math.log(this.Dna.Generation + 1) / 10) + 2);
+        var gridSlotWidth = globalWidth / gridSize;
+        var gridSlotHeight = globalHeight / gridSize;
+        var usedSlots = [];
+        var gridOffsetX = (Math.random() - 0.5) * gridSlotWidth / 4;
+        var gridOffsetY = (Math.random() - 0.5) * gridSlotHeight / 4;
+        for (var i = 0; i < this.workers.length; i++) {
+            if (usedSlots.length == this.workers.length)
+                return;
+            var x = 0;
+            var y = 0;
+            while (true) {
+                x = Utils.randomFromTo(0, gridSize);
+                y = Utils.randomFromTo(0, gridSize);
+                var key = x + ':' + y;
+                if (usedSlots.indexOf(key) == -1)
+                    break;
+            }
+            this.workers[i].postMessage({
+                dna: this.Dna,
+                rect: {
+                    x: (x * gridSlotWidth + gridOffsetX) / globalWidth,
+                    y: (y * gridSlotHeight + gridOffsetY) / globalHeight,
+                    x2: (x * gridSlotWidth + gridSlotWidth + gridOffsetX) / globalWidth,
+                    y2: (y * gridSlotHeight + gridSlotHeight + gridOffsetY) / globalHeight,
+                    width: gridSlotHeight / globalHeight,
+                    height: gridSlotHeight / globalHeight,
+                }
+            });
+        }
+    };
+    JsRasterizer.prototype.saveMutators = function (mutators) {
+        //this.allMutations.push(e.data.mutators);
         //if (this.allMutations.length % 500 == 0 && this.allMutations.length > 0) {
         //    var csv = '';
         //    for (var g = 0; g < this.allMutations[0].length; g++) {
@@ -426,15 +476,22 @@ var JsRasterizer = (function () {
         //    csv = "data:text/csv," + encodeURIComponent(csv);
         //    window.open(csv, 'Mutations num ' + this.Dna.Generation + '.csv');
         //}
-        if (dna.Fitness < this.Dna.Fitness) {
-            this.Dna = dna;
+    };
+    JsRasterizer.prototype.onMessage = function (e) {
+        var mutations = e.data.mutations;
+        this.completedWorkers++;
+        this.Dna.Generation += e.data.generations;
+        this.Dna.Mutation += mutations.length;
+        for (var i = 0; i < mutations.length; i++) {
+            if (mutations[i].oldGene == null)
+                this.Dna.Genes.push(mutations[i].newGene);
+            else
+                this.Dna.Genes[mutations[i].index] = mutations[i].newGene;
         }
         if (this.completedWorkers == this.workers.length) {
-            for (var q = 0; q < this.workers.length; q++)
-                this.workers[q].postMessage(this.Dna);
             this.completedWorkers = 0;
+            this.startLocalizedDraws();
             this.drawPreview();
-            localStorage.setItem('dna18', JSON.stringify(this.Dna));
         }
     };
     JsRasterizer.prototype.createThread = function () {
@@ -443,7 +500,6 @@ var JsRasterizer = (function () {
         this.workers.push(worker);
         worker.onmessage = function (f) { return _this.onMessage(f); };
         worker.postMessage(this.sourceImageData.data);
-        worker.postMessage(this.Dna);
     };
     JsRasterizer.prototype.Save = function () {
         var xhr = new XMLHttpRequest();
@@ -465,31 +521,49 @@ var JsRasterizerWorker = (function () {
         this.sourceImageData = sourceImageData;
         this.tempBuffer = new Uint8Array(globalWidth * globalHeight * 4);
     }
-    JsRasterizerWorker.prototype.draw = function (dna) {
+    JsRasterizerWorker.prototype.go = function (dna, rect) {
         var startTime = new Date().getTime();
-        var iterations = 10;
-        var fitness = dna.Fitness;
+        var iterations = 100;
         var mutator = GeneMutator.GetMutator();
-        for (var i = 0; i < iterations; i++)
-            GeneMutator.MutateDna(mutator, dna, this.sourceImageData);
+        var mutations = [];
+        var orginalGenes = dna.Genes;
+        var allowedGenes = orginalGenes.filter(function (f, index) {
+            for (var i = 0; i < f.Pos.length; i += 2)
+                if (f.Pos[i] < rect.x || f.Pos[i] > rect.x2)
+                    return false;
+            for (var i = 1; i < f.Pos.length; i += 2)
+                if (f.Pos[i] < rect.y || f.Pos[i] > rect.y2)
+                    return false;
+            f.i = index;
+            return true;
+        });
+        dna.Genes = allowedGenes;
+        dna.Fitness = GeneMutator.GetFitness(dna, this.sourceImageData);
+        var fitness = dna.Fitness;
+        for (var i = 0; i < iterations && fitness == dna.Fitness; i++)
+            GeneMutator.MutateDna(mutator, dna, this.sourceImageData, rect, mutations);
         var fitnessDiff = (fitness - dna.Fitness) / iterations;
-        GeneMutator.UpdateEffectiveness(fitnessDiff, mutator);
+        //GeneMutator.UpdateEffectiveness(Math.sign(fitnessDiff), mutator);
+        if (dna.Genes.length > 0)
+            GeneMutator.UpdateEffectiveness(fitnessDiff, mutator);
         var sum = GeneMutator.GeneMutators.map(function (f) { return f.effectiveness; }).reduce(function (a, b) { return a + b; });
         console.log('Mutators: ', GeneMutator.GeneMutators.map(function (f) { return f.name + ': ' + Math.round(f.effectiveness / sum * 1000); }).join('%, ') + '%');
         console.log('Generation time: ', (new Date().getTime() - startTime) / iterations, 'ms', 'fittness', dna.Fitness, 'Mutations: ', dna.Mutation, 'Generations: ', dna.Generation, 'Genes: ', dna.Genes.length);
         var mut = GeneMutator.GeneMutators.map(function (f) {
-            return { eff: f.effectiveness, name: f.name };
+            return { effectiveness: f.effectiveness, name: f.name };
         });
         mut.sort(function (a, b) { return a.name.localeCompare(b.name); });
-        self.postMessage({ dna: dna, mutations: mut }, null);
+        for (var i = 0; i < mutations.length; i++)
+            if (mutations[i].oldGene != null)
+                mutations[i].index = mutations[i].oldGene.i;
+        self.postMessage({ generations: 1, mutators: mut, mutations: mutations }, null);
     };
     return JsRasterizerWorker;
 })();
 var childRasterizer = null;
 self.onmessage = function (e) {
-    var d = e.data;
     if (childRasterizer == null)
-        childRasterizer = new JsRasterizerWorker(d);
+        childRasterizer = new JsRasterizerWorker(e.data);
     else
-        childRasterizer.draw(d);
+        childRasterizer.go(e.data.dna, e.data.rect);
 };
