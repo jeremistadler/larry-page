@@ -33,9 +33,21 @@ gulp.task('scripts', function () {
                 .pipe(gulp.dest('build-worker'));
 });
 
+gulp.task('specs', function() {
+    return gulp.src(['tests/**/*.ts'])
+               .pipe(ts({
+                   target: 'ES6',
+                   noExternalResolve: false
+               }))
+                .js
+                .pipe(gulp.dest('tests'));
+});
+
+
 gulp.task('watch', function() {
     gulp.watch(['./index.template.html', 'scripts/**/*.ts', 'main/**/*.ts', 'references.ts'], { debounceDelay: 200 }, ['scripts']);
     gulp.watch(['./index.html', 'build/**/*.*'], { debounceDelay: 500 }, ['reload']);
+    gulp.watch(['tests/**/*.ts'], { debounceDelay: 500 }, ['specs']);
 });
 
 
@@ -50,4 +62,4 @@ gulp.task('serve', function() {
     });
 });
 
-gulp.task('default', ['scripts', 'serve', 'watch'], function() { });
+gulp.task('default', ['scripts', 'serve', 'watch', 'specs'], function() { });

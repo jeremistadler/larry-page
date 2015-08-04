@@ -221,7 +221,7 @@ class GeneMutator {
         ctx.dna.Generation++;
     }
 
-    public static DefaultMutateGene(ctx: IDnaRenderContext) {
+    public static DefaultMutateGene(ctx: IDnaRenderContext): IMutatorState {
         if (ctx.dna.Genes.length == 0)
             return null;
 

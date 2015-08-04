@@ -174,6 +174,8 @@
     <Content Include="list.html" />
     <None Include="main\js-rasterizer-worker.ts" />
     <None Include="scripts\raster.ts" />
+    <TypeScriptCompile Include="tests\spec.ts" />
+    <Content Include="tests\SpecRunner.html" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -206,6 +208,7 @@
   <ItemGroup>
     <None Include="scripts\shared.ts" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

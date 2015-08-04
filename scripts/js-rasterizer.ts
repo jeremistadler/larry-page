@@ -2,7 +2,6 @@
 "use strict";
 
 class JsRasterizer {
-    pixelCtx: CanvasRenderingContext2D;
     previewCtx: CanvasRenderingContext2D;
     idleWorkers: Worker[] = [];
     activeWorkers: Worker[] = [];
@@ -22,7 +21,7 @@ class JsRasterizer {
 
         Dna.Fitness = FitnessCalculator.GetFitness(Dna, sourceImageData);
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 1; i++)
             this.createThread();
 
         this.startLocalizedDraws();
@@ -65,12 +64,12 @@ class JsRasterizer {
 
 
     drawPreview() {
-        //for (var i = 0; i < this.tempBuffer.length; i++) {
-        //    this.tempBuffer[i] = 255;
-        //}
+        //var buffer = new Uint8ClampedArray(globalWidth * globalHeight * 4);
+        //for (var i = 0; i < buffer.length; i++)
+        //    buffer[i] = 255;
 
         //var posBuffer = new Array(6);
-        //var colorBuffer = new Array(6);
+        //var colorBuffer = new Array(4);
 
         //for (var i = 0; i < this.Dna.Genes.length; i++) {
         //    var gene = this.Dna.Genes[i];
@@ -82,18 +81,18 @@ class JsRasterizer {
         //    for (var c = 0; c < gene.Pos.length; c++)
         //        posBuffer[c] = Math.floor(gene.Pos[c] * globalHeight);
 
-        //    Raster.drawPolygon(this.tempBuffer, globalWidth, posBuffer, colorBuffer);
+        //    Raster.drawPolygon(buffer, globalWidth, globalHeight, posBuffer, colorBuffer);
         //}
 
         //var data = this.pixelCtx.createImageData(globalWidth, globalHeight);
         //for (var i = 0; i < data.data.length; i++)
-        //    data.data[i] = this.tempBuffer[i];
+        //    data.data[i] = buffer[i];
         //this.pixelCtx.putImageData(data, 0, 0);
 
 
         //var div = document.createElement('div');
         //div.style.width = '1px';
-        //div.style.height = (this.Dna.Fitness / 10000) + 'px';
+        //div.style.height = (this.Dna.Fitness / 10000000) + 'px';
         //div.style.display = 'inline-block';
         //div.style.backgroundColor = 'cornflowerblue';
         //document.body.appendChild(div);
@@ -101,7 +100,13 @@ class JsRasterizer {
         this.previewCtx.fillStyle = 'white';
         this.previewCtx.fillRect(0, 0, globalWidth, globalHeight);
 
+
+        var geneStates = this.Dna.Genes.map(f => GeneHelper.CalculateState(f, this.currentRectangles[0]));
+
         for (var g = 0; g < this.Dna.Genes.length; g++) {
+            if (geneStates[g].IsIntersecting)
+                continue;
+
             var gene = this.Dna.Genes[g];
             this.previewCtx.fillStyle = 'rgba(' +
             Math.floor(gene.Color[0] * 255) + ',' +
@@ -242,8 +247,11 @@ class JsRasterizer {
             //if (Math.random() > 0.99)
             //    this.removeWorst();
 
-            this.startLocalizedDraws();
-            this.drawPreview();
+            window.setTimeout(f => {
+                this.startLocalizedDraws();
+                this.drawPreview();
+            }, 3000);
+
 
             var fitnessAfter = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
             DebugView.SetMessage('Genes', this.Dna.Genes.length, '');
