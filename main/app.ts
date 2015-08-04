@@ -30,7 +30,7 @@ var loadDna = function (onComplete: (dna: Dna) => void) {
         window.setTimeout(function () {
             var dna = localStorage.getItem(tempName);
             if (!dna)
-                onComplete(createDna(200, 'wolf.jpg'));
+                onComplete(createDna(200, 'cy0miacv.hrd.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });
@@ -91,10 +91,10 @@ var benchmark = function () {
     Raster.drawPolygon(buffer, 100, 100, [0, 0, 40, 0, 40, 100], [255, 100, 10, 1]);
     //Raster.drawPolygon(buffer, 100, 100, [0, 0, 40, 0, 0, 100], [255, 100, 10, 1]);
 
-    var fitness1 = GeneMutator.calculateFitness(cleanBuffer, buffer);
-    var fitnessP0 = GeneMutator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 1, x: 0.0, y: 0, x2: 1, y2: 1 }, 100, 100);
-    var fitnessP1 = GeneMutator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 0.5, x: 0.0, y: 0, x2: 0.5, y2: 1 }, 100, 100);
-    var fitnessP2 = GeneMutator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 0.5, x: 0.5, y: 0, x2: 1, y2: 1 }, 100, 100);
+    var fitness1 = FitnessCalculator.calculateFitness(cleanBuffer, buffer);
+    var fitnessP0 = FitnessCalculator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 1, x: 0.0, y: 0, x2: 1, y2: 1 }, 100, 100);
+    var fitnessP1 = FitnessCalculator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 0.5, x: 0.0, y: 0, x2: 0.5, y2: 1 }, 100, 100);
+    var fitnessP2 = FitnessCalculator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 0.5, x: 0.5, y: 0, x2: 1, y2: 1 }, 100, 100);
 
     console.log('Fitness   1: ', fitness1)
     console.log('Fitness  P0: ', fitnessP0);

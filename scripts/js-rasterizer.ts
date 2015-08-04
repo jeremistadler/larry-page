@@ -4,8 +4,8 @@
 class JsRasterizer {
     pixelCtx: CanvasRenderingContext2D;
     previewCtx: CanvasRenderingContext2D;
-    workers: Worker[] = [];
-    completedWorkers: number = 0;
+    idleWorkers: Worker[] = [];
+    activeWorkers: Worker[] = [];
     allMutations: any[] = [];
     startTime: number;
     currentRectangles: IRectangle[] = [];
@@ -22,7 +22,7 @@ class JsRasterizer {
 
         Dna.Fitness = FitnessCalculator.GetFitness(Dna, sourceImageData);
 
-        for (var i = 0; i < 1; i++)
+        for (var i = 0; i < 4; i++)
             this.createThread();
 
         this.startLocalizedDraws();
@@ -145,22 +145,23 @@ class JsRasterizer {
         this.startTime = new Date().getTime();
         this.currentRectangles.length = 0;
 
-        for (var i = 0; i < this.workers.length; i++)
+        for (; this.idleWorkers.length > 0;)
         {
-            if (usedSlots.length == this.workers.length)
-                return;
+            //if (usedSlots.length == this.activeWorkers.length)
+            //    return;
 
             var x = 0;
             var y = 0;
 
             while (true) {
-                x = Utils.randomFromTo(0, gridSize);
-                y = Utils.randomFromTo(0, gridSize);
+                x = Utils.randomFromTo(0, gridSize - 1);
+                y = Utils.randomFromTo(0, gridSize - 1);
                 var key = x + ':' + y;
-                if (usedSlots.indexOf(key) == -1)
+                if (usedSlots.indexOf(key) == -1) {
+                    usedSlots.push(key);
                     break;
+                }
             }
-
             var rect = {
                 x: (x * gridSlotWidth + gridOffsetX) / globalWidth,
                 y: (y * gridSlotHeight + gridOffsetY) / globalHeight,
@@ -171,7 +172,11 @@ class JsRasterizer {
             };
 
             this.currentRectangles.push(rect);
-            this.workers[i].postMessage({
+
+            var worker = this.idleWorkers.pop();
+            this.activeWorkers.push(worker);
+
+            worker.postMessage({
                 dna: this.Dna,
                 rect: rect
             });
@@ -209,12 +214,15 @@ class JsRasterizer {
     }
 
     onMessage(e: MessageEvent) {
-        this.completedWorkers++;
+        var worker = <Worker>e.target;
+        this.activeWorkers.splice(this.activeWorkers.indexOf(worker), 1);
+        this.idleWorkers.push(worker);
+
         var mutations = <IMutatorState[]>e.data.mutations;
         this.Dna.Generation += e.data.generations;
         this.Dna.Mutation += mutations.length;
 
-        DebugView.SetMessage('Mutations', mutations.length, '');
+        DebugView.SetMessage('New Mutations', mutations.length, '');
         for (var i = 0; i < e.data.mutators.length; i++)
             DebugView.SetMessage('Mutator: ' + e.data.mutators[i].name, e.data.mutators[i].effectiveness, '');
 
@@ -225,12 +233,10 @@ class JsRasterizer {
                 this.Dna.Genes[mutations[i].index] = mutations[i].newGene;
         }
 
-        if (this.completedWorkers == 1)
+        if (this.idleWorkers.length == 1)
             DebugView.SetMessage('Duration - First worker', (new Date().getTime() - this.startTime), 'ms');
         
-        if (this.completedWorkers == this.workers.length) {
-            this.completedWorkers = 0;
-
+        if (this.activeWorkers.length == 0) {
             DebugView.SetMessage('Duration - Last worker', (new Date().getTime() - this.startTime), 'ms');
 
             //if (Math.random() > 0.99)
@@ -246,8 +252,8 @@ class JsRasterizer {
                 console.warn('GLOBAL: fitness diff: ' + (this.Dna.Fitness - fitnessAfter));
             this.Dna.Fitness = fitnessAfter;
             DebugView.SetMessage('Fitness Squared', Math.round(Math.sqrt(this.Dna.Fitness) / 10), '');
-            DebugView.SetMessage('Generation', this.Dna.Mutation, '');
-            DebugView.SetMessage('Mutations', this.Dna.Generation, '');
+            DebugView.SetMessage('Generation', this.Dna.Generation, '');
+            DebugView.SetMessage('Mutations', this.Dna.Mutation, '');
             
             //localStorage.setItem(tempName, JSON.stringify(this.Dna));
         }
@@ -255,7 +261,7 @@ class JsRasterizer {
 
     createThread() {
         var worker = new Worker('build-worker/worker.js');
-        this.workers.push(worker);
+        this.idleWorkers.push(worker);
         worker.onmessage = f => this.onMessage(f);
         worker.postMessage(this.sourceImageData);
     }
