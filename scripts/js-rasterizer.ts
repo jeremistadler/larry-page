@@ -8,6 +8,7 @@ class JsRasterizer {
     completedWorkers: number = 0;
     allMutations: any[] = [];
     startTime: number;
+    currentRectangles: IRectangle[] = [];
 
     constructor(public sourceImageData: ImageData, public Dna: Dna) {
         var canvas = document.createElement('canvas');
@@ -115,18 +116,34 @@ class JsRasterizer {
             this.previewCtx.closePath();
             this.previewCtx.fill();
         }
+
+        for (var g = 0; g < this.currentRectangles.length; g++) {
+            this.previewCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+
+            this.previewCtx.beginPath();
+            this.previewCtx.moveTo(this.currentRectangles[g].x * globalWidth, this.currentRectangles[g].y * globalHeight);
+            this.previewCtx.lineTo(this.currentRectangles[g].x2 * globalWidth, this.currentRectangles[g].y * globalHeight);
+            this.previewCtx.lineTo(this.currentRectangles[g].x2 * globalWidth, this.currentRectangles[g].y2 * globalHeight);
+            this.previewCtx.lineTo(this.currentRectangles[g].x * globalWidth, this.currentRectangles[g].y2 * globalHeight);
+            this.previewCtx.closePath();
+            this.previewCtx.fill();
+        }
     }
 
     startLocalizedDraws() {
         var maxGridSize = (Math.log(this.Dna.Generation + 1) / 2) + 2;
         DebugView.SetMessage('Max grid size', maxGridSize, '(' + Math.round(maxGridSize) + ')');
-        var gridSize = Utils.randomFromTo(1, Math.round(maxGridSize));
+        var gridSize = Utils.randomFromTo(3, Math.round(maxGridSize));
+        gridSize = 3;
         var gridSlotWidth = globalWidth / gridSize;
         var gridSlotHeight = globalHeight / gridSize;
         var usedSlots = [];
         var gridOffsetX = (Math.random() - 0.5) * gridSlotWidth / 2;
         var gridOffsetY = (Math.random() - 0.5) * gridSlotHeight / 2;
+        gridOffsetX = 0;
+        gridOffsetY = 0;
         this.startTime = new Date().getTime();
+        this.currentRectangles.length = 0;
 
         for (var i = 0; i < this.workers.length; i++)
         {
@@ -144,16 +161,19 @@ class JsRasterizer {
                     break;
             }
 
+            var rect = {
+                x: (x * gridSlotWidth + gridOffsetX) / globalWidth,
+                y: (y * gridSlotHeight + gridOffsetY) / globalHeight,
+                x2: (x * gridSlotWidth + gridSlotWidth + gridOffsetX) / globalWidth,
+                y2: (y * gridSlotHeight + gridSlotHeight + gridOffsetY) / globalHeight,
+                width: gridSlotHeight / globalHeight,
+                height: gridSlotHeight / globalHeight,
+            };
+
+            this.currentRectangles.push(rect);
             this.workers[i].postMessage({
                 dna: this.Dna,
-                rect: {
-                    x: (x * gridSlotWidth + gridOffsetX) / globalWidth,
-                    y: (y * gridSlotHeight + gridOffsetY) / globalHeight,
-                    x2: (x * gridSlotWidth + gridSlotWidth + gridOffsetX) / globalWidth,
-                    y2: (y * gridSlotHeight + gridSlotHeight + gridOffsetY) / globalHeight,
-                    width: gridSlotHeight / globalHeight,
-                    height: gridSlotHeight/ globalHeight,
-                }
+                rect: rect
             });
         }
     }

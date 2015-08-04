@@ -126,8 +126,8 @@ class FitnessCalculator{
             buffer[i] = 255;
 
         for (var i = 0; i < dna.Genes.length; i++) {
-            if (!geneStates[i].IsIntersecting)
-                continue;
+            //if (!geneStates[i].IsIntersecting)
+            //    continue;
 
             var gene = dna.Genes[i];
 
