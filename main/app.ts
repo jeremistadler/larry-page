@@ -30,7 +30,7 @@ var loadDna = function (onComplete: (dna: Dna) => void) {
         window.setTimeout(function () {
             var dna = localStorage.getItem(tempName);
             if (!dna)
-                onComplete(createDna(200, 'cy0miacv.hrd.jpg'));
+                onComplete(createDna(10, 'cy0miacv.hrd.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });
