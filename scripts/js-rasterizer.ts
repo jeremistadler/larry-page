@@ -8,6 +8,7 @@ class JsRasterizer {
     allMutations: any[] = [];
     startTime: number;
     currentRectangles: IRectangle[] = [];
+    currentIteration = 0;
 
     constructor(public sourceImageData: ImageData, public Dna: Dna) {
         var canvas = document.createElement('canvas');
@@ -21,7 +22,7 @@ class JsRasterizer {
 
         Dna.Fitness = FitnessCalculator.GetFitness(Dna, sourceImageData);
 
-        for (var i = 0; i < 1; i++)
+        for (var i = 0; i < 4; i++)
             this.createThread();
 
         this.startLocalizedDraws();
@@ -32,12 +33,16 @@ class JsRasterizer {
         var startTime = new Date().getTime();
         var originalFitness = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
 
-        for (var i = 0; i < this.Dna.Genes.length; i++) {
+        var emptyGene = {
+            Color: [0, 0, 0, 0],
+            Pos: Utils.CreateNumberArray(6),
+        };
+
+        var step = Math.ceil(Math.max(this.Dna.Genes.length / 300, 1));
+
+        for (var i = 0; i < this.Dna.Genes.length && i < 300; i += step) {
             var gene = this.Dna.Genes[i];
-            this.Dna.Genes[i] = {
-                Color: [0, 0, 0, 0],
-                Pos: Utils.CreateNumberArray(6),
-            };
+            this.Dna.Genes[i] = emptyGene;
 
             var fitness = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
             list.push({
@@ -51,11 +56,10 @@ class JsRasterizer {
 
         list.sort((a, b) => a.fitness - b.fitness);
         var removed = 0;
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].fitnessDiff <= 30) {
-                removed++;
-                this.Dna.Genes.splice(list[i].index, 1);
-            }
+        for (; list.length > 2000 || (list.length > 0 && list[0].fitnessDiff <= 30);) {
+            removed++;
+            this.Dna.Genes.splice(list[0].index, 1);
+            list.splice(0, 1);
         }
 
         this.Dna.Fitness = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
@@ -92,20 +96,17 @@ class JsRasterizer {
 
         //var div = document.createElement('div');
         //div.style.width = '1px';
-        //div.style.height = (this.Dna.Fitness / 10000000) + 'px';
+        //div.style.height = (this.Dna.Fitness / 1000000) + 'px';
         //div.style.display = 'inline-block';
         //div.style.backgroundColor = 'cornflowerblue';
         //document.body.appendChild(div);
         
+
         this.previewCtx.fillStyle = 'white';
         this.previewCtx.fillRect(0, 0, globalWidth, globalHeight);
-
-
         var geneStates = this.Dna.Genes.map(f => GeneHelper.CalculateState(f, this.currentRectangles[0]));
 
         for (var g = 0; g < this.Dna.Genes.length; g++) {
-            if (geneStates[g].IsIntersecting)
-                continue;
 
             var gene = this.Dna.Genes[g];
             this.previewCtx.fillStyle = 'rgba(' +
@@ -136,25 +137,22 @@ class JsRasterizer {
     }
 
     startLocalizedDraws() {
-        var maxGridSize = (Math.log(this.Dna.Generation + 1) / 2) + 2;
+        var maxGridSize = (Math.log(this.Dna.Generation + 1) / 2) + 0;
         DebugView.SetMessage('Max grid size', maxGridSize, '(' + Math.round(maxGridSize) + ')');
-        var gridSize = Utils.randomFromTo(3, Math.round(maxGridSize));
-        gridSize = 2;
+        var gridSize = Utils.randomFromTo(1, Math.round(maxGridSize));
+        //gridSize = 5;
         var gridSlotWidth = globalWidth / gridSize;
         var gridSlotHeight = globalHeight / gridSize;
         var usedSlots = [];
         var gridOffsetX = (Math.random() - 0.5) * gridSlotWidth / 2;
         var gridOffsetY = (Math.random() - 0.5) * gridSlotHeight / 2;
-        gridOffsetX = 0;
-        gridOffsetY = 0;
+        //gridOffsetX = 0;
+        //gridOffsetY = 0;
         this.startTime = new Date().getTime();
         this.currentRectangles.length = 0;
 
-        for (; this.idleWorkers.length > 0;)
+        for (; this.idleWorkers.length > 0 && usedSlots.length < gridSize * gridSize;)
         {
-            //if (usedSlots.length == this.activeWorkers.length)
-            //    return;
-
             var x = 0;
             var y = 0;
 
@@ -241,16 +239,17 @@ class JsRasterizer {
         if (this.idleWorkers.length == 1)
             DebugView.SetMessage('Duration - First worker', (new Date().getTime() - this.startTime), 'ms');
         
-        if (this.activeWorkers.length == 0) {
+        if (this.activeWorkers.length == 0)
+        {
             DebugView.SetMessage('Duration - Last worker', (new Date().getTime() - this.startTime), 'ms');
 
-            //if (Math.random() > 0.99)
-            //    this.removeWorst();
+            this.currentIteration++;
+            if (this.currentIteration % 50 == 0)
+                this.removeWorst();
 
-            window.setTimeout(f => {
-                this.startLocalizedDraws();
-                this.drawPreview();
-            }, 3000);
+            this.startLocalizedDraws();
+            this.drawPreview();
+            DebugView.RenderToDom()
 
 
             var fitnessAfter = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);

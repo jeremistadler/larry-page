@@ -52,6 +52,7 @@ interface DebugMessage {
 
 class DebugView {
     static Messages: DebugMessage[] = [];
+    static elm: HTMLElement;
     
     static SetMessage(name: string, value: number, unit: string) {
         var old = this.Messages[name];
@@ -65,7 +66,13 @@ class DebugView {
         };
     }
 
-    static RenderToDom(elm: HTMLElement) {
+    static RenderToDom() {
+        if (this.elm == null) {
+            this.elm = document.createElement('div');
+            this.elm.style.display = 'inline-block';
+            document.body.appendChild(this.elm);
+        }
+
         var html = '<table style="font-size: 11px;color: #333;font-family:\'Segoe UI\'"><tr><td>Name</td><td>Value</td><td>Old Value</td><td>Diff</td></tr>';
         
         for (var name in this.Messages) {
@@ -77,6 +84,6 @@ class DebugView {
                 '</td><td>' + Math.round((f.value - f.oldValue) * 100) / 100 + ' ' + f.unit + '</td></tr>';
         }
 
-        elm.innerHTML = html + '</table>';
+        this.elm.innerHTML = html + '</table>';
     }
 }

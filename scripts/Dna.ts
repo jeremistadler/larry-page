@@ -77,7 +77,7 @@ class GeneHelper {
 
         return {
             IsContained: isContained,
-            IsIntersecting: (
+            IsIntersecting: isContained || !(
                 minX > rect.x2 ||
                 maxX < rect.x ||
                 minY > rect.y2 ||
@@ -127,8 +127,8 @@ class FitnessCalculator{
             buffer[i] = 255;
 
         for (var i = 0; i < dna.Genes.length; i++) {
-            //if (!geneStates[i].IsIntersecting)
-            //    continue;
+            if (!geneStates[i].IsIntersecting)
+                continue;
 
             var gene = dna.Genes[i];
 
@@ -192,21 +192,7 @@ class GeneMutator {
         if (mutatorState == null)
             return;
 
-        // REMOVE WHEN COMPLETE
-        // Its just fail safe checks
         var geneState = GeneHelper.CalculateState(mutatorState.newGene, ctx.rect);
-        if (geneState.IsContained == false) {
-            console.warn('Mutator ' + ctx.mutator.name + ' returned out of bounds x triangle');
-            ctx.mutator.undo(ctx, mutatorState);
-            return;
-        }
-        if (geneState.IsIntersecting == false) {
-            console.warn('IsIntersection gene calculator is broken');
-            geneState.IsIntersecting = true;
-        }
-        // END OF REMOVE
-
-        // this is to cover up for new genes
         ctx.geneStates[mutatorState.index] = geneState;
 
         var partialFitness = FitnessCalculator.GetConstrainedFitness(ctx.dna, ctx.source, ctx.rect, ctx.geneStates);
@@ -250,8 +236,8 @@ class GeneMutator {
     public static GeneMutators: IGeneMutator[] = [
         {
             name: 'ColorOnly',
-            effectiveness: 10000000,
-            func: function (ctx: IDnaRenderContext) {
+            effectiveness: 1000,
+            func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
                 if (state == null) return null;
 
@@ -265,9 +251,24 @@ class GeneMutator {
             undo: (ctx, state) => ctx.dna.Genes[state.index] = state.oldGene
         },
         {
+            name: 'Opacity',
+            effectiveness: 1000,
+            func: function (ctx: IDnaRenderContext): IMutatorState {
+                var state = GeneMutator.DefaultMutateGene(ctx);
+                if (state == null) return null;
+
+                state.newGene.Color = state.oldGene.Color.slice();
+                state.newGene.Pos = state.oldGene.Pos.slice();
+
+                state.newGene.Color[3] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + state.newGene.Color[3]);
+                return state;
+            },
+            undo: (ctx, state) => ctx.dna.Genes[state.index] = state.oldGene
+        },
+        {
             name: 'MoveGene',
-            effectiveness: 10000000,
-            func: function (ctx: IDnaRenderContext) {
+            effectiveness: 1000,
+            func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
                 if (state == null) return null;
 
@@ -283,8 +284,8 @@ class GeneMutator {
         },
         {
             name: 'MoveGenePoint',
-            effectiveness: 10000000,
-            func: function (ctx: IDnaRenderContext) {
+            effectiveness: 1000,
+            func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
                 if (state == null) return null;
 
@@ -302,8 +303,8 @@ class GeneMutator {
         },
         {
             name: 'All Random',
-            effectiveness: 10000000,
-            func: function (ctx: IDnaRenderContext) {
+            effectiveness: 1000,
+            func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
                 if (state == null) return null;
 
@@ -320,28 +321,31 @@ class GeneMutator {
             },
             undo: (ctx, state) => ctx.dna.Genes[state.index] = state.oldGene
         },
-        {
-            name: 'Add Small Triangle',
-            effectiveness: 0,
-            func: function (ctx: IDnaRenderContext) {
-                var gene = {
-                    Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)],
-                    Pos: [Math.random() * ctx.rect.width + ctx.rect.x, Math.random() * ctx.rect.height + ctx.rect.y, 0, 0, 0, 0]
-                };
-                gene.Pos[2] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * ctx.rect.width - 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
-                gene.Pos[3] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * ctx.rect.height - 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
-                gene.Pos[4] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * ctx.rect.width - 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
-                gene.Pos[5] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * ctx.rect.height - 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
-
-                ctx.dna.Genes.push(gene);
-                return { index: ctx.dna.Genes.length - 1, oldGene: null, newGene: gene };
-            },
-            undo: (ctx, state) => ctx.dna.Genes.splice(state.index, 1)
-        },
+        //{
+        //    name: 'Add Small Triangle',
+        //    effectiveness: 1000,
+        //    func: function (ctx: IDnaRenderContext): IMutatorState {
+        //        var gene = {
+        //            Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)],
+        //            Pos: [Math.random() * ctx.rect.width + ctx.rect.x, Math.random() * ctx.rect.height + ctx.rect.y, 0, 0, 0, 0]
+        //        };
+        //        gene.Pos[2] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * ctx.rect.width - 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
+        //        gene.Pos[3] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * ctx.rect.height - 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
+        //        gene.Pos[4] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * ctx.rect.width - 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
+        //        gene.Pos[5] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * ctx.rect.height - 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
+        //
+        //        ctx.dna.Genes.push(gene);
+        //        return { index: ctx.dna.Genes.length - 1, oldGene: <Gene>null, newGene: gene };
+        //    },
+        //    undo: (ctx, state) => ctx.dna.Genes.splice(state.index, 1)
+        //},
         {
             name: 'Add Big Triangle',
-            effectiveness: 0,
-            func: function (ctx: IDnaRenderContext) {
+            effectiveness: 1000,
+            func: function (ctx: IDnaRenderContext): IMutatorState {
+                if (ctx.geneStates.length > ctx.dna.Generation / 5000 + 20)
+                    return null;
+
                 var gene = {
                     Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)],
                     Pos: new Array(6)

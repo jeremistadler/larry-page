@@ -1,4 +1,6 @@
-﻿
+﻿///<reference path="../references.ts" />
+"use strict";
+
 
 class JsRasterizerWorker {
     constructor(public sourceImageData: ImageData) { }
@@ -6,7 +8,7 @@ class JsRasterizerWorker {
     go(dna: Dna, rect: IRectangle) {
         var startTime = new Date().getTime();
 
-        var iterations = 200;
+        var iterations = 300;
         var mutator = GeneMutator.GetMutator();
         var geneStates = dna.Genes.map(f => GeneHelper.CalculateState(f, rect));
         var ctx: IDnaRenderContext = {

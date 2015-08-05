@@ -30,7 +30,7 @@ var loadDna = function (onComplete: (dna: Dna) => void) {
         window.setTimeout(function () {
             var dna = localStorage.getItem(tempName);
             if (!dna)
-                onComplete(createDna(10, 'cy0miacv.hrd.jpg'));
+                onComplete(createDna(0, 'cy0miacv.hrd.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });
@@ -98,16 +98,5 @@ var renderCanvas = function (buffer, width: number, height: number) {
 }
 
 var loadedAll = function (dna, image) {
-    var elm = null;
-    window.setInterval(f => {
-        if (elm == null) {
-            elm = document.createElement('div');
-            elm.style.display = 'inline-block';
-            document.body.appendChild(elm);
-        }
-
-        DebugView.RenderToDom(elm)
-    }, 2000);
-
     var rasterizer = new JsRasterizer(image, dna);
 }
