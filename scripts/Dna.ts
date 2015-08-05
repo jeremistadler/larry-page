@@ -77,10 +77,11 @@ class GeneHelper {
 
         return {
             IsContained: isContained,
-            IsIntersecting: isContained || (
-                (((minX <= rect.x && maxX >= rect.x) || (minX <= rect.x2 && maxX >= rect.x2)) &&
-                ((minY <= rect.y && maxY >= rect.y) || (minY <= rect.y2 && maxY >= rect.y2))) ||
-                ((minX <= rect.x && maxX >= rect.x2) && (minY <= rect.y && maxY >= rect.y2)))
+            IsIntersecting: (
+                minX > rect.x2 ||
+                maxX < rect.x ||
+                minY > rect.y2 ||
+                maxY < rect.y)
         }
     }
 }
