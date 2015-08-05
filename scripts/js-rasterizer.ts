@@ -139,7 +139,7 @@ class JsRasterizer {
         var maxGridSize = (Math.log(this.Dna.Generation + 1) / 2) + 2;
         DebugView.SetMessage('Max grid size', maxGridSize, '(' + Math.round(maxGridSize) + ')');
         var gridSize = Utils.randomFromTo(3, Math.round(maxGridSize));
-        gridSize = 3;
+        gridSize = 2;
         var gridSlotWidth = globalWidth / gridSize;
         var gridSlotHeight = globalHeight / gridSize;
         var usedSlots = [];

@@ -74,22 +74,6 @@ describe("Gene Helper", function () {
         expect(state.IsIntersecting).toBe(true);
         expect(state.IsContained).toBe(false);
     });
-    //TODO, find a case where it does not work
-    it("should be able to calculate intersecting genes, case 2", function () {
-        var gene = {
-            Pos: [0, 0, 0, 1, 100, 0],
-            Color: []
-        };
-        var rect = {
-            x: 0,
-            y: 0,
-            x2: 1,
-            y2: 1
-        };
-        var state = GeneHelper.CalculateState(gene, rect);
-        expect(state.IsIntersecting).toBe(true);
-        expect(state.IsContained).toBe(false);
-    });
     it("should be able to calculate covering genes as intersecting", function () {
         var gene = {
             Pos: [0, 0, 100, 0, 0, 100],
