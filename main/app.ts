@@ -9,7 +9,9 @@ var createDna = function(numberOfGenes: number, image: string): Dna {
         Organism: {
             Id: 0,
             ImagePath: image,
-            GeneCount: numberOfGenes
+            GeneCount: numberOfGenes,
+            Width: 200,
+            Height: 200
         }
     };
 
@@ -66,7 +68,7 @@ var loadTexture = function (dna: Dna, onComplete: (image: ImageData) => void) {
         document.body.appendChild(canvas);
         canvas.style.width = '200px';
         canvas.style.height = '200px';
-        canvas.style.imageRendering = 'pixelated';
+        //canvas.style.imageRendering = 'pixelated';
         onComplete(data);
     };
     image.onerror = function (e) {

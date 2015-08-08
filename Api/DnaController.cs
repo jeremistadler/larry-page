@@ -80,12 +80,12 @@ namespace server.Api
 
 
         [HttpGet]
-        [Route("api/organisms/top")]
+        [Route("api/organismsWithDna")]
         public IEnumerable<DnaModel> GetTopOrganismDnaList(int limit = 10, int skip = 0)
         {
             limit = Math.Min(limit, 200);
 
-            var organisms = Db.Organisms.OrderBy(f => f.Created).ToArray();
+            var organisms = Db.Organisms.OrderByDescending(f => f.Created).ToArray();
 
             return organisms
                 .Select(f => Db.Dna.Where(d => d.Organism.Id == f.Id).OrderByDescending(d => d.Mutation).FirstOrDefault())
@@ -94,7 +94,7 @@ namespace server.Api
         }
 
         [HttpGet]
-        [Route("api/organisms/lastest")]
+        [Route("api/organisms/latest")]
         public IEnumerable<object> GetLatestOrganisms(int limit = 10, int skip = 0)
         {
             limit = Math.Min(limit, 200);

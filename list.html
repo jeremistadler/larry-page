@@ -10,6 +10,7 @@
         body {
             background: #f8f8f8;
             font-family: 'Roboto', sans-serif;
+            transition: 0.3s;
         }
 
         #imageContainer {
@@ -38,9 +39,8 @@
         }
 
         .drag-active {
-            background: rgb(175, 225, 169);
-            filter: blur(3px);
-            -webkit-filter: blur(3px);
+            filter: saturate(0.2);
+            -webkit-filter: saturate(2) blur(3px);
             transition: 0.3s;
         }
 
@@ -82,12 +82,35 @@
             transition: 0.3s;
         }
 
-        .upload-box{
-
+        #upload-box {
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            width: 300px;
+            margin-left: -150px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: white;
+            visibility: hidden;
+            pointer-events: none;
+            opacity: 0;
+            transition: 1s;
         }
 
-        .upload-box img{
+            #upload-box.visible {
+                opacity: 1;
+                visibility: visible;
+                transition: 0.3s;
+            }
 
+            #upload-box img {
+                width: 100%;
+            }
+
+        .upload-box-header {
+            font-size: 16px;
+            color: #4E4E4E;
+            padding: 10px;
+            background-color: #EAEAEA;
         }
     </style>
 </head>
@@ -96,8 +119,11 @@
     <div id="imageContainer"></div>
     <footer class="footer">Drop images anywhere to give them to larry</footer>
 
-    <div class="upload-box">
-        <img />
+    <div id="upload-box">
+        <div class="upload-box-header">
+            Uploading...
+        </div>
+        <img id="upload-box-img" />
     </div>
 
     <script>
@@ -118,7 +144,7 @@
             homeButton.classList.add('hidden');
 
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', baseUrl + '/api/organisms/top?limit=200', true);
+            xhr.open('GET', baseUrl + '/api/organismsWithDna?limit=200', true);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
             xhr.onload = function(e) {
                 if (this.status != 200)
@@ -202,13 +228,43 @@
             return canvasWrapper;
         }
 
-        var createOrganism = function(image) {
+        var createOrganism = function(imagePath, image) {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', baseUrl + '/api/organism/save', true);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-            xhr.onload = function(e) { };
-            xhr.send(JSON.stringify({ geneCount: 50, imagePath: image }));
+            xhr.onload = function(e) {
+                document.getElementById('upload-box').classList.remove('visible');
+            };
+            xhr.send(JSON.stringify({ imagePath: imagePath, width: image.naturalWidth, height: image.naturalHeight }));
         }
+
+        var uploadAndCreateOrganism = function(formData, image) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', baseUrl + '/api/upload', true);
+            xhr.onload = function(e) {
+                var data = JSON.parse(xhr.response);
+                createOrganism(data[0], image);
+            };
+            xhr.send(formData);
+        }
+
+        var showUploadAndCreateOrganism = function(file) {
+            document.getElementById('upload-box').classList.add('visible');
+
+            var reader = new FileReader();
+            reader.onload = function(e2) {
+                var img = document.getElementById('upload-box-img');
+                img.onload = function() {
+                    var formData = new FormData();
+                    formData.append(file.name, file);
+                    uploadAndCreateOrganism(formData, img);
+                }
+
+                img.src = e2.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
 
         document.body.addEventListener('dragstart', function(e) { e.preventDefault(); document.body.classList.add('drag-active') });
         document.body.addEventListener('dragenter', function(e) { e.preventDefault(); document.body.classList.add('drag-active') });
@@ -222,32 +278,12 @@
             document.body.classList.remove('drag-active');
 
             var files = e.dataTransfer.files;
-            var formData = new FormData();
-
             for (var i = 0, file; file = files[i]; i++) {
                 if (file.type.match(/image.*/)) {
-                    formData.append(file.name, file);
-                    var reader = new FileReader();
-                    reader.onload = function(e2) {
-                        var img = document.createElement('img');
-                        img.src = e2.target.result;
-                        img.style.width = '200px';
-                        img.style.height = '200px';
-                        document.body.appendChild(img);
-                    }
-                    reader.readAsDataURL(file);
+                    showUploadAndCreateOrganism(file);
+                    break;
                 }
             }
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', baseUrl + '/api/upload', true);
-            xhr.onload = function(e) {
-                var data = JSON.parse(xhr.response);
-                for (var i = 0; i < data.length; i++) {
-                    createOrganism(data[i]);
-                }
-            };
-            xhr.send(formData);
         });
     </script>
 </body>
