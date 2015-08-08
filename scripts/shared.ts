@@ -2,10 +2,11 @@
 
 var globalWidth = 128;
 var globalHeight = 128;
-var baseUrl = '';
-var debug = true;
+
+var baseUrl = 'http://larry.jeremi.se';
+//var baseUrl = 'http://localhost:2270';
+
+var imageBaseUrl = baseUrl + '/images';
+var debug = false;
 var tempName = 'dnaLocalized1';
 
-if (debug) {
-    baseUrl = 'http://larry.jeremi.se';
-}

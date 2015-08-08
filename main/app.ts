@@ -30,7 +30,7 @@ var loadDna = function (onComplete: (dna: Dna) => void) {
         window.setTimeout(function () {
             var dna = localStorage.getItem(tempName);
             if (!dna)
-                onComplete(createDna(0, 'cy0miacv.hrd.jpg'));
+                onComplete(createDna(0, imageBaseUrl + '/' + 'cy0miacv.hrd.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });
@@ -44,16 +44,17 @@ var loadDna = function (onComplete: (dna: Dna) => void) {
         if (this.status == 200)
             onComplete(<Dna>JSON.parse(this.response));
         else
-            alert('Server could not return a DNA');
+            console.error('Server could not return a DNA');
     };
     xhr.onerror = function (e) {
-        alert('Could not reach server to get DNA');
+        console.error('Could not reach server to get DNA');
     };
     xhr.send();
 }
 
 var loadTexture = function (dna: Dna, onComplete: (image: ImageData) => void) {
     var image = new Image();
+    image.crossOrigin = '';
     image.onload = function () {
         var canvas = document.createElement('canvas');
         canvas.width = globalWidth;
@@ -68,10 +69,10 @@ var loadTexture = function (dna: Dna, onComplete: (image: ImageData) => void) {
         canvas.style.imageRendering = 'pixelated';
         onComplete(data);
     };
-    image.onerror = function () {
-        alert('Could not load image');
+    image.onerror = function (e) {
+        console.error('Could not load image', e);
     };
-    image.src = '/images/' + dna.Organism.ImagePath;
+    image.src = imageBaseUrl + '/' + dna.Organism.ImagePath;
 }
 
 loadDna(function (dna) {

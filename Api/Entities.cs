@@ -27,16 +27,16 @@ namespace server.Api
         [Required]
         public virtual OrganismEntity Organism { get; set; }
 
-        public DnaView ToView()
+        public DnaModel ToView()
         {
-            return new DnaView
+            return new DnaModel
             {
                 Date = this.Date,
                 Fitness = this.Fitness,
                 Generation = this.Generation,
                 Mutation = this.Mutation,
                 Seed = this.Seed,
-                Genes = GeneView.Deserialize(this.Genes),
+                Genes = GeneModel.Deserialize(this.Genes),
                 Organism = this.Organism == null ? null : this.Organism.ToView()
             };
         }
@@ -51,7 +51,11 @@ namespace server.Api
 
         public string ImagePath { get; set; }
         public DateTime Created { get; set; }
-        public int GeneCount { get; set; }
+        public DateTime LastAccessed { get; set; }
+
+        public int Width { get; set; }
+        public int Height { get; set; }
+
 
         public virtual IEnumerable<DnaEntity> Dna { get; set; }
 
@@ -60,14 +64,15 @@ namespace server.Api
             Dna = new HashSet<DnaEntity>();
         }
 
-        public OrganismView ToView()
+        public OrganismModel ToView()
         {
-            return new OrganismView
+            return new OrganismModel
             {
                 Id = this.Id,
                 ImagePath = this.ImagePath,
                 Created = this.Created,
-                GeneCount = this.GeneCount
+                Width = this.Width,
+                Height = this.Height
             };
         }
     }

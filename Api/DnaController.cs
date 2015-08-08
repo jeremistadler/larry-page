@@ -12,7 +12,7 @@ namespace server.Api
     {
         [HttpPost]
         [Route("api/dna/save")]
-        public object Save(DnaView dna)
+        public object Save(DnaModel dna)
         {
             if (dna == null || dna.Generation <= 0 || dna.Mutation <= 0 || dna.Organism == null || dna.Organism.Id <= 0)
                 return BadRequest();
@@ -21,25 +21,30 @@ namespace server.Api
             if (organism == null)
                 return BadRequest();
 
+            organism.LastAccessed = DateTime.Now;
+
             dna.Date = DateTime.Now;
             var dnaEntity = dna.ToEntity();
             dnaEntity.Organism = organism;
             Db.Dna.Add(dnaEntity);
             Db.SaveChanges();
 
+
             return Ok();
         }
 
         [HttpPost]
         [Route("api/organism/save")]
-        public object Save(OrganismView organism)
+        public object Save(OrganismModel organism)
         {
-            if (organism == null || organism.GeneCount <= 0 || string.IsNullOrWhiteSpace(organism.ImagePath))
+            if (organism == null || organism.Width <= 0 || organism.Height <= 0 || string.IsNullOrWhiteSpace(organism.ImagePath))
                 return BadRequest();
 
-            organism.Created = DateTime.Now;
-            organism.Id = 0;
-            Db.Organisms.Add(organism.ToEntity());
+            var entity = organism.ToEntity();
+            entity.Id = 0;
+            entity.Created = entity.LastAccessed = DateTime.Now;
+
+            Db.Organisms.Add(entity);
             Db.SaveChanges();
 
             return Ok();
@@ -48,7 +53,7 @@ namespace server.Api
 
         [HttpGet]
         [Route("api/dna/latest")]
-        public IEnumerable<DnaView> GetLatestDna(long organismId, int limit = 1, int skip = 0)
+        public IEnumerable<DnaModel> GetLatestDna(long organismId, int limit = 1, int skip = 0)
         {
             limit = Math.Min(limit, 200);
             return Db.Dna
@@ -60,15 +65,30 @@ namespace server.Api
         }
 
         [HttpGet]
+        [Route("api/dna/best")]
+        public IEnumerable<DnaModel> GetBestDna(long organismId, int limit = 1, int skip = 0)
+        {
+            limit = Math.Min(limit, 200);
+            return Db.Dna
+                .Where(f => f.Organism.Id == organismId)
+                .OrderByDescending(f => f.Mutation)
+                .Take(limit)
+                .ToArray()
+                .Select(f => f.ToView());
+        }
+
+
+
+        [HttpGet]
         [Route("api/organisms/top")]
-        public IEnumerable<DnaView> GetTopOrganismDnaList(int limit = 10, int skip = 0)
+        public IEnumerable<DnaModel> GetTopOrganismDnaList(int limit = 10, int skip = 0)
         {
             limit = Math.Min(limit, 200);
 
             var organisms = Db.Organisms.OrderBy(f => f.Created).ToArray();
 
             return organisms
-                .Select(f => Db.Dna.Where(d => d.Organism.Id == f.Id).OrderBy(d => d.Fitness).FirstOrDefault())
+                .Select(f => Db.Dna.Where(d => d.Organism.Id == f.Id).OrderByDescending(d => d.Mutation).FirstOrDefault())
                 .Where(f => f != null)
                 .Select(f => f.ToView());
         }
@@ -93,27 +113,30 @@ namespace server.Api
 
         [HttpGet]
         [Route("api/dna/random")]
-        public DnaView GetRandomDna()
+        public DnaModel GetRandomDna()
         {
             var organism = Db.Organisms
-                .OrderByDescending(f => f.Created)
+                .OrderBy(f => f.LastAccessed)
                 .First();
+
+            organism.LastAccessed = DateTime.Now;
+            Db.SaveChanges();
 
             if (Db.Dna.Where(f => f.Organism.Id == organism.Id).Any())
                 return Db.Dna
                     .Where(f => f.Organism.Id == organism.Id)
-                    .OrderBy(f => f.Fitness)
+                    .OrderByDescending(f => f.Mutation)
                     .Take(1)
                     .ToArray()
                     .Select(f => f.ToView())
                     .First();
 
-            return new DnaView
+            return new DnaModel
             {
                 Date = DateTime.Now,
                 Organism = organism.ToView(),
                 Fitness = long.MaxValue / 1000,
-                Genes = GeneView.CreateDefault(organism.GeneCount).ToArray()
+                Genes = GeneModel.CreateDefault(0).ToArray()
             };
         }
     }

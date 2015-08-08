@@ -8,13 +8,14 @@ using System.Web;
 
 namespace server.Api
 {
-    public class OrganismView
+    public class OrganismModel
     {
         public long Id { get; set; }
         [StringLength(255)]
         public string ImagePath { get; set; }
         public DateTime Created { get; set; }
-        public int GeneCount { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
 
         public OrganismEntity ToEntity()
         {
@@ -23,21 +24,22 @@ namespace server.Api
                 Id = this.Id,
                 ImagePath = this.ImagePath,
                 Created = this.Created,
-                GeneCount = this.GeneCount
+                Width = this.Width,
+                Height = this.Height
             };
         }
     }
 
 
-    public class DnaView
+    public class DnaModel
     {
         public long Seed { get; set; }
         public long Generation { get; set; }
         public long Mutation { get; set; }
         public long Fitness { get; set; }
         public DateTime Date { get; set; }
-        public GeneView[] Genes { get; set; }
-        public OrganismView Organism { get; set; }
+        public GeneModel[] Genes { get; set; }
+        public OrganismModel Organism { get; set; }
 
         public DnaEntity ToEntity()
         {
@@ -48,30 +50,30 @@ namespace server.Api
                 Generation = this.Generation,
                 Mutation = this.Mutation,
                 Seed = this.Seed,
-                Genes = GeneView.Serialize(this.Genes),
+                Genes = GeneModel.Serialize(this.Genes),
             };
         }
     }
 
     [ProtoContract]
-    public class GeneView
+    public class GeneModel
     {
         [ProtoMember(1)]
         public double[] Pos { get; set; }
         [ProtoMember(2)]
         public double[] Color { get; set; }
 
-        public static IEnumerable<GeneView> CreateDefault(int geneCount)
+        public static IEnumerable<GeneModel> CreateDefault(int geneCount)
         {
             return Enumerable.Range(0, geneCount)
-                .Select(f => new GeneView 
+                .Select(f => new GeneModel 
                 { 
                     Pos = new double[6], 
                     Color = new double[4] 
                 });
         }
 
-        public static byte[] Serialize(GeneView[] genes)
+        public static byte[] Serialize(GeneModel[] genes)
         {
             using (var stream = new MemoryStream())
             {
@@ -80,10 +82,10 @@ namespace server.Api
             }
         }
 
-        public static GeneView[] Deserialize(byte[] buffer)
+        public static GeneModel[] Deserialize(byte[] buffer)
         {
             using (var stream = new MemoryStream(buffer))
-                return Serializer.DeserializeItems<GeneView>(stream, PrefixStyle.Base128, 1).ToArray();
+                return Serializer.DeserializeItems<GeneModel>(stream, PrefixStyle.Base128, 1).ToArray();
         }
     }
 

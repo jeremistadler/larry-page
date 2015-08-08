@@ -13,6 +13,8 @@ interface IRectangle {
 interface Organism {
     Id: number;
     ImagePath: string;
+    Width: number;
+    Height: number;
 }
 
 interface Gene {

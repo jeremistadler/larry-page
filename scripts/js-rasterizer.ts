@@ -10,19 +10,25 @@ class JsRasterizer {
     currentRectangles: IRectangle[] = [];
     currentIteration = 0;
 
+    previewWidth: number;
+    previewHeight: number;
+
     constructor(public sourceImageData: ImageData, public Dna: Dna) {
+        this.previewHeight = 200;
+        this.previewWidth = 200;
+
         var canvas = document.createElement('canvas');
-        canvas.width = globalWidth;
-        canvas.height = globalHeight;
-        canvas.style.width = '200px';
-        canvas.style.height = '200px';
-        canvas.style.imageRendering = 'pixelated';
+        canvas.width = this.previewWidth;
+        canvas.height = this.previewHeight;
+        //canvas.style.width = '200px';
+        //canvas.style.height = '200px';
+        //canvas.style.imageRendering = 'pixelated';
         this.previewCtx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
         document.body.appendChild(canvas);
 
         Dna.Fitness = FitnessCalculator.GetFitness(Dna, sourceImageData);
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 2; i++)
             this.createThread();
 
         this.startLocalizedDraws();
@@ -55,55 +61,25 @@ class JsRasterizer {
         }
 
         list.sort((a, b) => a.fitness - b.fitness);
-        var removed = 0;
+        var indexesToRemove = [];
         for (; list.length > 2000 || (list.length > 0 && list[0].fitnessDiff <= 30);) {
-            removed++;
-            this.Dna.Genes.splice(list[0].index, 1);
+            indexesToRemove.push(list[0].index);
             list.splice(0, 1);
         }
+        indexesToRemove.sort((a, b) => b - a);
+
+        for (var g = 0; g < indexesToRemove.length; g++)
+            this.Dna.Genes.splice(list[g].index, 1);
+
 
         this.Dna.Fitness = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
-        DebugView.SetMessage('Removed genes', new Date().getTime() - startTime, 'ms(' + removed + ' items)');
+        DebugView.SetMessage('Removed genes', new Date().getTime() - startTime, 'ms(' + indexesToRemove.length + ' items)');
     }
 
 
     drawPreview() {
-        //var buffer = new Uint8ClampedArray(globalWidth * globalHeight * 4);
-        //for (var i = 0; i < buffer.length; i++)
-        //    buffer[i] = 255;
-
-        //var posBuffer = new Array(6);
-        //var colorBuffer = new Array(4);
-
-        //for (var i = 0; i < this.Dna.Genes.length; i++) {
-        //    var gene = this.Dna.Genes[i];
-
-        //    for (var c = 0; c < 3; c++)
-        //        colorBuffer[c] = Math.floor(gene.Color[c] * 255);
-        //    colorBuffer[3] = gene.Color[3];
-
-        //    for (var c = 0; c < gene.Pos.length; c++)
-        //        posBuffer[c] = Math.floor(gene.Pos[c] * globalHeight);
-
-        //    Raster.drawPolygon(buffer, globalWidth, globalHeight, posBuffer, colorBuffer);
-        //}
-
-        //var data = this.pixelCtx.createImageData(globalWidth, globalHeight);
-        //for (var i = 0; i < data.data.length; i++)
-        //    data.data[i] = buffer[i];
-        //this.pixelCtx.putImageData(data, 0, 0);
-
-
-        //var div = document.createElement('div');
-        //div.style.width = '1px';
-        //div.style.height = (this.Dna.Fitness / 1000000) + 'px';
-        //div.style.display = 'inline-block';
-        //div.style.backgroundColor = 'cornflowerblue';
-        //document.body.appendChild(div);
-        
-
         this.previewCtx.fillStyle = 'white';
-        this.previewCtx.fillRect(0, 0, globalWidth, globalHeight);
+        this.previewCtx.fillRect(0, 0, this.previewWidth, this.previewHeight);
         var geneStates = this.Dna.Genes.map(f => GeneHelper.CalculateState(f, this.currentRectangles[0]));
 
         for (var g = 0; g < this.Dna.Genes.length; g++) {
@@ -116,31 +92,34 @@ class JsRasterizer {
             gene.Color[3] + ')';
 
             this.previewCtx.beginPath();
-            this.previewCtx.moveTo(gene.Pos[0] * globalWidth, gene.Pos[1] * globalHeight);
-            this.previewCtx.lineTo(gene.Pos[2] * globalWidth, gene.Pos[3] * globalHeight);
-            this.previewCtx.lineTo(gene.Pos[4] * globalWidth, gene.Pos[5] * globalHeight);
+            this.previewCtx.moveTo(gene.Pos[0] * this.previewWidth, gene.Pos[1] * this.previewHeight);
+            this.previewCtx.lineTo(gene.Pos[2] * this.previewWidth, gene.Pos[3] * this.previewHeight);
+            this.previewCtx.lineTo(gene.Pos[4] * this.previewWidth, gene.Pos[5] * this.previewHeight);
             this.previewCtx.closePath();
             this.previewCtx.fill();
         }
+
+        this.previewCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        this.previewCtx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        this.previewCtx.beginPath();
 
         for (var g = 0; g < this.currentRectangles.length; g++) {
-            this.previewCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-
-            this.previewCtx.beginPath();
-            this.previewCtx.moveTo(this.currentRectangles[g].x * globalWidth, this.currentRectangles[g].y * globalHeight);
-            this.previewCtx.lineTo(this.currentRectangles[g].x2 * globalWidth, this.currentRectangles[g].y * globalHeight);
-            this.previewCtx.lineTo(this.currentRectangles[g].x2 * globalWidth, this.currentRectangles[g].y2 * globalHeight);
-            this.previewCtx.lineTo(this.currentRectangles[g].x * globalWidth, this.currentRectangles[g].y2 * globalHeight);
-            this.previewCtx.closePath();
-            this.previewCtx.fill();
+            this.previewCtx.moveTo(this.currentRectangles[g].x * this.previewWidth, this.currentRectangles[g].y * this.previewHeight);
+            this.previewCtx.lineTo(this.currentRectangles[g].x2 * this.previewWidth, this.currentRectangles[g].y * this.previewHeight);
+            this.previewCtx.lineTo(this.currentRectangles[g].x2 * this.previewWidth, this.currentRectangles[g].y2 * this.previewHeight);
+            this.previewCtx.lineTo(this.currentRectangles[g].x * this.previewWidth, this.currentRectangles[g].y2 * this.previewHeight);
+            this.previewCtx.lineTo(this.currentRectangles[g].x * this.previewWidth, this.currentRectangles[g].y * this.previewHeight);
         }
+
+        this.previewCtx.fill();
+        this.previewCtx.stroke();
     }
 
     startLocalizedDraws() {
         var maxGridSize = (Math.log(this.Dna.Generation + 1) / 2) + 0;
         DebugView.SetMessage('Max grid size', maxGridSize, '(' + Math.round(maxGridSize) + ')');
         var gridSize = Utils.randomFromTo(1, Math.round(maxGridSize));
-        //gridSize = 5;
+        //gridSize = 2;
         var gridSlotWidth = globalWidth / gridSize;
         var gridSlotHeight = globalHeight / gridSize;
         var usedSlots = [];
@@ -184,36 +163,6 @@ class JsRasterizer {
                 rect: rect
             });
         }
-    }
-
-    saveMutators(mutators) {
-        //this.allMutations.push(e.data.mutators);
-        //if (this.allMutations.length % 500 == 0 && this.allMutations.length > 0) {
-        //    var csv = '';
-
-        //    for (var g = 0; g < this.allMutations[0].length; g++) {
-        //        csv += this.allMutations[0][g].name;
-        //        if (g != this.allMutations[0].length - 1)
-        //            csv += ',';
-        //    }
-
-        //    csv += '\r\n';
-
-        //    for (var g = 0; g < this.allMutations.length; g++) {
-        //        var sum = this.allMutations[g].map(f => f.eff).reduce((a, b) => a + b);
-
-        //        for (var j = 0; j < this.allMutations[g].length; j++) {
-        //            csv += (this.allMutations[g][j].eff / sum);
-        //            if (j != this.allMutations[g].length - 1)
-        //                csv += ',';
-        //        }
-        //        csv += '\r\n';
-        //    }
-
-        //    csv = "data:text/csv," + encodeURIComponent(csv);
-        //    window.open(csv, 'Mutations num ' + this.Dna.Generation + '.csv');
-        //}
-
     }
 
     onMessage(e: MessageEvent) {
@@ -261,7 +210,10 @@ class JsRasterizer {
             DebugView.SetMessage('Fitness Squared', Math.round(Math.sqrt(this.Dna.Fitness) / 10), '');
             DebugView.SetMessage('Generation', this.Dna.Generation, '');
             DebugView.SetMessage('Mutations', this.Dna.Mutation, '');
-            
+
+            if (this.currentIteration % 50 == 0)
+                this.Save();
+
             //localStorage.setItem(tempName, JSON.stringify(this.Dna));
         }
     }

@@ -174,7 +174,7 @@
     <Content Include="list.html" />
     <None Include="main\js-rasterizer-worker.ts" />
     <None Include="scripts\raster.ts" />
-    <TypeScriptCompile Include="tests\spec.ts" />
+    <None Include="tests\spec.ts" />
     <Content Include="tests\SpecRunner.html" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
