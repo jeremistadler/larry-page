@@ -110,14 +110,19 @@ class FitnessCalculator{
         for (var i = 0; i < dna.Genes.length; i++) {
             var gene = dna.Genes[i];
 
-            for (var c = 0; c < 3; c++)
-                this.colorBuffer[c] = Math.floor(gene.Color[c] * 255);
+            this.colorBuffer[0] = Math.floor(gene.Color[0] * 255);
+            this.colorBuffer[1] = Math.floor(gene.Color[1] * 255);
+            this.colorBuffer[2] = Math.floor(gene.Color[2] * 255);
             this.colorBuffer[3] = gene.Color[3];
 
-            for (var c = 0; c < gene.Pos.length; c++)
-                this.posBuffer[c] = gene.Pos[c] * globalHeight;
+            this.posBuffer[0] = gene.Pos[0] * image.width;
+            this.posBuffer[1] = gene.Pos[1] * image.height;
+            this.posBuffer[2] = gene.Pos[2] * image.width;
+            this.posBuffer[3] = gene.Pos[3] * image.height;
+            this.posBuffer[4] = gene.Pos[4] * image.width;
+            this.posBuffer[5] = gene.Pos[5] * image.height;
 
-            Raster.drawPolygon(buffer, globalWidth, globalHeight, this.posBuffer, this.colorBuffer);
+            Raster.drawPolygon(buffer, image.width, image.height, this.posBuffer, this.colorBuffer);
         }
 
         return this.calculateFitness(image, buffer);
@@ -134,17 +139,22 @@ class FitnessCalculator{
 
             var gene = dna.Genes[i];
 
-            for (var c = 0; c < 3; c++)
-                this.colorBuffer[c] = Math.floor(gene.Color[c] * 255);
+            this.colorBuffer[0] = Math.floor(gene.Color[0] * 255);
+            this.colorBuffer[1] = Math.floor(gene.Color[1] * 255);
+            this.colorBuffer[2] = Math.floor(gene.Color[2] * 255);
             this.colorBuffer[3] = gene.Color[3];
 
-            for (var c = 0; c < gene.Pos.length; c++)
-                this.posBuffer[c] = gene.Pos[c] * globalHeight;
+            this.posBuffer[0] = gene.Pos[0] * image.width;
+            this.posBuffer[1] = gene.Pos[1] * image.height;
+            this.posBuffer[2] = gene.Pos[2] * image.width;
+            this.posBuffer[3] = gene.Pos[3] * image.height;
+            this.posBuffer[4] = gene.Pos[4] * image.width;
+            this.posBuffer[5] = gene.Pos[5] * image.height;
 
-            Raster.drawPolygon(buffer, globalWidth, globalHeight, this.posBuffer, this.colorBuffer);
+            Raster.drawPolygon(buffer, image.width, image.height, this.posBuffer, this.colorBuffer);
         }
 
-        return this.calculateConstrainedFitness(image.data, buffer, rect, image.width, image.height);
+        return this.calculateConstrainedFitness(image, buffer, rect);
     }
 
     static calculateConstrainedFitness(img: ImageData, buff2: Int8Array, rect: IRectangle) {
@@ -156,8 +166,8 @@ class FitnessCalculator{
         //if (x1 === 0 && y1 === 0 && x2 === img.width && y2 === img.height)
         //    return this.calculateFitness(img, buff2);
 
-        var diff = 0.0;
-        var q = 0.0;
+        var diff = 0;
+        var q = 0;
         for (var y = y1; y < y2; y++) {
             for (var x = x1; x < x2; x++) {
                 q = Math.abs(img.data[(y * img.width + x) * 4 + 0] - buff2[(y * img.width + x) * 4 + 0]);
@@ -175,7 +185,7 @@ class FitnessCalculator{
     }
 
     static calculateFitness(img: ImageData, buff2: Int8Array) {
-        var diff = 0.0;
+        var diff = 0;
         for (var i = 0; i < img.data.length; i++) {
             var q = Math.abs(img.data[i] - buff2[i]);
             diff += q * q;
