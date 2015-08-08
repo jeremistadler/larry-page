@@ -193,21 +193,23 @@
 
 
         function RenderDna(dna, container, size) {
+            var scaleFactor = Math.min(size / dna.Organism.Height, size / dna.Organism.Width);
+
             var canvas = document.createElement('canvas');
             var canvasWrapper = document.createElement('div');
             var canvasImg = document.createElement('div');
             canvasWrapper.classList.add('thumb');
             canvasImg.classList.add('thumbImg');
             canvasImg.style.backgroundImage = "url('/images/" + dna.Organism.ImagePath + "')";
-            canvas.width = size;
-            canvas.height = size;
+            canvas.width = dna.Organism.Width * scaleFactor;
+            canvas.height = dna.Organism.Height * scaleFactor;
             canvasWrapper.appendChild(canvas);
             canvasWrapper.appendChild(canvasImg);
             container.appendChild(canvasWrapper);
 
             var ctx = canvas.getContext('2d', { alpha: false });
             ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, size, size);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             for (var g = 0; g < dna.Genes.length; g++) {
                 var gene = dna.Genes[g];
@@ -218,9 +220,9 @@
                     gene.Color[3] + ')';
 
                 ctx.beginPath();
-                ctx.moveTo(gene.Pos[0] * size, gene.Pos[1] * size);
-                ctx.lineTo(gene.Pos[2] * size, gene.Pos[3] * size);
-                ctx.lineTo(gene.Pos[4] * size, gene.Pos[5] * size);
+                ctx.moveTo(gene.Pos[0] * canvas.width, gene.Pos[1] * canvas.height);
+                ctx.lineTo(gene.Pos[2] * canvas.width, gene.Pos[3] * canvas.height);
+                ctx.lineTo(gene.Pos[4] * canvas.width, gene.Pos[5] * canvas.height);
                 ctx.closePath();
                 ctx.fill();
             }
