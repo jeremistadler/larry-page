@@ -42,8 +42,8 @@ namespace server.Api
 
             var entity = organism.ToEntity();
             entity.Id = 0;
-            entity.Created = entity.LastAccessed = DateTime.Now;
-
+            entity.Created = DateTime.Now;
+            entity.LastAccessed = DateTime.Now.AddDays(-100);
             Db.Organisms.Add(entity);
             Db.SaveChanges();
 

@@ -24,6 +24,9 @@ class Raster {
     }
 
     private static scanline(x1: number, y1: number, x2: number, y2: number, startY: number, endY: number) {
+        if (y1 == y2)
+            return;
+
         if (y1 > y2) {
             var tempY = y1;
             var tempX = x1;
@@ -39,7 +42,7 @@ class Raster {
         //if ( y2 < y1 ) { y2++ }
 
         var dx = (x2 - x1) / (y2 - y1); 		// change in x over change in y will give us the gradient
-        var row = Math.round(y1 - startY); 		// the offset the start writing at (into the array)
+        var row = Math.floor(y1 - startY); 		// the offset the start writing at (into the array)
 
         for (; y1 <= y2; y1++) {
             if (this._rowMin[row] > x1) this._rowMin[row] = x1;
@@ -51,15 +54,9 @@ class Raster {
     }
 
     private static _drawPolygon(buffer: Uint8Array, width: number, height: number, points: number[], color: number[]) {
-        var minY = points[1];
-        var maxY = points[1];
-
-        for (var i = 1; i < points.length; i += 2) {
-            minY = Math.min(minY, points[i]);
-            maxY = Math.max(maxY, points[i]);
-        }
-
-        var polygonHeight = maxY - minY;
+        var minY = Math.min(points[1], points[3], points[5]);
+        var maxY = Math.max(points[1], points[3], points[5]);
+        var polygonHeight = Math.floor(maxY - minY);
 
         for (var i = 0; i < polygonHeight + 10; i++) this._rowMin[i] = 100000.0;
         for (var i = 0; i < polygonHeight + 10; i++) this._rowMax[i] = -100000.0;

@@ -32,11 +32,11 @@ class JsRasterizerWorker {
 
         dna.Fitness = FitnessCalculator.GetFitness(dna, this.sourceImageData);
 
-        if (originalPartialFitness < ctx.partialFitness)
-            debugger;
+        //if (originalPartialFitness < ctx.partialFitness)
+        //    debugger;
 
-        if (originalFullFitness < dna.Fitness)
-            debugger;
+        //if (originalFullFitness < dna.Fitness)
+        //    debugger;
 
         //var sum = GeneMutator.GeneMutators.map(f => f.effectiveness).reduce((a, b) => a + b);
         //console.log('Mutators: ', GeneMutator.GeneMutators.map(f => f.name + ': ' + Math.round(f.effectiveness / sum * 1000)).join('%, ') + '%');

@@ -32,7 +32,7 @@ describe("Fitness calculator", function () {
             cleanBuffer[i] = 255;
         Raster.drawPolygon(buffer, 100, 100, [0, 0, 40, 0, 40, 100], [255, 100, 10, 1]);
         //Raster.drawPolygon(buffer, 100, 100, [0, 0, 40, 0, 0, 100], [255, 100, 10, 1]);
-        var totalFitness = FitnessCalculator.calculateFitness(cleanBuffer, buffer);
+        var totalFitness = FitnessCalculator.calculateFitness({ data: cleanBuffer, width: 100, height: 100 }, buffer);
         var fitnessP0 = FitnessCalculator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 1, x: 0.0, y: 0, x2: 1, y2: 1 }, 100, 100);
         var fitnessP1 = FitnessCalculator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 0.5, x: 0.0, y: 0, x2: 0.5, y2: 1 }, 100, 100);
         var fitnessP2 = FitnessCalculator.calculateConstrainedFitness(cleanBuffer, buffer, { height: 1, width: 0.5, x: 0.5, y: 0, x2: 1, y2: 1 }, 100, 100);

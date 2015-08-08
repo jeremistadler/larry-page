@@ -120,7 +120,7 @@ class FitnessCalculator{
             Raster.drawPolygon(buffer, globalWidth, globalHeight, this.posBuffer, this.colorBuffer);
         }
 
-        return this.calculateFitness(image.data, buffer);
+        return this.calculateFitness(image, buffer);
     }
 
     static GetConstrainedFitness(dna: Dna, image: ImageData, rect: IRectangle, geneStates: IGeneRectangleState[]) {
@@ -147,26 +147,26 @@ class FitnessCalculator{
         return this.calculateConstrainedFitness(image.data, buffer, rect, image.width, image.height);
     }
 
-    static calculateConstrainedFitness(buff1: number[], buff2: Int8Array, rect: IRectangle, width: number, height: number) {
-        var x1 = Math.max(Math.floor(rect.x * width), 0);
-        var y1 = Math.max(Math.floor(rect.y * height), 0);
-        var x2 = Math.min(Math.ceil(rect.x2 * width), width);
-        var y2 = Math.min(Math.ceil(rect.y2 * height), height);
+    static calculateConstrainedFitness(img: ImageData, buff2: Int8Array, rect: IRectangle) {
+        var x1 = Math.max(Math.floor(rect.x * img.width), 0);
+        var y1 = Math.max(Math.floor(rect.y * img.height), 0);
+        var x2 = Math.min(Math.ceil(rect.x2 * img.width), img.width);
+        var y2 = Math.min(Math.ceil(rect.y2 * img.height), img.height);
 
-        //if (x1 === 0 && y1 === 0 && x2 === width && y2 === height)
-        //    return this.calculateFitness(buff1, buff2);
+        //if (x1 === 0 && y1 === 0 && x2 === img.width && y2 === img.height)
+        //    return this.calculateFitness(img, buff2);
 
         var diff = 0.0;
         var q = 0.0;
         for (var y = y1; y < y2; y++) {
             for (var x = x1; x < x2; x++) {
-                q = Math.abs(buff1[(y * width + x) * 4 + 0] - buff2[(y * width + x) * 4 + 0]);
+                q = Math.abs(img.data[(y * img.width + x) * 4 + 0] - buff2[(y * img.width + x) * 4 + 0]);
                 diff += q * q;
-                q = Math.abs(buff1[(y * width + x) * 4 + 1] - buff2[(y * width + x) * 4 + 1]);
+                q = Math.abs(img.data[(y * img.width + x) * 4 + 1] - buff2[(y * img.width + x) * 4 + 1]);
                 diff += q * q;
-                q = Math.abs(buff1[(y * width + x) * 4 + 2] - buff2[(y * width + x) * 4 + 2]);
+                q = Math.abs(img.data[(y * img.width + x) * 4 + 2] - buff2[(y * img.width + x) * 4 + 2]);
                 diff += q * q;
-                q = Math.abs(buff1[(y * width + x) * 4 + 3] - buff2[(y * width + x) * 4 + 3]);
+                q = Math.abs(img.data[(y * img.width + x) * 4 + 3] - buff2[(y * img.width + x) * 4 + 3]);
                 diff += q * q;
             }
         }
@@ -174,10 +174,10 @@ class FitnessCalculator{
         return diff;
     }
 
-    static calculateFitness(buff1: number[], buff2: Int8Array) {
+    static calculateFitness(img: ImageData, buff2: Int8Array) {
         var diff = 0.0;
-        for (var i = 0; i < buff1.length; i++) {
-            var q = Math.abs(buff1[i] - buff2[i]);
+        for (var i = 0; i < img.data.length; i++) {
+            var q = Math.abs(img.data[i] - buff2[i]);
             diff += q * q;
         }
         return diff;

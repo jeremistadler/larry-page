@@ -94,3 +94,5 @@ index.html
 larry-page.csproj.user
 scripts/*.js
 build-worker/worker.js
+scripts/dna.js.map
+*.map

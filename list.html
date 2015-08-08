@@ -126,11 +126,21 @@
         <img id="upload-box-img" />
     </div>
 
+    <script src="build-worker/worker.js"></script>
+
     <script>
         var baseUrl = '';
         var dnaItems = [];
         var imageContainer = document.getElementById('imageContainer');
         var homeButton = document.getElementsByClassName('homeButton')[0];
+        var rasterizer = null;
+
+        Utils.getRandomDna(baseUrl, function(dna) {
+            Utils.loadAndScaleImageData(baseUrl + '/images/' + dna.Organism.ImagePath, 128, 128, function(image, canvas) {
+                rasterizer = new JsRasterizer(image, dna);
+            });
+        });
+
 
         var animateOut = function() {
             for (var i = 0; i < imageContainer.childNodes.length; i++) {
@@ -236,6 +246,12 @@
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
             xhr.onload = function(e) {
                 document.getElementById('upload-box').classList.remove('visible');
+
+                //rasterizer.Stop();
+                //var dna = JSON.parse(xhr.response);
+                //Utils.loadAndScaleImageData(baseUrl + '/images/' + dna.Organism.ImagePath, 128, 128, function(image, canvas) {
+                //    rasterizer = new JsRasterizer(image, dna);
+                //});
             };
             xhr.send(JSON.stringify({ imagePath: imagePath, width: image.naturalWidth, height: image.naturalHeight }));
         }

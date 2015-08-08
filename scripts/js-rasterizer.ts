@@ -14,8 +14,8 @@ class JsRasterizer {
     previewHeight: number;
 
     constructor(public sourceImageData: ImageData, public Dna: Dna) {
-        this.previewHeight = 200;
-        this.previewWidth = 200;
+        this.previewHeight = sourceImageData.width;
+        this.previewWidth = sourceImageData.height;
 
         var canvas = document.createElement('canvas');
         canvas.width = this.previewWidth;
@@ -69,7 +69,7 @@ class JsRasterizer {
         indexesToRemove.sort((a, b) => b - a);
 
         for (var g = 0; g < indexesToRemove.length; g++)
-            this.Dna.Genes.splice(list[g].index, 1);
+            this.Dna.Genes.splice(indexesToRemove[g], 1);
 
 
         this.Dna.Fitness = FitnessCalculator.GetFitness(this.Dna, this.sourceImageData);
@@ -230,5 +230,15 @@ class JsRasterizer {
         xhr.open('POST', baseUrl + '/api/dna/save', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.send(JSON.stringify(this.Dna));
+    }
+
+    Stop() {
+        for (var i = 0; i < this.idleWorkers.length; i++) {
+            this.idleWorkers[i].terminate();
+        }
+
+        for (var i = 0; i < this.activeWorkers.length; i++) {
+            this.activeWorkers[i].terminate();
+        }
     }
 }

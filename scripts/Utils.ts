@@ -39,6 +39,76 @@ class Utils {
     static Clamp(num: number, min: number, max: number) {
         return Math.min(Math.max(num, min), max);
     }
+
+    static createDna(numberOfGenes: number, image: string): Dna {
+        var dna = {
+            Fitness: Infinity,
+            Genes: new Array(numberOfGenes),
+            Generation: 0,
+            Mutation: 0,
+            Organism: {
+                Id: 0,
+                ImagePath: image,
+                GeneCount: numberOfGenes,
+                Width: 200,
+                Height: 200
+            }
+        };
+
+        for (var i = 0; i < numberOfGenes; i++) {
+            var gene = dna.Genes[i] = {
+                Color: [Math.random(), Math.random(), Math.random(), Math.random() * 0.8 + 0.2],
+                Pos: new Array(6)
+            };
+            for (var q = 0; q < gene.Pos.length; q++)
+                gene.Pos[q] = Math.random();
+        }
+
+        return dna;
+    }
+
+    static loadDebugDna(onComplete: (dna: Dna) => void) {
+        window.setTimeout(function () {
+            var dna = localStorage.getItem(tempName);
+            if (!dna)
+                onComplete(Utils.createDna(0, imageBaseUrl + '/' + 'cy0miacv.hrd.jpg'));
+            else
+                onComplete(JSON.parse(dna));
+        });
+    }
+
+    static getRandomDna(baseUrl: string, onComplete: (dna: Dna) => void) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', baseUrl + '/api/dna/random', true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function (e) {
+            if (this.status == 200)
+                onComplete(<Dna>JSON.parse(this.response));
+            else
+                console.error('Server could not return a DNA');
+        };
+        xhr.onerror = function (e) {
+            console.error('Could not reach server to get DNA');
+        };
+        xhr.send();
+    }
+
+    static loadAndScaleImageData(url: string, width: number, height: number, onComplete: (image: ImageData, canvas: HTMLCanvasElement) => void) {
+        var image = new Image();
+        image.crossOrigin = '';
+        image.onload = function () {
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
+            ctx.fillStyle = 'white';
+            ctx.drawImage(image, 0, 0, width, height);
+            var data = ctx.getImageData(0, 0, width, height);
+            onComplete(data, canvas);
+        };
+        image.onerror = e => console.error('Could not load image', e);
+        image.src = url;
+    }
 }
 
 
