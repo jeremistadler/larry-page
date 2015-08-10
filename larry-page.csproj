@@ -143,6 +143,7 @@
   <ItemGroup>
     <Content Include=".gitignore" />
     <Content Include="favicon.ico" />
+    <Content Include="form.css" />
     <Content Include="Global.asax" />
     <Content Include="gulpfile.js" />
     <Content Include="icons\android-icon-144x144.png" />
