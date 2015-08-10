@@ -117,7 +117,7 @@ class Group {
         var elmLabel = document.createElement('label');
         elmLabel.innerHTML = text.replace('{0}', this.config[configKey]);
 
-        group.classList.add('input-group');
+        group.classList.add('input-group', 'form-checkbox-group');
         group.appendChild(elmLabel);
         group.appendChild(elm);
         this.groupElm.appendChild(group);
