@@ -1,6 +1,19 @@
 ﻿"use strict";
 ///<reference path="../references.ts" />
 
+interface ISettings {
+    minGridSize: number;
+    maxGridSize: number;
+
+    newMinOpacity: number;
+    newMaxOpacity: number;
+
+    mutatorWeights: number[];
+    autoAdjustMutatorWeights: boolean;
+    iterations: number;
+}
+
+
 interface IRectangle {
     x: number;
     y: number;
@@ -38,6 +51,7 @@ interface IDnaRenderContext {
     geneStates: IGeneRectangleState[];
     source: ImageData;
     partialFitness: number;
+    settings: ISettings;
 }
 
 interface IGeneRectangleState {
@@ -256,7 +270,7 @@ class GeneMutator {
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = state.oldGene.Pos.slice();
 
-                var indexToChange = Utils.randomFromTo(0, 4);
+                var indexToChange = Utils.randomInt(0, 2);
                 state.newGene.Color[indexToChange] = Utils.ClampFloat((Math.random() - 0.5) * 0.1 + state.newGene.Color[indexToChange]);
                 return state;
             },
@@ -359,10 +373,10 @@ class GeneMutator {
                     return null;
 
                 var gene = {
-                    Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)],
+                    Color: [Math.random(), Math.random(), Math.random(), Utils.randomFloat(ctx.settings.newMinOpacity, ctx.settings.newMaxOpacity)],
                     Pos: new Array(6)
                 }
-
+                
                 for (var i = 0; i < gene.Pos.length; i += 2)
                     gene.Pos[i] = Math.random() * ctx.rect.width + ctx.rect.x;
 

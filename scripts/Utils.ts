@@ -17,8 +17,20 @@ class Utils {
         return Math.floor(Math.random() * arr.length);
     }
 
-    static randomFromTo(from, to){
-        return Math.floor(Math.random() * (to - from + 1) + from);
+    /**
+    * @min inclusive
+    * @max exclusive
+    */
+    static randomFloat(min, max){
+        return Math.random() * (max - min) + min;
+    }
+
+    /**
+    * @min inclusive
+    * @max inclusive
+    */
+    static randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     static CreateNumberArray(length: number) {
