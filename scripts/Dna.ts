@@ -1,6 +1,13 @@
 ﻿"use strict";
 ///<reference path="../references.ts" />
 
+interface IWorkerResult {
+    generations: number;
+    mutations: IMutatorState[];
+    mutatorName: string;
+    fitnessImprovement: number;
+}
+
 interface ISettings {
     minGridSize: number;
     maxGridSize: number;
@@ -232,6 +239,24 @@ class GeneMutator {
             ctx.mutator.undo(ctx, mutatorState);
 
         ctx.dna.Generation++;
+    }
+
+    static setFromSettings(settings: ISettings) {
+        for (var i = 0; i < settings.mutatorWeights.length; i++)
+            GeneMutator.GeneMutators[i].effectiveness = settings.mutatorWeights[i];
+    }
+
+    static setSettingsFromMutators(settings: ISettings) {
+        for (var i = 0; i < settings.mutatorWeights.length; i++)
+            settings.mutatorWeights[i] = GeneMutator.GeneMutators[i].effectiveness;
+    }
+
+    static getFromName(name: string) {
+        for (var i = 0; i < GeneMutator.GeneMutators.length; i++)
+            if (GeneMutator.GeneMutators[i].name === name)
+                return GeneMutator.GeneMutators[i];
+
+        return null;
     }
 
     public static DefaultMutateGene(ctx: IDnaRenderContext): IMutatorState {

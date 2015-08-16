@@ -170,12 +170,18 @@ class JsRasterizer {
 
     onMessage(e: MessageEvent) {
         var worker = <Worker>e.target;
+        var data = <IWorkerResult>e.data;
+
         this.activeWorkers.splice(this.activeWorkers.indexOf(worker), 1);
         this.idleWorkers.push(worker);
 
-        var mutations = <IMutatorState[]>e.data.mutations;
-        this.Dna.Generation += e.data.generations;
+        var mutations = data.mutations;
+        this.Dna.Generation += data.generations;
         this.Dna.Mutation += mutations.length;
+
+        var mutator = GeneMutator.getFromName(data.mutatorName);
+        GeneMutator.UpdateEffectiveness(data.fitnessImprovement, mutator);
+        GeneMutator.setSettingsFromMutators(this.Settings);
 
         DebugView.SetMessage('New Mutations', mutations.length, '');
 

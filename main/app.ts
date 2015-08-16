@@ -50,7 +50,7 @@ Utils.getRandomDna(baseUrl, function (dna) {
 
         for (var i = 0; i < GeneMutator.GeneMutators.length; i++)
             (function (index) {
-                mutatorGroup.AddSlider(GeneMutator.GeneMutators[i].name + ': {0}', 0, 10000000, 10, s => s.mutatorWeights[index], (s, v) => { s.mutatorWeights[index] = v });
+                mutatorGroup.AddSlider(GeneMutator.GeneMutators[i].name + ': {0}', 0, 1000, 10, s => s.mutatorWeights[index], (s, v) => { s.mutatorWeights[index] = v });
             })(i)
 
         new Group(settings)

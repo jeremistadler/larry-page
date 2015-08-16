@@ -7,9 +7,11 @@ class JsRasterizerWorker {
     
     go(dna: Dna, rect: IRectangle, settings: ISettings) {
         var startTime = new Date().getTime();
+        GeneMutator.setFromSettings(settings);
 
         var mutator = GeneMutator.GetMutator();
         var geneStates = dna.Genes.map(f => GeneHelper.CalculateState(f, rect));
+
         var ctx: IDnaRenderContext = {
             dna: dna,
             rect: rect,
@@ -27,26 +29,23 @@ class JsRasterizerWorker {
         for (var i = 0; i < settings.iterations; i++)
             GeneMutator.MutateDna(ctx);
 
-        var fitnessDiff = (originalPartialFitness - ctx.partialFitness) / settings.iterations;
-        GeneMutator.UpdateEffectiveness(fitnessDiff, mutator);
+        var fitnessImprovement = (originalPartialFitness - ctx.partialFitness) / settings.iterations;
 
-        dna.Fitness = FitnessCalculator.GetFitness(dna, this.sourceImageData);
+        if (originalPartialFitness < ctx.partialFitness)
+            debugger;
 
-        //if (originalPartialFitness < ctx.partialFitness)
-        //    debugger;
+        var newFitness = FitnessCalculator.GetFitness(dna, this.sourceImageData);
+        if (originalFullFitness < newFitness)
+            debugger;
+        
+        var workerResult: IWorkerResult = {
+            generations: settings.iterations,
+            mutations: ctx.mutations,
+            mutatorName: mutator.name,
+            fitnessImprovement: fitnessImprovement
+        };
 
-        //if (originalFullFitness < dna.Fitness)
-        //    debugger;
-
-        //var sum = GeneMutator.GeneMutators.map(f => f.effectiveness).reduce((a, b) => a + b);
-        //console.log('Mutators: ', GeneMutator.GeneMutators.map(f => f.name + ': ' + Math.round(f.effectiveness / sum * 1000)).join('%, ') + '%');
-        //console.log('Generation time: ', (new Date().getTime() - startTime) / iterations, 'ms', 'fittness', dna.Fitness, 'Mutations: ', dna.Mutation, 'Generations: ', dna.Generation, 'Genes: ', dna.Genes.length);
-
-        var mut = GeneMutator.GeneMutators.map(f => {
-            return { effectiveness: f.effectiveness, name: f.name }
-        });
-        mut.sort((a, b) => a.name.localeCompare(b.name));
-        self.postMessage({ generations: settings.iterations, mutators: mut, mutations: ctx.mutations }, null);
+        self.postMessage(workerResult, null)
     }
 }
 
