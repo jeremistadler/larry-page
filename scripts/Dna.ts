@@ -216,13 +216,13 @@ class FitnessCalculator{
 }
 
 class GeneMutator {
-    static StartingEffectiveness = 1000000;
     static EffectivenessChangeRate = 0.03;
-    static MinimumEffectiveness = 0.00001;
+    static MinEffectiveness = 0.00001;
+    static MaxEffectiveness = 3000;
 
     static MutateDna(ctx: IDnaRenderContext) {
         var mutatorState = ctx.mutator.func(ctx);
-        if (mutatorState == null)
+        if (mutatorState === null)
             return;
 
         var geneState = GeneHelper.CalculateState(mutatorState.newGene, ctx.rect);
@@ -260,7 +260,7 @@ class GeneMutator {
     }
 
     public static DefaultMutateGene(ctx: IDnaRenderContext): IMutatorState {
-        if (ctx.dna.Genes.length == 0)
+        if (ctx.dna.Genes.length === 0)
             return null;
 
         var oldGene: Gene = null;
@@ -273,7 +273,7 @@ class GeneMutator {
             }
         }
 
-        if (oldGene == null)
+        if (oldGene === null)
             return null;
 
         var gene = {
@@ -290,7 +290,7 @@ class GeneMutator {
             effectiveness: 1000,
             func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
-                if (state == null) return null;
+                if (state === null) return null;
 
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = state.oldGene.Pos.slice();
@@ -306,7 +306,7 @@ class GeneMutator {
             effectiveness: 1000,
             func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
-                if (state == null) return null;
+                if (state === null) return null;
 
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = state.oldGene.Pos.slice();
@@ -321,7 +321,7 @@ class GeneMutator {
             effectiveness: 1000,
             func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
-                if (state == null) return null;
+                if (state === null) return null;
 
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = new Array(6);
@@ -338,13 +338,13 @@ class GeneMutator {
             effectiveness: 1000,
             func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
-                if (state == null) return null;
+                if (state === null) return null;
 
                 state.newGene.Color = state.oldGene.Color.slice();
                 state.newGene.Pos = state.oldGene.Pos.slice();
 
                 var indexToMove = Utils.randomIndex(state.newGene.Pos);
-                if (indexToMove % 2 == 0)
+                if (indexToMove % 2 === 0)
                     state.newGene.Pos[indexToMove] = Utils.Clamp(state.newGene.Pos[indexToMove] + (Math.random() - 0.5) * 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
                 else
                     state.newGene.Pos[indexToMove] = Utils.Clamp(state.newGene.Pos[indexToMove] + (Math.random() - 0.5) * 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
@@ -357,7 +357,7 @@ class GeneMutator {
             effectiveness: 1000,
             func: function (ctx: IDnaRenderContext): IMutatorState {
                 var state = GeneMutator.DefaultMutateGene(ctx);
-                if (state == null) return null;
+                if (state === null) return null;
 
                 state.newGene.Color = [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)];
                 state.newGene.Pos = new Array(6);
@@ -441,7 +441,8 @@ class GeneMutator {
         if (isFinite(fitnessDiff)) {
             mutator.effectiveness = mutator.effectiveness * (1 - this.EffectivenessChangeRate) +
             fitnessDiff * this.EffectivenessChangeRate;
-            mutator.effectiveness = Math.max(mutator.effectiveness, this.MinimumEffectiveness);
+            mutator.effectiveness = Math.max(mutator.effectiveness, this.MinEffectiveness);
+            mutator.effectiveness = Math.min(mutator.effectiveness, this.MaxEffectiveness);
         }
     }
 }

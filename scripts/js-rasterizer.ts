@@ -2,7 +2,6 @@
 "use strict";
 
 class JsRasterizer {
-    previewCtx: CanvasRenderingContext2D;
     idleWorkers: Worker[] = [];
     activeWorkers: Worker[] = [];
     allMutations: any[] = [];
@@ -12,26 +11,12 @@ class JsRasterizer {
     onFrameStarted: { (dna: Dna): void; }[] = [];
     currentIteration = 0;
 
-    previewWidth: number = 0;
-    previewHeight: number = 0;
     clearNextRound: boolean = false;
 
     constructor(public source: ImageData, public Dna: Dna, public Settings: ISettings) {
-        this.previewHeight = this.source.width;
-        this.previewWidth = this.source.height;
-
-        var canvas = document.createElement('canvas');
-        canvas.width = this.previewWidth;
-        canvas.height = this.previewHeight;
-        //canvas.style.width = '200px';
-        //canvas.style.height = '200px';
-        //canvas.style.imageRendering = 'pixelated';
-        this.previewCtx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
-        document.body.appendChild(canvas);
-
         Dna.Fitness = FitnessCalculator.GetFitness(Dna, this.source);
 
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 4; i++)
             this.createThread();
 
         this.startLocalizedDraws();
@@ -80,42 +65,44 @@ class JsRasterizer {
     }
 
 
-    drawPreview() {
-        this.previewCtx.fillStyle = 'white';
-        this.previewCtx.fillRect(0, 0, this.previewWidth, this.previewHeight);
+    drawPreview(ctx: CanvasRenderingContext2D) {
+        var width = ctx.canvas.width;
+        var height = ctx.canvas.height;
+
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
         var geneStates = this.Dna.Genes.map(f => GeneHelper.CalculateState(f, this.currentRectangles[0]));
 
         for (var g = 0; g < this.Dna.Genes.length; g++) {
-
             var gene = this.Dna.Genes[g];
-            this.previewCtx.fillStyle = 'rgba(' +
+            ctx.fillStyle = 'rgba(' +
             Math.floor(gene.Color[0] * 255) + ',' +
             Math.floor(gene.Color[1] * 255) + ',' +
             Math.floor(gene.Color[2] * 255) + ',' +
             gene.Color[3] + ')';
 
-            this.previewCtx.beginPath();
-            this.previewCtx.moveTo(gene.Pos[0] * this.previewWidth, gene.Pos[1] * this.previewHeight);
-            this.previewCtx.lineTo(gene.Pos[2] * this.previewWidth, gene.Pos[3] * this.previewHeight);
-            this.previewCtx.lineTo(gene.Pos[4] * this.previewWidth, gene.Pos[5] * this.previewHeight);
-            this.previewCtx.closePath();
-            this.previewCtx.fill();
+            ctx.beginPath();
+            ctx.moveTo(gene.Pos[0] * width, gene.Pos[1] * height);
+            ctx.lineTo(gene.Pos[2] * width, gene.Pos[3] * height);
+            ctx.lineTo(gene.Pos[4] * width, gene.Pos[5] * height);
+            ctx.closePath();
+            ctx.fill();
         }
 
-        this.previewCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-        this.previewCtx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-        this.previewCtx.beginPath();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.beginPath();
 
         for (var g = 0; g < this.currentRectangles.length; g++) {
-            this.previewCtx.moveTo(this.currentRectangles[g].x * this.previewWidth, this.currentRectangles[g].y * this.previewHeight);
-            this.previewCtx.lineTo(this.currentRectangles[g].x2 * this.previewWidth, this.currentRectangles[g].y * this.previewHeight);
-            this.previewCtx.lineTo(this.currentRectangles[g].x2 * this.previewWidth, this.currentRectangles[g].y2 * this.previewHeight);
-            this.previewCtx.lineTo(this.currentRectangles[g].x * this.previewWidth, this.currentRectangles[g].y2 * this.previewHeight);
-            this.previewCtx.lineTo(this.currentRectangles[g].x * this.previewWidth, this.currentRectangles[g].y * this.previewHeight);
+            ctx.moveTo(this.currentRectangles[g].x * width, this.currentRectangles[g].y * height);
+            ctx.lineTo(this.currentRectangles[g].x2 * width, this.currentRectangles[g].y * height);
+            ctx.lineTo(this.currentRectangles[g].x2 * width, this.currentRectangles[g].y2 * height);
+            ctx.lineTo(this.currentRectangles[g].x * width, this.currentRectangles[g].y2 * height);
+            ctx.lineTo(this.currentRectangles[g].x * width, this.currentRectangles[g].y * height);
         }
 
-        this.previewCtx.fill();
-        this.previewCtx.stroke();
+        ctx.fill();
+        ctx.stroke();
     }
 
     startLocalizedDraws() {
@@ -132,6 +119,7 @@ class JsRasterizer {
         //gridOffsetY = 0;
         this.startTime = new Date().getTime();
         this.currentRectangles.length = 0;
+        GeneMutator.setSettingsFromMutators(this.Settings);
 
         for (; this.idleWorkers.length > 0 && usedSlots.length < gridSize * gridSize;) {
             var x = 0;
@@ -179,9 +167,10 @@ class JsRasterizer {
         this.Dna.Generation += data.generations;
         this.Dna.Mutation += mutations.length;
 
-        var mutator = GeneMutator.getFromName(data.mutatorName);
-        GeneMutator.UpdateEffectiveness(data.fitnessImprovement, mutator);
-        GeneMutator.setSettingsFromMutators(this.Settings);
+        if (this.Settings.autoAdjustMutatorWeights) {
+            var mutator = GeneMutator.getFromName(data.mutatorName);
+            GeneMutator.UpdateEffectiveness(data.fitnessImprovement, mutator);
+        }
 
         DebugView.SetMessage('New Mutations', mutations.length, '');
 
@@ -201,11 +190,12 @@ class JsRasterizer {
             if (this.clearNextRound) {
                 this.clearNextRound = false;
                 this.Dna.Genes.length = 0;
+                this.Dna.Fitness = Infinity;
             }
 
             this.currentIteration++;
-            if (this.currentIteration % 50 == 0)
-                this.removeWorst();
+            //if (this.currentIteration % 50 == 0)
+            //    this.removeWorst();
 
             for (var g = 0; g < this.onFrameCompleted.length; g++)
                 this.onFrameCompleted[g](this.Dna);
@@ -215,7 +205,6 @@ class JsRasterizer {
             for (var g = 0; g < this.onFrameStarted.length; g++)
                 this.onFrameStarted[g](this.Dna);
 
-            this.drawPreview();
             DebugView.RenderToDom()
 
             var fitnessAfter = FitnessCalculator.GetFitness(this.Dna, this.source);

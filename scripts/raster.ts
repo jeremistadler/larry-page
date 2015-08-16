@@ -6,7 +6,7 @@ class Raster {
 
     private static drawHLine(buffer: Uint8Array, width: number, height: number, x1: number, x2: number, y: number, color: number[]) {
         if (y < 0 || y > height - 1) return;
-        if (x1 == x2) return;
+        if (x1 === x2) return;
 
         x1 = Math.max(x1, 0);
         x2 = Math.min(x2, width);
@@ -24,7 +24,7 @@ class Raster {
     }
 
     private static scanline(x1: number, y1: number, x2: number, y2: number, startY: number, endY: number) {
-        if (y1 == y2)
+        if (y1 === y2)
             return;
 
         if (y1 > y2) {

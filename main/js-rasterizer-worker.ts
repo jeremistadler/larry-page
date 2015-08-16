@@ -31,12 +31,12 @@ class JsRasterizerWorker {
 
         var fitnessImprovement = (originalPartialFitness - ctx.partialFitness) / settings.iterations;
 
-        if (originalPartialFitness < ctx.partialFitness)
-            debugger;
+        //if (originalPartialFitness < ctx.partialFitness)
+        //    debugger;
 
-        var newFitness = FitnessCalculator.GetFitness(dna, this.sourceImageData);
-        if (originalFullFitness < newFitness)
-            debugger;
+        //var newFitness = FitnessCalculator.GetFitness(dna, this.sourceImageData);
+        //if (originalFullFitness < newFitness)
+        //    debugger;
         
         var workerResult: IWorkerResult = {
             generations: settings.iterations,

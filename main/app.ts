@@ -1,18 +1,17 @@
 ///<reference path="../references.ts" />
 
-var rasterizer = null;
-
 
 Utils.getRandomDna(baseUrl, function (dna) {
-    Utils.loadAndScaleImageData(imageBaseUrl + '/' + dna.Organism.ImagePath, globalWidth, globalHeight, function (image, canvas) {
-        document.body.appendChild(canvas);
-        canvas.style.width = '200px';
-        canvas.style.height = '200px';
-        (<any>canvas).style.imageRendering = 'pixelated';
+    Utils.loadAndScaleImageData(imageBaseUrl + '/' + dna.Organism.ImagePath, globalWidth, globalHeight, function (image, sourceImageCanvas) {
+
+        var previewCanvas = document.createElement('canvas');
+        previewCanvas.width = sourceImageCanvas.width;
+        previewCanvas.height = sourceImageCanvas.height;
+        var previewCtx = <CanvasRenderingContext2D>previewCanvas.getContext('2d', { alpha: false });
 
         var settings = {
             minGridSize: 1,
-            maxGridSize: 5,
+            maxGridSize: 3,
 
             newMinOpacity: 0.1,
             newMaxOpacity: 1,
@@ -22,9 +21,19 @@ Utils.getRandomDna(baseUrl, function (dna) {
             iterations: 50
         };
 
-        rasterizer = new JsRasterizer(image, dna, settings);
+        var rasterizer = new JsRasterizer(image, dna, settings);
 
         var form = new Form().AddToBody();
+
+        new Group(settings)
+            .AddHeader('Original Image')
+            .AddCanvas(sourceImageCanvas)
+            .AddToForm(form);
+
+        new Group(settings)
+            .AddHeader('Preview')
+            .AddCanvas(previewCanvas)
+            .AddToForm(form);
 
         new Group(settings)
             .AddHeader('Iterations')
@@ -45,12 +54,12 @@ Utils.getRandomDna(baseUrl, function (dna) {
 
         var mutatorGroup = new Group(settings)
             .AddHeader('Mutators')
-            .AddCheckbox('Auto: {0}', 'autoAdjustMutatorWeights')
+            .AddCheckbox('Auto', s => s.autoAdjustMutatorWeights, (s, v) => s.autoAdjustMutatorWeights = v)
             .AddToForm(form);
 
         for (var i = 0; i < GeneMutator.GeneMutators.length; i++)
             (function (index) {
-                mutatorGroup.AddSlider(GeneMutator.GeneMutators[i].name + ': {0}', 0, 1000, 10, s => s.mutatorWeights[index], (s, v) => { s.mutatorWeights[index] = v });
+                mutatorGroup.AddSlider(GeneMutator.GeneMutators[i].name + ': {0}', 0, 3000, 10, s => GeneMutator.GeneMutators[index].effectiveness, (s, v) => { GeneMutator.GeneMutators[index].effectiveness = v });
             })(i)
 
         new Group(settings)
@@ -61,9 +70,15 @@ Utils.getRandomDna(baseUrl, function (dna) {
         form.AddButton('Noop', () => { });
 
         rasterizer.onFrameStarted.push(function (dna) {
+            rasterizer.drawPreview(previewCtx);
+
             for (var i = 0; i < form.groups.length; i++)
                 for (var ii = 0; ii < form.groups[i].onConfigUpdate.length; ii++)
                     form.groups[i].onConfigUpdate[ii]();
+        });
+
+        rasterizer.onFrameCompleted.push(function (dna) {
+
         });
     });
 });
@@ -113,6 +128,11 @@ class Group {
         return this;
     }
 
+    AddCanvas(canvas: HTMLCanvasElement): Group {
+        this.groupElm.appendChild(canvas);
+        return this;
+    }
+
     AddButton(text: string, action): Group {
         var elm = document.createElement('input');
 
@@ -128,20 +148,25 @@ class Group {
         return this;
     }
 
-    AddCheckbox(text: string, configKey: string): Group {
+    AddCheckbox(text: string, readSettings: (settings: ISettings) => boolean, writeSettings: (settings: ISettings, value: boolean) => void): Group {
         var group = document.createElement('div');
         var elm = document.createElement('input');
         var elmLabel = document.createElement('label');
 
         elm.type = 'checkbox';
-        elm.value = this.config[configKey].toString();
-        elm.oninput = e => {
-            this.config[configKey] = (<HTMLInputElement> e.target).hasAttribute('checked');
-            elmLabel.innerHTML = text.replace('{0}', this.config[configKey]);
+        elm.checked = readSettings(this.config);
+        elm.onchange = e => {
+            writeSettings(this.config, (<HTMLInputElement> e.target).checked);
+            elmLabel.innerHTML = text.replace('{0}', readSettings(this.config).toString());
         };
 
         var elmLabel = document.createElement('label');
-        elmLabel.innerHTML = text.replace('{0}', this.config[configKey]);
+
+        this.onConfigUpdate.push(() => {
+            var val = readSettings(this.config)
+            elm.checked = val;
+            elmLabel.innerHTML = text.replace('{0}', val.toString());
+        });
 
         group.classList.add('input-group', 'form-checkbox-group');
         group.appendChild(elmLabel);
