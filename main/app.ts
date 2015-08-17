@@ -1,24 +1,32 @@
 ///<reference path="../references.ts" />
 
+var currentFrame = 3.6;
 
 Utils.getRandomDna(baseUrl, function (dna) {
-    Utils.loadAndScaleImageData(imageBaseUrl + '/' + dna.Organism.ImagePath, globalWidth, globalHeight, function (image, sourceImageCanvas) {
+    if (dna.Organism.Id != 64) {
+        document.location.reload(true);
+        return;
+    }
 
+    Utils.loadAndScaleVideoFrame('images/ironman.mp4', globalWidth, globalHeight, currentFrame, function (image, sourceImageCanvas) {
         var previewCanvas = document.createElement('canvas');
         previewCanvas.width = sourceImageCanvas.width;
         previewCanvas.height = sourceImageCanvas.height;
         var previewCtx = <CanvasRenderingContext2D>previewCanvas.getContext('2d', { alpha: false });
 
-        var settings = {
-            minGridSize: 1,
-            maxGridSize: 3,
+        var debugViewContainer = document.createElement('div');
+        debugViewContainer.style.display = 'inline-block';
 
-            newMinOpacity: 0.1,
+        var settings = {
+            minGridSize: 2,
+            maxGridSize: 4,
+
+            newMinOpacity: 0.4,
             newMaxOpacity: 1,
 
             autoAdjustMutatorWeights: true,
             mutatorWeights: Utils.CreateNumberArray(GeneMutator.GeneMutators.length),
-            iterations: 50
+            iterations: 100
         };
 
         var rasterizer = new JsRasterizer(image, dna, settings);
@@ -62,23 +70,57 @@ Utils.getRandomDna(baseUrl, function (dna) {
                 mutatorGroup.AddSlider(GeneMutator.GeneMutators[i].name + ': {0}', 0, 3000, 10, s => GeneMutator.GeneMutators[index].effectiveness, (s, v) => { GeneMutator.GeneMutators[index].effectiveness = v });
             })(i)
 
+        var removeNextRound = false;
+
         new Group(settings)
             .AddHeader('Actions')
             .AddButton('Reset DNA', () => { rasterizer.clearNextRound = true })
+            .AddButton('Remove Bad Triangles', () => { removeNextRound = true })
             .AddToForm(form);
 
-        form.AddButton('Noop', () => { });
+        new Group(settings)
+            .AddHeader('Info')
+            .AddToForm(form)
+            .groupElm.appendChild(debugViewContainer);
+
 
         rasterizer.onFrameStarted.push(function (dna) {
             rasterizer.drawPreview(previewCtx);
+            DebugView.RenderToDom(debugViewContainer);
 
             for (var i = 0; i < form.groups.length; i++)
                 for (var ii = 0; ii < form.groups[i].onConfigUpdate.length; ii++)
                     form.groups[i].onConfigUpdate[ii]();
         });
 
-        rasterizer.onFrameCompleted.push(function (dna) {
+        var nextImageData: ImageData = null;
+        var loadingNextFrame = false;
 
+        rasterizer.onFrameCompleted.push(function (dna) {
+            if (removeNextRound) {
+                removeNextRound = false;
+                rasterizer.removeWorst();
+            }
+
+            if (dna.Fitness < 400 * 400 * 100 && !loadingNextFrame) {
+                currentFrame += 0.1;
+                loadingNextFrame = true;
+                Utils.loadAndScaleVideoFrame('images/ironman.mp4', globalWidth, globalHeight, currentFrame, function (nImage, nSourceImageCanvas) {
+                    nextImageData = nImage;
+
+                    new Group(settings)
+                        .AddHeader('Preview ' + currentFrame)
+                        .AddCanvas(nSourceImageCanvas)
+                        .AddToForm(form);
+                });
+            }
+
+            if (nextImageData !== null) {
+                rasterizer.changeSource(nextImageData);
+                nextImageData = null;
+                rasterizer.Save();
+                loadingNextFrame = false;
+            }
         });
     });
 });
@@ -168,7 +210,8 @@ class Group {
             elmLabel.innerHTML = text.replace('{0}', val.toString());
         });
 
-        group.classList.add('input-group', 'form-checkbox-group');
+        group.classList.add('input-group');
+        group.classList.add('form-checkbox-group');
         group.appendChild(elmLabel);
         group.appendChild(elm);
         this.groupElm.appendChild(group);

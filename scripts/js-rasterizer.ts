@@ -149,6 +149,7 @@ class JsRasterizer {
             this.activeWorkers.push(worker);
 
             worker.postMessage({
+                command: 'render',
                 dna: this.Dna,
                 rect: rect,
                 settings: this.Settings
@@ -205,8 +206,6 @@ class JsRasterizer {
             for (var g = 0; g < this.onFrameStarted.length; g++)
                 this.onFrameStarted[g](this.Dna);
 
-            DebugView.RenderToDom()
-
             var fitnessAfter = FitnessCalculator.GetFitness(this.Dna, this.source);
             DebugView.SetMessage('Genes', this.Dna.Genes.length, '');
             DebugView.SetMessage('Fitness improvement', this.Dna.Fitness - fitnessAfter, '');
@@ -228,7 +227,7 @@ class JsRasterizer {
         var worker = new Worker('build-worker/worker.js');
         this.idleWorkers.push(worker);
         worker.onmessage = f => this.onMessage(f);
-        worker.postMessage(this.source);
+        worker.postMessage({ command: 'source', source: this.source });
     }
 
     Save() {
@@ -245,6 +244,14 @@ class JsRasterizer {
 
         for (var i = 0; i < this.activeWorkers.length; i++) {
             this.activeWorkers[i].terminate();
+        }
+    }
+
+    changeSource(newSource: ImageData) {
+        this.Dna.Fitness = FitnessCalculator.GetFitness(this.Dna, this.source);
+        this.source = newSource;
+        for (var i = 0; i < this.idleWorkers.length; i++) {
+            this.idleWorkers[i].postMessage({ command: 'source', source: newSource});
         }
     }
 }

@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <title>The larry bot</title>
     <link href='http://fonts.googleapis.com/css?family=Roboto:100,400,300,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <!--<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">-->
     <style>
         body {
             background: #f8f8f8;
@@ -115,7 +115,7 @@
     </style>
 </head>
 <body>
-    <header class="header"><span onclick="renderHome()" class="homeButton hidden"><i class="fa fa-home"></i></span> The Larry Bot</header>
+    <header class="header" onclick="renderHome()" ><span class="homeButton hidden"><i class="fa fa-home"></i></span> The Larry Bot</header>
     <div id="imageContainer"></div>
     <footer class="footer">Drop images anywhere to give them to larry</footer>
 
@@ -129,22 +129,22 @@
     <script src="build-worker/worker.js"></script>
 
     <script>
-        var baseUrl = '';
+        var baseUrl = 'http://larry.jeremi.se';
         var dnaItems = [];
         var imageContainer = document.getElementById('imageContainer');
         var homeButton = document.getElementsByClassName('homeButton')[0];
-        var rasterizer = null;
+        //var rasterizer = null;
 
-        Utils.getRandomDna(baseUrl, function(dna) {
-            Utils.loadAndScaleImageData(baseUrl + '/images/' + dna.Organism.ImagePath, 128, 128, function(image, canvas) {
-                rasterizer = new JsRasterizer(image, dna);
-            });
-        });
+        //Utils.getRandomDna(baseUrl, function(dna) {
+        //    Utils.loadAndScaleImageData(baseUrl + '/images/' + dna.Organism.ImagePath, 128, 128, function(image, canvas) {
+        //        rasterizer = new JsRasterizer(image, dna);
+        //    });
+        //});
 
 
-        var animateOut = function() {
+        var animateOut = function () {
             for (var i = 0; i < imageContainer.childNodes.length; i++) {
-                imageContainer.childNodes[i].style.transitionDelay = '.' + i + 's';
+                imageContainer.childNodes[i].style.transitionDelay = (i * 0.1) + 's';
                 imageContainer.childNodes[i].classList.add('fade-out')
             }
         }
@@ -166,7 +166,8 @@
                 imageContainer.innerHTML = '';
                 for (var i = 0; i < dnaItems.length; i++) {
                     (function(dna) {
-                        var canvasWrapper = RenderDna(dna, imageContainer, 128);
+                        var canvasWrapper = CreateDnaTile(dna, 128);
+                        imageContainer.appendChild(canvasWrapper);
                         canvasWrapper.onclick = function() {
                             renderOrganism(dna.Organism.Id);
                         }
@@ -189,37 +190,74 @@
             xhr.onload = function(e) {
                 if (this.status != 200)
                     throw 'Could not get items';
+                imageContainer.innerHTML = '';
 
                 dnaItems = JSON.parse(this.response);
-                dnaItems.sort(function(a, b) { return a.Generation - b.Generation });
+                var animatedTile = CreateAnimatedTile(dnaItems, 640);
+                imageContainer.appendChild(animatedTile);
 
-                imageContainer.innerHTML = '';
+                dnaItems.sort(function (a, b) { return b.Generation - a.Generation });
+
                 for (var i = 0; i < dnaItems.length; i++) {
-                    RenderDna(dnaItems[i], imageContainer, 128);
+                    var tile = CreateDnaTile(dnaItems[i], 128);
+                    imageContainer.appendChild(tile);
                 }
             };
             xhr.send();
         }
 
+        function CreateAnimatedTile(dnaList, size) {
+            if (dnaList.length === 0)
+                return;
 
-        function RenderDna(dna, container, size) {
-            var scaleFactor = Math.min(size / dna.Organism.Height, size / dna.Organism.Width);
+            dnaList = dnaList.slice(0);
+            dnaList.sort(function (a, b) { return a.Generation - b.Generation });
+            var organism = dnaList[0].Organism;
 
             var canvas = document.createElement('canvas');
-            var canvasWrapper = document.createElement('div');
-            var canvasImg = document.createElement('div');
-            canvasWrapper.classList.add('thumb');
-            canvasImg.classList.add('thumbImg');
-            canvasImg.style.backgroundImage = "url('/images/" + dna.Organism.ImagePath + "')";
+
+            var scaleFactor = Math.min(size / organism.Height, size / organism.Width);
+            canvas.width = organism.Width * scaleFactor;
+            canvas.height = organism.Height * scaleFactor;
+            var ctx = canvas.getContext('2d', { alpha: false });
+
+            var frameIndex = 0;
+
+            window.setInterval(function () {
+                frameIndex++;
+
+                if (dnaList.length == frameIndex)
+                    frameIndex = 0;
+
+                RenderDna(dnaList[frameIndex], ctx);
+            }, 100);
+
+            return canvas;
+        }
+
+        function CreateDnaTile(dna, size) {
+            var scaleFactor = Math.min(size / dna.Organism.Height, size / dna.Organism.Width);
+            var canvas = document.createElement('canvas');
+            var wrapper = document.createElement('div');
+            var backgroundImg = document.createElement('div');
+            wrapper.classList.add('thumb');
+            backgroundImg.classList.add('thumbImg');
+            backgroundImg.style.backgroundImage = "url('" + baseUrl + "/images/" + dna.Organism.ImagePath + "')";
             canvas.width = dna.Organism.Width * scaleFactor;
             canvas.height = dna.Organism.Height * scaleFactor;
-            canvasWrapper.appendChild(canvas);
-            canvasWrapper.appendChild(canvasImg);
-            container.appendChild(canvasWrapper);
-
+            wrapper.appendChild(canvas);
+            wrapper.appendChild(backgroundImg);
             var ctx = canvas.getContext('2d', { alpha: false });
+            RenderDna(dna, ctx);
+            return wrapper;
+        }
+
+        function RenderDna(dna, ctx) {
+            var width = ctx.canvas.width;
+            var height = ctx.canvas.height;
+
             ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, width, height);
 
             for (var g = 0; g < dna.Genes.length; g++) {
                 var gene = dna.Genes[g];
@@ -230,14 +268,12 @@
                     gene.Color[3] + ')';
 
                 ctx.beginPath();
-                ctx.moveTo(gene.Pos[0] * canvas.width, gene.Pos[1] * canvas.height);
-                ctx.lineTo(gene.Pos[2] * canvas.width, gene.Pos[3] * canvas.height);
-                ctx.lineTo(gene.Pos[4] * canvas.width, gene.Pos[5] * canvas.height);
+                ctx.moveTo(gene.Pos[0] * width, gene.Pos[1] * height);
+                ctx.lineTo(gene.Pos[2] * width, gene.Pos[3] * height);
+                ctx.lineTo(gene.Pos[4] * width, gene.Pos[5] * height);
                 ctx.closePath();
                 ctx.fill();
             }
-
-            return canvasWrapper;
         }
 
         var createOrganism = function(imagePath, image) {

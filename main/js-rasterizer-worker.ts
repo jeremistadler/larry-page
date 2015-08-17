@@ -51,8 +51,8 @@ class JsRasterizerWorker {
 
 var childRasterizer = null;
 self.onmessage = function (e) {
-    if (childRasterizer == null)
-        childRasterizer = new JsRasterizerWorker(e.data);
+    if (e.data.command === 'source')
+        childRasterizer = new JsRasterizerWorker(e.data.source);
     else
         childRasterizer.go(e.data.dna, e.data.rect, e.data.settings);
 }

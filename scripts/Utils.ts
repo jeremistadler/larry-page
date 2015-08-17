@@ -121,6 +121,26 @@ class Utils {
         image.onerror = e => console.error('Could not load image', e);
         image.src = url;
     }
+
+    static loadAndScaleVideoFrame(url: string, width: number, height: number, frame: number, onComplete: (image: ImageData, canvas: HTMLCanvasElement) => void) {
+        var image = document.createElement('video');
+        //image.crossOrigin = '';
+        image.addEventListener("loadeddata", function () {
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
+            ctx.fillStyle = 'white';
+            ctx.drawImage(image, 0, 0, width, height);
+            var data = ctx.getImageData(0, 0, width, height);
+            onComplete(data, canvas);
+            this.currentTime = 10;
+        }, false);
+
+        image.src = url;
+        image.currentTime = frame;
+        image.onerror = e => console.error('Could not load video', e);
+    }
 }
 
 
@@ -134,7 +154,6 @@ interface DebugMessage {
 
 class DebugView {
     static Messages: DebugMessage[] = [];
-    static elm: HTMLElement;
     
     static SetMessage(name: string, value: number, unit: string) {
         var old = this.Messages[name];
@@ -148,13 +167,7 @@ class DebugView {
         };
     }
 
-    static RenderToDom() {
-        if (this.elm == null) {
-            this.elm = document.createElement('div');
-            this.elm.style.display = 'inline-block';
-            document.body.appendChild(this.elm);
-        }
-
+    static RenderToDom(elm: HTMLElement) {
         var html = '<table style="font-size: 11px;color: #333;font-family:\'Segoe UI\'"><tr><td>Name</td><td>Value</td><td>Old Value</td><td>Diff</td></tr>';
         
         for (var name in this.Messages) {
@@ -166,6 +179,6 @@ class DebugView {
                 '</td><td>' + Math.round((f.value - f.oldValue) * 100) / 100 + ' ' + f.unit + '</td></tr>';
         }
 
-        this.elm.innerHTML = html + '</table>';
+        elm.innerHTML = html + '</table>';
     }
 }

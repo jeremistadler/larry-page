@@ -392,7 +392,7 @@ class GeneMutator {
         //},
         {
             name: 'Add Big Triangle',
-            effectiveness: 1000,
+            effectiveness: 100,
             func: function (ctx: IDnaRenderContext): IMutatorState {
                 if (ctx.geneStates.length > ctx.dna.Generation / 5000 + 20)
                     return null;
