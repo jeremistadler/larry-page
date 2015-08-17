@@ -208,7 +208,7 @@ class FitnessCalculator{
     static calculateFitness(img: ImageData, buff2: Int8Array) {
         var diff = 0;
         for (var i = 0; i < img.data.length; i++) {
-            var q = Math.abs(img.data[i] - buff2[i]);
+            var q = img.data[i] - buff2[i];
             diff += q * q;
         }
         return diff;

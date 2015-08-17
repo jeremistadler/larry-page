@@ -134,7 +134,6 @@ class Utils {
             ctx.drawImage(image, 0, 0, width, height);
             var data = ctx.getImageData(0, 0, width, height);
             onComplete(data, canvas);
-            this.currentTime = 10;
         }, false);
 
         image.src = url;
