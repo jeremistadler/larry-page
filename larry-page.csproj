@@ -130,16 +130,16 @@
       <DependentUpon>Web.config</DependentUpon>
     </Content>
     <None Include="tsconfig.json" />
-    <None Include="frontend\tests\spec.ts" />
-    <Content Include="frontend\tests\SpecRunner.html" />
-    <None Include="frontend\scripts\dna.ts" />
-    <None Include="frontend\scripts\js-rasterizer.ts" />
-    <None Include="frontend\scripts\raster.ts" />
-    <None Include="frontend\scripts\shared.ts" />
-    <None Include="frontend\scripts\utils.ts" />
-    <Content Include="frontend\form.css" />
-    <Content Include="frontend\list.html" />
-    <Content Include="frontend\index.html" />
+    <None Include="Frontend\tests\spec.ts" />
+    <Content Include="Frontend\tests\SpecRunner.html" />
+    <None Include="Frontend\scripts\dna.ts" />
+    <None Include="Frontend\scripts\js-rasterizer.ts" />
+    <None Include="Frontend\scripts\raster.ts" />
+    <None Include="Frontend\scripts\shared.ts" />
+    <None Include="Frontend\scripts\utils.ts" />
+    <Content Include="Frontend\form.css" />
+    <Content Include="Frontend\list.html" />
+    <Content Include="Frontend\index.html" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="package.json" />
@@ -195,8 +195,8 @@
   <ItemGroup>
     <Folder Include="Api\Controllers\" />
     <Folder Include="Api\Entities\" />
-    <Folder Include="frontend\" />
-    <Folder Include="frontend\tests\" />
-    <Folder Include="frontend\scripts\" />
+    <Folder Include="Frontend\" />
+    <Folder Include="Frontend\tests\" />
+    <Folder Include="Frontend\scripts\" />
   </ItemGroup>
 </Project>
