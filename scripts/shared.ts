@@ -1,12 +1,11 @@
-﻿"use strict";
+export namespace RenderConfig {
+    export var globalWidth = 128;
+    export var globalHeight = 128;
 
-var globalWidth = 128;
-var globalHeight = 128;
+    export var baseUrl = 'http://larry.jeremi.se';
+    //var baseUrl = 'http://localhost:2270';
 
-var baseUrl = 'http://larry.jeremi.se';
-//var baseUrl = 'http://localhost:2270';
-
-var imageBaseUrl = baseUrl + '/images';
-var debug = false;
-var tempName = 'dnaLocalized1';
-
+    export var imageBaseUrl = baseUrl + '/images';
+    export var debug = false;
+    export var tempName = 'dnaLocalized1';
+}﻿

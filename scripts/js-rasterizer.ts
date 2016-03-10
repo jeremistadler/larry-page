@@ -1,7 +1,8 @@
-﻿///<reference path="../references.ts" />
-"use strict";
+import Utils2 = require('./utils');
+var Utils = Utils2.Utils;
 
-class JsRasterizer {
+
+export class JsRasterizer {
     idleWorkers: Worker[] = [];
     activeWorkers: Worker[] = [];
     allMutations: any[] = [];

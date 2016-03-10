@@ -1,5 +1,8 @@
-﻿"use strict";
-///<reference path="../references.ts" />
+import Utils2 = require('./utils');
+var Utils = Utils2.Utils;
+
+import Raster2 = require('./raster');
+var Raster = Raster2.Raster;
 
 interface IWorkerResult {
     generations: number;
@@ -401,7 +404,7 @@ class GeneMutator {
                     Color: [Math.random(), Math.random(), Math.random(), Utils.randomFloat(ctx.settings.newMinOpacity, ctx.settings.newMaxOpacity)],
                     Pos: new Array(6)
                 }
-                
+
                 for (var i = 0; i < gene.Pos.length; i += 2)
                     gene.Pos[i] = Math.random() * ctx.rect.width + ctx.rect.x;
 

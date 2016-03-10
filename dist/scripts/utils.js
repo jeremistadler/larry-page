@@ -1,0 +1,141 @@
+"use strict";
+var RenderConfig = require('./shared');
+var config = RenderConfig.RenderConfig;
+var Utils = (function () {
+    function Utils() {
+    }
+    Utils.StartTick = function (tickMethod) {
+        var oldTime = 0;
+        var tickLoop = function (time) {
+            var deltaTime = time - oldTime;
+            oldTime = time;
+            tickMethod(deltaTime / 1000);
+            window.requestAnimationFrame(tickLoop);
+        };
+        tickLoop(0);
+    };
+    Utils.randomIndex = function (arr) {
+        return Math.floor(Math.random() * arr.length);
+    };
+    Utils.randomFloat = function (min, max) {
+        return Math.random() * (max - min) + min;
+    };
+    Utils.randomInt = function (min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
+    Utils.CreateNumberArray = function (length) {
+        var arr = new Array(length);
+        for (var i = 0; i < length; i++)
+            arr[i] = 0;
+        return arr;
+    };
+    Utils.ClampFloat = function (num) {
+        return Math.min(1, Math.max(num, 0));
+    };
+    Utils.ClampByte = function (num) {
+        return Math.min(255, Math.max(num, 0));
+    };
+    Utils.Clamp = function (num, min, max) {
+        return Math.min(Math.max(num, min), max);
+    };
+    Utils.createDna = function (numberOfGenes, image) {
+        var dna = {
+            Fitness: Infinity,
+            Genes: new Array(numberOfGenes),
+            Generation: 0,
+            Mutation: 0,
+            Organism: {
+                Id: 0,
+                ImagePath: image,
+                GeneCount: numberOfGenes,
+                Width: 200,
+                Height: 200
+            }
+        };
+        for (var i = 0; i < numberOfGenes; i++) {
+            var gene = dna.Genes[i] = {
+                Color: [Math.random(), Math.random(), Math.random(), Math.random() * 0.8 + 0.2],
+                Pos: new Array(6)
+            };
+            for (var q = 0; q < gene.Pos.length; q++)
+                gene.Pos[q] = Math.random();
+        }
+        return dna;
+    };
+    Utils.loadDebugDna = function (onComplete) {
+        window.setTimeout(function () {
+            var dna = localStorage.getItem(config.tempName);
+            if (!dna)
+                onComplete(Utils.createDna(0, config.imageBaseUrl + '/' + 'cy0miacv.hrd.jpg'));
+            else
+                onComplete(JSON.parse(dna));
+        });
+    };
+    Utils.getRandomDna = function (baseUrl, onComplete) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', baseUrl + '/api/dna/random', true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function (e) {
+            if (this.status == 200)
+                onComplete(JSON.parse(this.response));
+            else
+                console.error('Server could not return a DNA');
+        };
+        xhr.onerror = function (e) {
+            console.error('Could not reach server to get DNA');
+        };
+        xhr.send();
+    };
+    Utils.loadAndScaleImageData = function (url, width, height, onComplete) {
+        var image = new Image();
+        image.crossOrigin = '';
+        image.onload = function () {
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d', { alpha: false });
+            ctx.fillStyle = 'white';
+            ctx.drawImage(image, 0, 0, width, height);
+            var data = ctx.getImageData(0, 0, width, height);
+            onComplete(data, canvas);
+        };
+        image.onerror = function (e) { return console.error('Could not load image', e); };
+        image.src = url;
+    };
+    return Utils;
+}());
+exports.Utils = Utils;
+var DebugView = (function () {
+    function DebugView() {
+    }
+    DebugView.SetMessage = function (name, value, unit) {
+        var old = this.Messages[name];
+        this.Messages[name] = {
+            name: name,
+            value: value,
+            unit: unit,
+            oldValue: old ? old.value : 0,
+            oldUnit: old ? old.unit : '',
+        };
+    };
+    DebugView.RenderToDom = function () {
+        if (this.elm == null) {
+            this.elm = document.createElement('div');
+            this.elm.style.display = 'inline-block';
+            document.body.appendChild(this.elm);
+        }
+        var html = '<table style="font-size: 11px;color: #333;font-family:\'Segoe UI\'"><tr><td>Name</td><td>Value</td><td>Old Value</td><td>Diff</td></tr>';
+        for (var name in this.Messages) {
+            var f = this.Messages[name];
+            html +=
+                '<tr><td>' + f.name +
+                    '</td><td>' + Math.round(f.value * 100) / 100 + ' ' + f.unit +
+                    '</td><td>' + Math.round(f.oldValue * 100) / 100 + ' ' + f.oldUnit +
+                    '</td><td>' + Math.round((f.value - f.oldValue) * 100) / 100 + ' ' + f.unit + '</td></tr>';
+        }
+        this.elm.innerHTML = html + '</table>';
+    };
+    DebugView.Messages = [];
+    return DebugView;
+}());
+//# sourceMappingURL=utils.js.map

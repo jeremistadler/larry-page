@@ -8,7 +8,7 @@ var concat = require("gulp-concat");
 var addsrc = require('gulp-add-src');
 
 gulp.task('scripts', function () {
-    var scripts = gulp.src(['references.ts', 'scripts/**/*.ts', 'main/app.ts'])
+    var scripts = gulp.src(['scripts/references.ts', 'scripts/**/*.ts', 'scripts/app.ts'])
                .pipe(ts({
                    target: 'ES6',
                    noExternalResolve: true
@@ -23,7 +23,7 @@ gulp.task('scripts', function () {
                }))
                .pipe(gulp.dest('.'));
 
-    return gulp.src(['references.ts', 'scripts/**/*.ts', 'main/js-rasterizer-worker.ts'])
+    return gulp.src(['scripts/references.ts', 'scripts/**/*.ts', 'scripts/js-rasterizer-worker.ts'])
                .pipe(ts({
                    target: 'ES6',
                    noExternalResolve: true

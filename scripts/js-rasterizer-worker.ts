@@ -1,10 +1,7 @@
-﻿///<reference path="../references.ts" />
-"use strict";
-
-
+﻿
 class JsRasterizerWorker {
     constructor(public sourceImageData: ImageData) { }
-    
+
     go(dna: Dna, rect: IRectangle, settings: ISettings) {
         var startTime = new Date().getTime();
         GeneMutator.setFromSettings(settings);
@@ -37,7 +34,7 @@ class JsRasterizerWorker {
         //var newFitness = FitnessCalculator.GetFitness(dna, this.sourceImageData);
         //if (originalFullFitness < newFitness)
         //    debugger;
-        
+
         var workerResult: IWorkerResult = {
             generations: settings.iterations,
             mutations: ctx.mutations,
@@ -56,6 +53,3 @@ self.onmessage = function (e) {
     else
         childRasterizer.go(e.data.dna, e.data.rect, e.data.settings);
 }
-
-
-

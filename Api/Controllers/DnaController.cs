@@ -10,6 +10,13 @@ namespace server.Api
 {
     public class DnaController : ApiBase
     {
+		[HttpGet]
+		[Route("api/warmup")]
+		public object Warmup()
+		{
+			return "Warmup at " + DateTime.Now.ToShortTimeString();
+		}
+
         [HttpPost]
         [Route("api/dna/save")]
         public object Save(DnaModel dna)

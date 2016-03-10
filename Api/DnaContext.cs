@@ -9,30 +9,12 @@ using System.Web;
 
 namespace server.Api
 {
-    public static class SecretsReader
-    {
-        static JObject Secrets;
-        static SecretsReader()
-        {
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data\\secrets.json");
-            var text = File.ReadAllText(path);
-            Secrets = JObject.Parse(text);
-        }
-
-        public static string ReadConnectionString(string key)
-        {
-            var value = ((Newtonsoft.Json.Linq.JValue)Secrets[key]).Value<string>();
-            return value;
-        }
-    }
-
     public class DnaContext : DbContext
     {
         public DbSet<DnaEntity> Dna { get; set; }
         public DbSet<OrganismEntity> Organisms { get; set; }
 
-        public DnaContext()
-            : base(SecretsReader.ReadConnectionString("db"))
+		public DnaContext() : base(SecretsReader.Read<string>("db"))
         {
             Database.SetInitializer(new CreateDatabaseIfNotExists<DnaContext>());
         }

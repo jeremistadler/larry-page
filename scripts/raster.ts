@@ -1,6 +1,7 @@
-﻿"use strict";
+import Utils2 = require('./utils');
+var Utils = Utils2.Utils;
 
-class Raster {
+export class Raster {
     static _rowMin: number[] = Utils.CreateNumberArray(1024);
     static _rowMax: number[] = Utils.CreateNumberArray(1024);
 
@@ -134,4 +135,3 @@ class Raster {
         this._drawPolygon(buffer, width, height, this.rotPoints(this.polyBox(x, y, h, w), rot, { x: x, y: y }), color);
     }
 }
-

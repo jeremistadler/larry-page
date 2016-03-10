@@ -1,6 +1,7 @@
-﻿"use strict";
-
-class Utils {
+import RenderConfig = require('./shared');
+var config = RenderConfig.RenderConfig;
+﻿
+export class Utils {
     static StartTick(tickMethod: (dt: number) => void) {
         var oldTime = 0;
         var tickLoop = (time) => {
@@ -81,9 +82,9 @@ class Utils {
 
     static loadDebugDna(onComplete: (dna: Dna) => void) {
         window.setTimeout(function () {
-            var dna = localStorage.getItem(tempName);
+            var dna = localStorage.getItem(config.tempName);
             if (!dna)
-                onComplete(Utils.createDna(0, imageBaseUrl + '/' + 'cy0miacv.hrd.jpg'));
+                onComplete(Utils.createDna(0, config.imageBaseUrl + '/' + 'cy0miacv.hrd.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });
@@ -135,7 +136,7 @@ interface DebugMessage {
 class DebugView {
     static Messages: DebugMessage[] = [];
     static elm: HTMLElement;
-    
+
     static SetMessage(name: string, value: number, unit: string) {
         var old = this.Messages[name];
 
@@ -156,7 +157,7 @@ class DebugView {
         }
 
         var html = '<table style="font-size: 11px;color: #333;font-family:\'Segoe UI\'"><tr><td>Name</td><td>Value</td><td>Old Value</td><td>Diff</td></tr>';
-        
+
         for (var name in this.Messages) {
             var f = this.Messages[name];
             html +=

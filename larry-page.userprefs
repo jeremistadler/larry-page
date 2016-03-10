@@ -1,0 +1,15 @@
+﻿<Properties RefactoringSettings.EnableRefactorings="True" StartupItem="larry-page.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Api/OrganismController.cs">
+    <Files>
+      <File FileName="Api/DnaContext.cs" Line="1" Column="1" />
+      <File FileName="Api/OrganismEntity.cs" Line="11" Column="28" />
+      <File FileName="Api/DnaEntity.cs" Line="1" Column="1" />
+      <File FileName="Api/OrganismController.cs" Line="1" Column="1" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

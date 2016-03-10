@@ -1,8 +1,15 @@
-///<reference path="../references.ts" />
+import Utils2 = require('./utils');
+var Utils = Utils2.Utils;
+
+import Raster2 = require('./raster');
+var Raster = Raster2.Raster;
+
+import Config2 = require('./shared');
+var Config = Config2.RenderConfig;
 
 
-Utils.getRandomDna(baseUrl, function (dna) {
-    Utils.loadAndScaleImageData(imageBaseUrl + '/' + dna.Organism.ImagePath, globalWidth, globalHeight, function (image, sourceImageCanvas) {
+Utils.getRandomDna(Config.baseUrl, function (dna) {
+    Utils.loadAndScaleImageData(Config.imageBaseUrl + '/' + dna.Organism.ImagePath, Config.globalWidth, Config.globalHeight, function (image, sourceImageCanvas) {
 
         var previewCanvas = document.createElement('canvas');
         previewCanvas.width = sourceImageCanvas.width;

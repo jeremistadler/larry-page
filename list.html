@@ -1,16 +1,14 @@
 ﻿<!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <title>The larry bot</title>
-    <link href='http://fonts.googleapis.com/css?family=Roboto:100,400,300,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+
     <style>
         body {
             background: #f8f8f8;
-            font-family: 'Roboto', sans-serif;
-            transition: 0.3s;
+            font-family: system, -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Lucida Grande", "Segoe UI";
         }
 
         #imageContainer {
@@ -126,10 +124,10 @@
         <img id="upload-box-img" />
     </div>
 
-    <script src="build-worker/worker.js"></script>
+    <script src="build/main.js"></script>
 
     <script>
-        var baseUrl = '';
+        var baseUrl = 'http://larry.jeremi.se';
         var dnaItems = [];
         var imageContainer = document.getElementById('imageContainer');
         var homeButton = document.getElementsByClassName('homeButton')[0];
@@ -201,8 +199,16 @@
             xhr.send();
         }
 
-
+        function RenderDnaSvg(dna, container, size) {
+            var svgElm = document.createElement('div');
+            svgElm.innerHTML = '<svg height="210" width="500"><polygon points="200,10 250,190 160,210" style="fill:lime;stroke:purple;stroke-width:1" /></svg>';
+            container.appendChild(svgElm);
+            return svgElm;
+        }
+  
         function RenderDna(dna, container, size) {
+            return RenderDnaSvg(dna, container, size);
+
             var scaleFactor = Math.min(size / dna.Organism.Height, size / dna.Organism.Width);
 
             var canvas = document.createElement('canvas');
