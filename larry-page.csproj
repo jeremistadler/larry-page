@@ -113,10 +113,6 @@
   <ItemGroup>
     <Compile Include="Api\DnaContext.cs" />
     <Compile Include="Api\Views.cs" />
-    <Compile Include="WebApiConfig.cs" />
-    <Compile Include="Global.asax.cs">
-      <DependentUpon>Global.asax</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Api\Controllers\BaseController.cs" />
@@ -128,23 +124,22 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include=".gitignore" />
-    <Content Include="form.css" />
-    <Content Include="Global.asax" />
     <Content Include="gulpfile.js" />
-    <Content Include="list.html" />
-    <None Include="main\js-rasterizer-worker.ts" />
-    <None Include="scripts\raster.ts" />
     <Content Include="Web.config" />
-    <Content Include="Web.Debug.config">
-      <DependentUpon>Web.config</DependentUpon>
-    </Content>
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
-    <Content Include="index.html" />
     <None Include="tsconfig.json" />
     <None Include="frontend\tests\spec.ts" />
     <Content Include="frontend\tests\SpecRunner.html" />
+    <None Include="frontend\scripts\dna.ts" />
+    <None Include="frontend\scripts\js-rasterizer.ts" />
+    <None Include="frontend\scripts\raster.ts" />
+    <None Include="frontend\scripts\shared.ts" />
+    <None Include="frontend\scripts\utils.ts" />
+    <Content Include="frontend\form.css" />
+    <Content Include="frontend\list.html" />
+    <Content Include="frontend\index.html" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="package.json" />
@@ -153,15 +148,7 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="scripts\dna.ts" />
-    <None Include="scripts\utils.ts" />
-    <None Include="scripts\js-rasterizer.ts" />
-  </ItemGroup>
-  <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="scripts\shared.ts" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>
@@ -210,5 +197,6 @@
     <Folder Include="Api\Entities\" />
     <Folder Include="frontend\" />
     <Folder Include="frontend\tests\" />
+    <Folder Include="frontend\scripts\" />
   </ItemGroup>
 </Project>
