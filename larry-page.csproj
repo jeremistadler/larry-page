@@ -140,6 +140,7 @@
     <Content Include="Frontend\form.css" />
     <Content Include="Frontend\list.html" />
     <Content Include="Frontend\index.html" />
+    <None Include="config.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="package.json" />
