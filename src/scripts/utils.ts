@@ -1,6 +1,6 @@
-import RenderConfig = require('./shared');
-var config = RenderConfig.RenderConfig;
-﻿
+import { RenderConfig } from './shared';
+import { Dna } from './dna';
+
 export class Utils {
     static StartTick(tickMethod: (dt: number) => void) {
         var oldTime = 0;
@@ -82,9 +82,9 @@ export class Utils {
 
     static loadDebugDna(onComplete: (dna: Dna) => void) {
         window.setTimeout(function () {
-            var dna = localStorage.getItem(config.tempName);
+            var dna = localStorage.getItem(RenderConfig.tempName);
             if (!dna)
-                onComplete(Utils.createDna(0, config.imageBaseUrl + '/' + 'cy0miacv.hrd.jpg'));
+                onComplete(Utils.createDna(0, RenderConfig.imageBaseUrl + '/' + 'cy0miacv.hrd.jpg'));
             else
                 onComplete(JSON.parse(dna));
         });
@@ -125,7 +125,7 @@ export class Utils {
 }
 
 
-interface DebugMessage {
+export interface DebugMessage {
     name: string;
     value: number;
     unit: string;
@@ -133,7 +133,7 @@ interface DebugMessage {
     oldUnit: string;
 }
 
-class DebugView {
+export class DebugView {
     static Messages: DebugMessage[] = [];
     static elm: HTMLElement;
 

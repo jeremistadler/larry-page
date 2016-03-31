@@ -1,4 +1,7 @@
-﻿
+import { Dna, ISettings, IRectangle, IDnaRenderContext, IWorkerResult } from './dna';﻿
+import { GeneMutator, GeneHelper } from './gene-mutator';
+import { FitnessCalculator } from './fitness-calculator';
+
 class JsRasterizerWorker {
     constructor(public sourceImageData: ImageData) { }
 

@@ -1,5 +1,3 @@
-///<reference path="../references.ts" />
-///<reference path="jasmine.d.ts" />
 
 
 describe("Raster", function() {
@@ -32,7 +30,7 @@ describe("Raster", function() {
 
 
 describe("Fitness calculator", function() {
-  
+
     it("should calculate the same fitness combined", function() {
         var cleanBuffer = new Uint8ClampedArray(100 * 100 * 4);
         var buffer = new Uint8ClampedArray(100 * 100 * 4);
@@ -65,7 +63,7 @@ describe("Gene Helper", function() {
         };
 
         var rect = {
-            x: 0, 
+            x: 0,
             y: 0,
             x2: 1,
             y2: 1

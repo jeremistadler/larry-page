@@ -1,15 +1,12 @@
-import Utils2 = require('./utils');
-var Utils = Utils2.Utils;
+import { Raster } from './raster';
+import { Utils } from './utils';
+import { RenderConfig } from './shared';
+import { Dna, ISettings } from './dna';
+import { GeneMutator } from './gene-mutator';
+import { JsRasterizer } from './rasterizer';
 
-import Raster2 = require('./raster');
-var Raster = Raster2.Raster;
-
-import Config2 = require('./shared');
-var Config = Config2.RenderConfig;
-
-
-Utils.getRandomDna(Config.baseUrl, function (dna) {
-    Utils.loadAndScaleImageData(Config.imageBaseUrl + '/' + dna.Organism.ImagePath, Config.globalWidth, Config.globalHeight, function (image, sourceImageCanvas) {
+Utils.getRandomDna(RenderConfig.baseUrl, function (dna) {
+    Utils.loadAndScaleImageData(RenderConfig.imageBaseUrl + '/' + dna.Organism.ImagePath, RenderConfig.globalWidth, RenderConfig.globalHeight, function (image, sourceImageCanvas) {
 
         var previewCanvas = document.createElement('canvas');
         previewCanvas.width = sourceImageCanvas.width;

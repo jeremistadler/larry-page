@@ -1,6 +1,8 @@
-import Utils2 = require('./utils');
-var Utils = Utils2.Utils;
-
+import { Dna, ISettings, IRectangle, IWorkerResult } from './dna';
+import { FitnessCalculator } from './fitness-calculator';
+import { Utils, DebugView } from './utils';
+import { RenderConfig } from './shared';
+import { GeneMutator, GeneHelper } from './gene-mutator';
 
 export class JsRasterizer {
     idleWorkers: Worker[] = [];
@@ -234,7 +236,7 @@ export class JsRasterizer {
 
     Save() {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', baseUrl + '/api/dna/save', true);
+        xhr.open('POST', RenderConfig.baseUrl + '/api/dna/save', true);
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.send(JSON.stringify(this.Dna));
     }

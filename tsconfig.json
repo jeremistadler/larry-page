@@ -1,15 +1,34 @@
-﻿{
+{
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es5",
+    "target": "es6",
     "jsx": "react",
     "sourceMap": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "outDir": "dist"
   },
-  "exclude": [
-    "dist",
-    "node_modules"
-  ]
+  "filesGlob": [
+    "src/scripts/**/*.ts",
+    "src/scripts/**/*.tsx",
+    "typings/main.d.ts"
+  ],
+  "files": [
+    "src/scripts/app.ts",
+    "src/scripts/dna.ts",
+    "src/scripts/fitness-calculator.ts",
+    "src/scripts/gene-mutator.ts",
+    "src/scripts/raster.ts",
+    "src/scripts/rasterizer-worker.ts",
+    "src/scripts/rasterizer.ts",
+    "src/scripts/shared.ts",
+    "src/scripts/utils.ts",
+    "src/scripts/dna-info.tsx",
+    "src/scripts/list-app.tsx",
+    "src/scripts/list.tsx",
+    "typings/main.d.ts"
+  ],
+  "atom": {
+    "rewriteTsconfig": true
+  }
 }

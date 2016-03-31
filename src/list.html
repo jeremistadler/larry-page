@@ -110,11 +110,16 @@
             padding: 10px;
             background-color: #EAEAEA;
         }
+
+        .dna-info {
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
     <header class="header"><span onclick="renderHome()" class="homeButton hidden"><i class="fa fa-home"></i></span> The Larry Bot</header>
     <div id="imageContainer"></div>
+    <div id="content"></div>
     <footer class="footer">Drop images anywhere to give them to larry</footer>
 
     <div id="upload-box">
@@ -124,14 +129,19 @@
         <img id="upload-box-img" />
     </div>
 
-    <script src="build/main.js"></script>
+    <script src="list.bundle.js"></script>
 
     <script>
-        var baseUrl = 'http://larry.jeremi.se';
+    return;
+
+        var baseUrl = 'http://larry-api.jeremi.se';
         var dnaItems = [];
         var imageContainer = document.getElementById('imageContainer');
         var homeButton = document.getElementsByClassName('homeButton')[0];
         var rasterizer = null;
+
+        const utils_1 = require('./utils');
+        const Utils = utils_1.Utils;
 
         Utils.getRandomDna(baseUrl, function(dna) {
             Utils.loadAndScaleImageData(baseUrl + '/images/' + dna.Organism.ImagePath, 128, 128, function(image, canvas) {

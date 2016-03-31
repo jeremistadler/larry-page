@@ -1,5 +1,4 @@
-import Utils2 = require('./utils');
-var Utils = Utils2.Utils;
+import { Utils } from './utils';
 
 export class Raster {
     static _rowMin: number[] = Utils.CreateNumberArray(1024);
