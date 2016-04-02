@@ -14,16 +14,15 @@ namespace server.Api
 		static JObject json;
 		static string[] Paths = new[]
 		{
-			Path.Combine(Environment.CurrentDirectory, @"App_Data\config.json"),
-			Path.Combine(Environment.CurrentDirectory, "config.json"),
-			Path.Combine(Environment.CurrentDirectory, @"..\config.json"),
-			Path.Combine(Environment.CurrentDirectory, @"..\..\config.json"),
-			Path.Combine(Environment.CurrentDirectory, @"..\..\..\config.json"),
-			Path.Combine(Environment.CurrentDirectory, @"..\..\..\..\config.json"),
-			Path.Combine(Environment.CurrentDirectory, @"..\..\..\..\..\config.json"),
-			Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"config.json"),
-			Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\config.json"),
-		};
+			Path.Combine(Environment.CurrentDirectory, @"App_Data\secrets.json"),
+			Path.Combine(Environment.CurrentDirectory, "secrets.json"),
+			Path.Combine(Environment.CurrentDirectory, @"..\secrets.json"),
+			Path.Combine(Environment.CurrentDirectory, @"..\..\secrets.json"),
+			Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"App_Data\secrets.json"),
+			Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"secrets.json"),
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\secrets.json"),
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\secrets.json"),
+        };
 
 		public static T Read<T>(string key)
 		{

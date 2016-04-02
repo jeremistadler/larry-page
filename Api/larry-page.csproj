@@ -42,6 +42,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="protobuf-net">
       <HintPath>packages\protobuf-net.2.0.0.668\lib\net40\protobuf-net.dll</HintPath>
     </Reference>
@@ -101,9 +105,6 @@
     <Reference Include="MySql.Data.Entity.EF6">
       <HintPath>packages\MySql.Data.Entity.6.9.8\lib\net45\MySql.Data.Entity.EF6.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>packages\Newtonsoft.Json.8.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Owin">
@@ -111,39 +112,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Api\DnaContext.cs" />
-    <Compile Include="Api\Views.cs" />
+    <Compile Include="Controllers\BaseController.cs" />
+    <Compile Include="Controllers\DnaController.cs" />
+    <Compile Include="Controllers\OrganismController.cs" />
+    <Compile Include="DnaContext.cs" />
+    <Compile Include="Entities\DnaEntity.cs" />
+    <Compile Include="Entities\OrganismEntity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SecretsReader.cs" />
     <Compile Include="Startup.cs" />
-    <Compile Include="Api\Controllers\BaseController.cs" />
-    <Compile Include="Api\Controllers\DnaController.cs" />
-    <Compile Include="Api\Controllers\OrganismController.cs" />
-    <Compile Include="Api\Entities\DnaEntity.cs" />
-    <Compile Include="Api\Entities\OrganismEntity.cs" />
-    <Compile Include="Api\SecretsReader.cs" />
+    <Compile Include="Views.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".gitignore" />
-    <Content Include="gulpfile.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
-    <None Include="tsconfig.json" />
-    <None Include="Frontend\tests\spec.ts" />
-    <Content Include="Frontend\tests\SpecRunner.html" />
-    <None Include="Frontend\scripts\dna.ts" />
-    <None Include="Frontend\scripts\js-rasterizer.ts" />
-    <None Include="Frontend\scripts\raster.ts" />
-    <None Include="Frontend\scripts\shared.ts" />
-    <None Include="Frontend\scripts\utils.ts" />
-    <Content Include="Frontend\form.css" />
-    <Content Include="Frontend\list.html" />
-    <Content Include="Frontend\index.html" />
-    <None Include="config.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="package.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
@@ -151,7 +135,9 @@
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="App_Data\secrets.json" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
@@ -179,7 +165,6 @@
           <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
         </WebProjectProperties>
       </FlavorProperties>
-      <UserProperties package_1json__JSONSchema="pack" />
     </VisualStudio>
     <MonoDevelop>
       <Properties>
@@ -193,11 +178,5 @@
   </Target>
   <Target Name="AfterBuild">
   </Target> -->
-  <ItemGroup>
-    <Folder Include="Api\Controllers\" />
-    <Folder Include="Api\Entities\" />
-    <Folder Include="Frontend\" />
-    <Folder Include="Frontend\tests\" />
-    <Folder Include="Frontend\scripts\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

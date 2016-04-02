@@ -16,10 +16,14 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+.suo
+.vs/
 
 bin
 obj
 build
 dist
 packages
-config.json
+secrets.json
+images
+*.user
