@@ -1,25 +1,25 @@
 import * as React from 'react';
-import {Dna} from './dna';
+import {Dna} from '../scripts/dna';
 
 
-interface MainSectionProps {
+interface DnaImageProps {
     dna: Dna;
+    width: number;
+    height: number;
 };
-interface MainSectionState {
+interface DnaImageState {
 };
 
-class DnaInfo extends React.Component<MainSectionProps, MainSectionState> {
+class DnaImage extends React.Component<DnaImageProps, DnaImageState> {
   constructor(props, context) {
     super(props, context);
     this.state = { };
   }
 
   render() {
-    const { dna } = this.props;
-    const { } = this.state;
+    const { dna, height, width } = this.props;
 
-    var height = 200;
-    var width = 200;
+    if (!dna || !dna.Genes) return (<div>Empty Dna</div>)
 
     var polygons = dna.Genes.map((gene, i) => {
         var str = '';
@@ -39,13 +39,11 @@ class DnaInfo extends React.Component<MainSectionProps, MainSectionState> {
     });
 
     return (
-        <div className="dna-info">
-            <svg height={height} width={width}>
-                {polygons}
-            </svg>
-        </div>
+        <svg height={height} width={width}>
+            {polygons}
+        </svg>
     );
   }
 }
 
-export default DnaInfo;
+export default DnaImage;

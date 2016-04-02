@@ -1,6 +1,7 @@
 import * as React from 'react';
-import {Dna} from './dna';
-import DnaInfo from './dna-info';
+import {Dna} from '../scripts/dna';
+import DnaImage from './dna-image';
+import DnaRenderer from './renderer-ui';
 
 
 interface MainSectionProps {
@@ -29,14 +30,25 @@ class DnaList extends React.Component<MainSectionProps, MainSectionState> {
     const { } = this.props;
     const { dna } = this.state;
 
+    if (!dna)
+    return <div>Loading....</div>
+
     return (
+        <div>
+        <DnaRenderer dna={dna[0]} />
         <ul className="dna-list">
           {dna.map(todo =>
-            <DnaInfo
-              key={todo.Organism.Id}
-              dna={todo}/>
+              <div className="dna-info">
+                <DnaImage
+                  key={todo.Organism.Id}
+                  dna={todo}
+                  width={200}
+                  height={200}
+                   />
+               </div>
           )}
         </ul>
+        </div>
     );
   }
 }

@@ -6,9 +6,9 @@
   "scripts": {
     "postinstall": "./node_modules/.bin/typings install",
     "build": "npm run build:html & npm run build:js",
-    "build:js": "tsc && browserify dist/list-app.js > dist/list.bundle.js",
+    "build:js": "tsc && browserify dist/components/app.js > dist/app.bundle.js",
     "build:html": "copyfiles --up 1 src/*.html dist",
-    "watch": "watchify src/scripts/app.ts -o dist/app.bundle.js",
+    "watch": "watch 'npm run build' src --wait=1 --ignoreUnreadable & http-server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jeremi Stadler, Andreas Wilcox",
@@ -36,6 +36,6 @@
   "homepage": "https://github.com/jeremistadler/larry-page",
   "devDependencies": {
     "typings": "^0.7.9",
-    "watchify": "^3.7.0"
+    "watch": "^0.17.1"
   }
 }

@@ -1,4 +1,4 @@
-
+import {Dna} from '../scripts/dna';
 
 describe("Raster", function() {
   it("should be able to raster a triangle", function() {

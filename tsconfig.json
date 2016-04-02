@@ -1,4 +1,5 @@
 {
+  "compileOnSave": true,
   "compilerOptions": {
     "module": "commonjs",
     "target": "es6",
@@ -9,12 +10,12 @@
     "outDir": "dist"
   },
   "filesGlob": [
-    "src/scripts/**/*.ts",
-    "src/scripts/**/*.tsx",
-    "typings/main.d.ts"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "typings/main.d.ts",
+    "!src/tests/*.ts"
   ],
   "files": [
-    "src/scripts/app.ts",
     "src/scripts/dna.ts",
     "src/scripts/fitness-calculator.ts",
     "src/scripts/gene-mutator.ts",
@@ -23,9 +24,10 @@
     "src/scripts/rasterizer.ts",
     "src/scripts/shared.ts",
     "src/scripts/utils.ts",
-    "src/scripts/dna-info.tsx",
-    "src/scripts/list-app.tsx",
-    "src/scripts/list.tsx",
+    "src/components/app.tsx",
+    "src/components/dna-image.tsx",
+    "src/components/list.tsx",
+    "src/components/renderer-ui.tsx",
     "typings/main.d.ts"
   ],
   "atom": {
