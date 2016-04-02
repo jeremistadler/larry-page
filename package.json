@@ -5,10 +5,11 @@
   "main": "buils.js",
   "scripts": {
     "postinstall": "./node_modules/.bin/typings install",
-    "build": "npm run build:html & npm run build:js",
+    "build": "npm run build:html & npm run build:js & npm run build:images",
     "build:js": "tsc && browserify dist/components/app.js > dist/app.bundle.js",
     "build:html": "copyfiles --up 1 src/*.html dist",
-    "watch": "watch 'npm run build' src --wait=1 --ignoreUnreadable & http-server",
+    "build:images": "copyfiles ./*.png dist",
+    "watch": "watch 'npm run build' src --wait=1 --ignoreUnreadable & http-server dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jeremi Stadler, Andreas Wilcox",
