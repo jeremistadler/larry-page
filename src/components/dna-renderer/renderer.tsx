@@ -88,7 +88,9 @@ changeSourceDna(dna: Dna){
         <div className="renderer-container">
             <div className="renderer-inner-container">
             <p className="renderer-header">Currently rendering</p>
-            <DnaImage className="renderer-image" dna={dna} width={width} height={height} />
+            <div className="renderer-image" >
+                <DnaImage dna={dna} width={width} height={height} />
+            </div>
             <div className="renderer-text-container">
                 <p>Generation: <span className="renderer-value-text">{dna.Generation}</span></p>
                 <p>Mutation: <span className="renderer-value-text">{dna.Mutation}</span></p>
