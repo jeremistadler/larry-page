@@ -30,8 +30,9 @@ namespace server
 			);
 
 			app.UseWebApi (config);
+            
 
-			app.Use((ctx,next) => Invoke(ctx,next));
+			//app.Use((ctx,next) => Invoke(ctx,next));
 		}
 
 		// Invoked once per request.
