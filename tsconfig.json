@@ -25,9 +25,10 @@
     "src/scripts/shared.ts",
     "src/scripts/utils.ts",
     "src/components/app.tsx",
-    "src/components/dna-image.tsx",
-    "src/components/list.tsx",
-    "src/components/renderer-ui.tsx",
+    "src/components/dna-grid/grid.tsx",
+    "src/components/dna-image/dna-image.tsx",
+    "src/components/dna-renderer/renderer.tsx",
+    "src/components/uploader/uploader.tsx",
     "typings/main.d.ts"
   ],
   "atom": {

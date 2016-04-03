@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Dna} from '../scripts/dna';
+import {Dna} from '../../scripts/dna';
 
 
 interface DnaImageProps {
@@ -11,15 +11,32 @@ interface DnaImageState {
 };
 
 class DnaImage extends React.Component<DnaImageProps, DnaImageState> {
-  constructor(props, context) {
-    super(props, context);
-    this.state = { };
+    organismId: number = 0;
+    mutation: number = 0;
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return this.props.dna == null ||
+           nextProps.dna == null ||
+           this.organismId !== nextProps.dna.Organism.Id ||
+           this.mutation !== nextProps.dna.Mutation ||
+           this.props.width !== nextProps.width ||
+           this.props.height !== nextProps.height;
+  }
+
+  componentWillUpdate(newProps, newState)
+  {
+      if (!newProps.dna) return;
+      this.organismId = newProps.dna.Organism.Id;
+      this.mutation = newProps.dna.Mutation;
   }
 
   render() {
     const { dna, height, width } = this.props;
 
     if (!dna || !dna.Genes) return (<div>Empty Dna</div>)
+
+    var animationLength = 5;
+    var lengthPerPoly = animationLength / dna.Genes.length;
 
     var polygons = dna.Genes.map((gene, i) => {
         var str = '';
@@ -30,10 +47,12 @@ class DnaImage extends React.Component<DnaImageProps, DnaImageState> {
                               Math.floor(gene.Color[1] * 255) + ',' +
                               Math.floor(gene.Color[2] * 255) + ',' +
                               gene.Color[3] + ')';
+
         var style = {
             fill: color,
             stroke: 'rgba(0, 0, 0, 0.05)',
-            strokeWidth: 1
+            strokeWidth: 0,
+            animationDelay: (i * lengthPerPoly) + 's',
         }
         return <polygon points={str} style={style} key={i} />
     });

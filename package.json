@@ -5,11 +5,13 @@
   "main": "buils.js",
   "scripts": {
     "postinstall": "./node_modules/.bin/typings install",
-    "build": "npm run build:html & npm run build:js & npm run build:images",
-    "build:js": "tsc && browserify dist/components/app.js > dist/app.bundle.js",
+    "build": "npm run build:html && npm run build:css && npm run build:js && npm run build:worker && npm run build:images",
+    "build:js": "browserify dist/components/app.js > dist/app.bundle.js",
+    "build:worker": "browserify dist/scripts/rasterizer-worker.js > dist/worker.bundle.js",
     "build:html": "copyfiles --up 1 src/*.html dist",
+    "build:css": "node-sass src/components/app.scss dist/app.css",
     "build:images": "copyfiles ./*.png dist",
-    "watch": "watch 'npm run build' src --wait=1 --ignoreUnreadable & http-server dist",
+    "watch": "watch 'npm run build' src --ignoreUnreadable & http-server dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jeremi Stadler, Andreas Wilcox",
@@ -17,6 +19,7 @@
   "dependencies": {
     "browserify": "^13.0.0",
     "copyfiles": "^0.2.1",
+    "node-sass": "^3.4.2",
     "react": "^0.14.8",
     "react-dom": "^0.14.8",
     "typescript": "^1.8.9"

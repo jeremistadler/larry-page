@@ -1,0 +1,30 @@
+
+.renderer-container{
+    background: #373737;
+    padding: 30px;
+    color: white;
+}
+
+.renderer-inner-container{
+    max-width: 600px;
+    margin: auto;
+}
+
+.renderer-header{
+    font-size: 26px;
+    font-weight: 200;
+    margin-top: 0;
+}
+
+.renderer-text-container{
+    font-size: 12px;
+    font-weight: 300;
+    display: inline-block;
+    margin: 0px 20px;
+    overflow: hidden;
+}
+
+.renderer-value-text{
+    font-size: 12px;
+    font-weight: 600;
+}

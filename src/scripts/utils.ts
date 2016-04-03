@@ -106,21 +106,27 @@ export class Utils {
         xhr.send();
     }
 
-    static loadAndScaleImageData(url: string, width: number, height: number, onComplete: (image: ImageData, canvas: HTMLCanvasElement) => void) {
-        var image = new Image();
-        image.crossOrigin = '';
-        image.onload = function () {
-            var canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            var ctx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
-            ctx.fillStyle = 'white';
-            ctx.drawImage(image, 0, 0, width, height);
-            var data = ctx.getImageData(0, 0, width, height);
-            onComplete(data, canvas);
-        };
-        image.onerror = e => console.error('Could not load image', e);
-        image.src = url;
+    static loadAndScaleImageData(url: string, width: number, height: number): Promise<ImageData> {
+        return new Promise((resolve, reject) =>
+        {
+            var image = new Image();
+            image.crossOrigin = '';
+            image.onload = () => {
+                var canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                var ctx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
+                ctx.fillStyle = 'white';
+                ctx.drawImage(image, 0, 0, width, height);
+                var data = ctx.getImageData(0, 0, width, height);
+                resolve(data);
+            };
+            image.onerror = e => {
+                 console.error('Could not load image', e);
+                 reject();
+             }
+            image.src = url;
+        });
     }
 }
 
@@ -136,6 +142,10 @@ export interface DebugMessage {
 export class DebugView {
     static Messages: DebugMessage[] = [];
     static elm: HTMLElement;
+
+    constructor(){
+        console.log(DebugView.Messages);
+    }
 
     static SetMessage(name: string, value: number, unit: string) {
         var old = this.Messages[name];

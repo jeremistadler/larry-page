@@ -220,18 +220,19 @@ export class JsRasterizer {
             DebugView.SetMessage('Generation', this.Dna.Generation, '');
             DebugView.SetMessage('Mutations', this.Dna.Mutation, '');
 
-            //if (this.currentIteration % 50 == 0)
-            //    this.Save();
+            if (this.currentIteration % 50 == 0)
+                this.Save();
 
             //localStorage.setItem(tempName, JSON.stringify(this.Dna));
         }
     }
 
     createThread() {
-        var worker = new Worker('build-worker/worker.js');
+        var worker = new Worker('worker.bundle.js');
         this.idleWorkers.push(worker);
         worker.onmessage = f => this.onMessage(f);
         worker.postMessage(this.source);
+        worker.onerror = (a) => console.error(a);
     }
 
     Save() {
