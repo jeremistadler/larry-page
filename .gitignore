@@ -27,3 +27,4 @@ packages
 secrets.json
 images
 *.user
+Api/config.json

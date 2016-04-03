@@ -6,6 +6,7 @@
   "scripts": {
     "postinstall": "./node_modules/.bin/typings install",
     "build": "npm run build:html && npm run build:css && npm run build:js && npm run build:worker && npm run build:images",
+    "build:prod": "set NODE_ENV=production && tsc && npm run build",
     "build:js": "browserify dist/components/app.js > dist/app.bundle.js",
     "build:worker": "browserify dist/scripts/rasterizer-worker.js > dist/worker.bundle.js",
     "build:html": "copyfiles --up 1 src/*.html dist",
