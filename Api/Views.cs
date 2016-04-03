@@ -53,6 +53,20 @@ namespace server.Api
                 Genes = GeneModel.Serialize(this.Genes),
             };
         }
+
+        public DnaModel Round()
+        {
+            foreach (var gene in Genes)
+            {
+                for (int i = 0; i < gene.Color.Length; i++)
+                    gene.Color[i] = Math.Round(gene.Color[i], 2);
+
+                for (int i = 0; i < gene.Pos.Length; i++)
+                    gene.Pos[i] = Math.Round(gene.Pos[i], 2);
+            }
+
+            return this;
+        }
     }
 
     [ProtoContract]

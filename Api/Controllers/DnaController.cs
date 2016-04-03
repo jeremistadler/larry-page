@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace server.Api
@@ -28,6 +25,10 @@ namespace server.Api
             if (organism == null)
                 return BadRequest();
 
+            var bestExisting = Db.Dna.Where(f => f.Organism.Id == dna.Organism.Id).Select(f => f.Fitness).DefaultIfEmpty().Min();
+            if (bestExisting != 0 && bestExisting < dna.Fitness)
+                return BadRequest("Theres already a dna saved with better fitness");
+
             organism.LastAccessed = DateTime.Now;
 
             dna.Date = DateTime.Now;
@@ -36,23 +37,6 @@ namespace server.Api
             Db.Dna.Add(dnaEntity);
             Db.SaveChanges();
 
-
-            return Ok();
-        }
-
-        [HttpPost]
-        [Route("api/organism/save")]
-        public object Save(OrganismModel organism)
-        {
-            if (organism == null || organism.Width <= 0 || organism.Height <= 0 || string.IsNullOrWhiteSpace(organism.ImagePath))
-                return BadRequest();
-
-            var entity = organism.ToEntity();
-            entity.Id = 0;
-            entity.Created = DateTime.Now;
-            entity.LastAccessed = DateTime.Now.AddDays(-100);
-            Db.Organisms.Add(entity);
-            Db.SaveChanges();
 
             return Ok();
         }
@@ -84,20 +68,18 @@ namespace server.Api
                 .Select(f => f.ToView());
         }
 
-
-
         [HttpGet]
         [Route("api/organismsWithDna")]
         public IEnumerable<DnaModel> GetTopOrganismDnaList(int limit = 10, int skip = 0)
         {
-            limit = Math.Min(limit, 200);
+            limit = Math.Min(limit, 100);
 
             var organisms = Db.Organisms.OrderByDescending(f => f.Created).ToArray();
 
             return organisms
                 .Select(f => Db.Dna.Where(d => d.Organism.Id == f.Id).OrderByDescending(d => d.Mutation).FirstOrDefault())
                 .Where(f => f != null)
-                .Select(f => f.ToView());
+                .Select(f => f.ToView().Round());
         }
 
         [HttpGet]
