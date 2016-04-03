@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using System.Web;
 
 namespace server.Api
 {
@@ -21,11 +20,11 @@ namespace server.Api
         {
             return new OrganismEntity
             {
-                Id = this.Id,
-                ImagePath = this.ImagePath,
-                Created = this.Created,
-                Width = this.Width,
-                Height = this.Height
+                Id = Id,
+                ImagePath = ImagePath,
+                Created = Created,
+                Width = Width,
+                Height = Height
             };
         }
     }
@@ -45,12 +44,12 @@ namespace server.Api
         {
             return new DnaEntity
             {
-                Date = this.Date,
-                Fitness = this.Fitness,
-                Generation = this.Generation,
-                Mutation = this.Mutation,
-                Seed = this.Seed,
-                Genes = GeneModel.Serialize(this.Genes),
+                Date = Date,
+                Fitness = Fitness,
+                Generation = Generation,
+                Mutation = Mutation,
+                Seed = Seed,
+                Genes = GeneModel.Serialize(Genes),
             };
         }
 
@@ -59,10 +58,10 @@ namespace server.Api
             foreach (var gene in Genes)
             {
                 for (int i = 0; i < gene.Color.Length; i++)
-                    gene.Color[i] = Math.Round(gene.Color[i], 2);
+                    gene.Color[i] = Math.Round(gene.Color[i], 3);
 
                 for (int i = 0; i < gene.Pos.Length; i++)
-                    gene.Pos[i] = Math.Round(gene.Pos[i], 2);
+                    gene.Pos[i] = Math.Round(gene.Pos[i], 3);
             }
 
             return this;

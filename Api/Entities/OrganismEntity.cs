@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Web;
 
 namespace server.Api
 {
@@ -33,11 +31,11 @@ namespace server.Api
         {
             return new OrganismModel
             {
-                Id = this.Id,
-                ImagePath = this.ImagePath,
-                Created = this.Created,
-                Width = this.Width,
-                Height = this.Height
+                Id = Id,
+                ImagePath = ImagePath,
+                Created = Created,
+                Width = Width,
+                Height = Height
             };
         }
     }

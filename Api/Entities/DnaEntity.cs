@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Web;
 
 namespace server.Api
 {
@@ -31,13 +28,13 @@ namespace server.Api
         {
             return new DnaModel
             {
-                Date = this.Date,
-                Fitness = this.Fitness,
-                Generation = this.Generation,
-                Mutation = this.Mutation,
-                Seed = this.Seed,
-                Genes = GeneModel.Deserialize(this.Genes),
-                Organism = this.Organism == null ? null : this.Organism.ToView()
+                Date = Date,
+                Fitness = Fitness,
+                Generation = Generation,
+                Mutation = Mutation,
+                Seed = Seed,
+                Genes = GeneModel.Deserialize(Genes),
+                Organism = Organism == null ? null : Organism.ToView()
             };
         }
     }
