@@ -53,14 +53,14 @@ export class Utils {
         return Math.min(Math.max(num, min), max);
     }
 
-    static createDna(numberOfGenes: number, image: string): Dna {
+    static createDna(numberOfGenes: number, image: string, organismId: number = 0): Dna {
         var dna = {
             Fitness: Infinity,
             Genes: new Array(numberOfGenes),
             Generation: 0,
             Mutation: 0,
             Organism: {
-                Id: 0,
+                Id: organismId,
                 ImagePath: image,
                 GeneCount: numberOfGenes,
                 Width: 200,
@@ -88,95 +88,5 @@ export class Utils {
             else
                 onComplete(JSON.parse(dna));
         });
-    }
-
-    static getRandomDna(baseUrl: string, onComplete: (dna: Dna) => void) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', baseUrl + '/api/dna/random', true);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function (e) {
-            if (this.status == 200)
-                onComplete(<Dna>JSON.parse(this.response));
-            else
-                console.error('Server could not return a DNA');
-        };
-        xhr.onerror = function (e) {
-            console.error('Could not reach server to get DNA');
-        };
-        xhr.send();
-    }
-
-    static loadAndScaleImageData(url: string, width: number, height: number): Promise<ImageData> {
-        return new Promise((resolve, reject) =>
-        {
-            var image = new Image();
-            image.crossOrigin = '';
-            image.onload = () => {
-                var canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                var ctx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
-                ctx.fillStyle = 'white';
-                ctx.drawImage(image, 0, 0, width, height);
-                var data = ctx.getImageData(0, 0, width, height);
-                resolve(data);
-            };
-            image.onerror = e => {
-                 console.error('Could not load image', e);
-                 reject();
-             }
-            image.src = url;
-        });
-    }
-}
-
-
-export interface DebugMessage {
-    name: string;
-    value: number;
-    unit: string;
-    oldValue: number;
-    oldUnit: string;
-}
-
-export class DebugView {
-    static Messages: DebugMessage[] = [];
-    static elm: HTMLElement;
-
-    constructor(){
-        console.log(DebugView.Messages);
-    }
-
-    static SetMessage(name: string, value: number, unit: string) {
-        var old = this.Messages[name];
-
-        this.Messages[name] = {
-            name: name,
-            value: value,
-            unit: unit,
-            oldValue: old ? old.value : 0,
-            oldUnit: old ? old.unit : '',
-        };
-    }
-
-    static RenderToDom() {
-        if (this.elm == null) {
-            this.elm = document.createElement('div');
-            this.elm.style.display = 'inline-block';
-            document.body.appendChild(this.elm);
-        }
-
-        var html = '<table style="font-size: 11px;color: #333;font-family:\'Segoe UI\'"><tr><td>Name</td><td>Value</td><td>Old Value</td><td>Diff</td></tr>';
-
-        for (var name in this.Messages) {
-            var f = this.Messages[name];
-            html +=
-                '<tr><td>' + f.name +
-                '</td><td>' + Math.round(f.value * 100) / 100 + ' ' + f.unit +
-                '</td><td>' + Math.round(f.oldValue * 100) / 100 + ' ' + f.oldUnit +
-                '</td><td>' + Math.round((f.value - f.oldValue) * 100) / 100 + ' ' + f.unit + '</td></tr>';
-        }
-
-        this.elm.innerHTML = html + '</table>';
     }
 }

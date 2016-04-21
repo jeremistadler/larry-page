@@ -1,6 +1,6 @@
 import { Dna, ISettings, IRectangle, IWorkerResult } from './dna';
 import { FitnessCalculator } from './fitness-calculator';
-import { Utils, DebugView } from './utils';
+import { Utils } from './utils';
 import { RenderConfig } from './shared';
 import { GeneMutator, GeneHelper } from './gene-mutator';
 
@@ -64,7 +64,7 @@ export class JsRasterizer {
 
 
         this.Dna.Fitness = FitnessCalculator.GetFitness(this.Dna, this.source);
-        DebugView.SetMessage('Removed genes', new Date().getTime() - startTime, 'ms(' + indexesToRemove.length + ' items)');
+        console.log('Removed ', indexesToRemove.length,  ' genes in ', new Date().getTime() - startTime, ' ms');
     }
 
 
@@ -175,8 +175,6 @@ export class JsRasterizer {
             GeneMutator.UpdateEffectiveness(data.fitnessImprovement, mutator);
         }
 
-        DebugView.SetMessage('New Mutations', mutations.length, '');
-
         for (var i = 0; i < mutations.length; i++) {
             if (mutations[i].oldGene == null)
                 this.Dna.Genes.push(mutations[i].newGene);
@@ -184,12 +182,8 @@ export class JsRasterizer {
                 this.Dna.Genes[mutations[i].index] = mutations[i].newGene;
         }
 
-        if (this.idleWorkers.length == 1)
-            DebugView.SetMessage('Duration - First worker', (new Date().getTime() - this.startTime), 'ms');
 
         if (this.activeWorkers.length == 0) {
-            DebugView.SetMessage('Duration - Last worker', (new Date().getTime() - this.startTime), 'ms');
-
             if (this.clearNextRound) {
                 this.clearNextRound = false;
                 this.Dna.Genes.length = 0;
@@ -208,17 +202,11 @@ export class JsRasterizer {
             for (var g = 0; g < this.onFrameStarted.length; g++)
                 this.onFrameStarted[g](this.Dna);
 
-            DebugView.RenderToDom()
 
             var fitnessAfter = FitnessCalculator.GetFitness(this.Dna, this.source);
-            DebugView.SetMessage('Genes', this.Dna.Genes.length, '');
-            DebugView.SetMessage('Fitness improvement', this.Dna.Fitness - fitnessAfter, '');
             if (fitnessAfter > this.Dna.Fitness)
-                console.warn('GLOBAL: fitness diff: ' + (this.Dna.Fitness - fitnessAfter));
+                console.warn('Fitness diff: ' + (this.Dna.Fitness - fitnessAfter), ' startLocalizedDraws is mutating the image');
             this.Dna.Fitness = fitnessAfter;
-            DebugView.SetMessage('Fitness Squared', Math.round(Math.sqrt(this.Dna.Fitness) / 10), '');
-            DebugView.SetMessage('Generation', this.Dna.Generation, '');
-            DebugView.SetMessage('Mutations', this.Dna.Mutation, '');
 
             if (this.currentIteration % 50 == 0)
                 this.Save();

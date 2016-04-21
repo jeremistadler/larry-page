@@ -7,8 +7,8 @@ import Uploader from './uploader/uploader';
 ReactDOM.render(
     <div>
         <DnaRenderer />
-        <DnaGrid />
         <Uploader />
+        <DnaGrid />
     </div>,
   document.getElementById('content')
 );

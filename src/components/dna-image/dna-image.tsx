@@ -33,7 +33,14 @@ class DnaImage extends React.Component<DnaImageProps, DnaImageState> {
   render() {
     const { dna, height, width } = this.props;
 
-    if (!dna || !dna.Genes) return (<div>Empty Dna</div>)
+    if (!dna || !dna.Genes){
+        var style = {
+            width: width + 'px',
+            height: height + 'px',
+            display: 'inline-block'
+        }
+        return (<div style={style}></div>)
+    }
 
     var animationLength = 5;
     var lengthPerPoly = animationLength / dna.Genes.length;

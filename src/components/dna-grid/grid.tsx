@@ -1,5 +1,7 @@
 import * as React from 'react';
 import {Dna} from '../../scripts/dna';
+import {DnaApi} from '../../scripts/api';
+import {Utils} from '../../scripts/utils';
 import DnaImage from '../dna-image/dna-image';
 declare var fetch: any;
 
@@ -13,13 +15,12 @@ class DnaGrid extends React.Component<MainSectionProps, MainSectionState> {
     constructor(props, context) {
       super(props, context);
       this.state = {
-          dnaList: null
+          dnaList: [1,2,3,4,5,6,7,8].map(f => Utils.createDna(0, '', f))
       }
   }
 
     componentWillMount(){
-        fetch('http://larry-api.jeremi.se/api/organismsWithDna?limit=50')
-        .then(response => response.json())
+        DnaApi.fetchDnaList()
         .then(response => {
             this.setState({
                 dnaList: response
@@ -28,10 +29,7 @@ class DnaGrid extends React.Component<MainSectionProps, MainSectionState> {
     }
 
   render() {
-    const { dnaList } = this.state;
-
-    if (dnaList == null)
-        return <div>Loading dna list</div>
+    var { dnaList } = this.state;
 
     return (
         <div>

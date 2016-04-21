@@ -22,8 +22,8 @@ class Uploader extends React.Component<UploaderProps, UploaderState> {
     return (
         <div>
             <form ref="uploadForm" className="uploader" encType="multipart/form-data" >
-               <input ref="file" type="file" name="file" className="upload-file"/>
-               <input type="button" ref="button" value="Upload" onClick={this.uploadFile.bind(this)} />
+                <label htmlFor="uploader">Upload Image</label>
+               <input ref="file" type="file" name="uploader" id="uploader" className="upload-file" onChange={this.uploadFile.bind(this)}/>
            </form>
         </div>
     );

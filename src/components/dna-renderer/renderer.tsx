@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Raster } from '../../scripts/raster';
 import { Utils } from '../../scripts/utils';
+import { DnaApi } from '../../scripts/api';
 import { RenderConfig } from '../../scripts/shared';
 import { Dna, ISettings } from '../../scripts/dna';
 import { GeneMutator } from '../../scripts/gene-mutator';
@@ -41,9 +42,7 @@ class DnaRenderer extends React.Component<RasterizerProps, RasterizerState> {
 }
 
 componentWillMount(){
-    fetch('http://larry-api.jeremi.se/api/dna/random')
-    .then(response => response.json())
-    .then(dna => {
+    DnaApi.fetchRandomDna().then(dna => {
         this.changeSourceDna(dna);
     })
 }
@@ -68,7 +67,7 @@ changeSourceDna(dna: Dna){
     this.dnaUpdated(dna);
 
     var imageUrl = RenderConfig.imageBaseUrl + '/' + dna.Organism.ImagePath;
-    Utils.loadAndScaleImageData(imageUrl, RenderConfig.globalWidth, RenderConfig.globalHeight).then(image => {
+    DnaApi.loadAndScaleImageData(imageUrl, RenderConfig.globalWidth, RenderConfig.globalHeight).then(image => {
         //if(window.devicePixelRatio) return;
         this.rasterizer = new JsRasterizer(image, dna, this.state.settings);
         this.rasterizer.onFrameCompleted.push((dna) => {
@@ -80,9 +79,9 @@ changeSourceDna(dna: Dna){
 }
 
   render() {
-    const { width, height, dna, settings } = this.state;
+    var { width, height, dna, settings } = this.state;
 
-    if (!dna) return <div>Loading dna...</div>
+    if (!dna) dna = Utils.createDna(0, '');
 
     return (
         <div className="renderer-container">
