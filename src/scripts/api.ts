@@ -38,6 +38,7 @@ export class DnaApi {
                 canvas.height = height;
                 var ctx = <CanvasRenderingContext2D>canvas.getContext('2d', { alpha: false });
                 ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, width, height);
                 ctx.drawImage(image, 0, 0, width, height);
                 var data = ctx.getImageData(0, 0, width, height);
                 resolve(data);
