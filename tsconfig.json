@@ -23,6 +23,7 @@
     "src/scripts/raster.ts",
     "src/scripts/rasterizer-worker.ts",
     "src/scripts/rasterizer.ts",
+    "src/scripts/reducers.ts",
     "src/scripts/shared.ts",
     "src/scripts/utils.ts",
     "src/components/app.tsx",
