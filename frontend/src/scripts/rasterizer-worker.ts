@@ -12,7 +12,7 @@ class JsRasterizerWorker {
   constructor(public sourceImageData: ImageData) {}
 
   go(dna: Dna, rect: IRectangle, settings: ISettings) {
-    var startTime = new Date().getTime()
+    //var startTime = new Date().getTime()
     GeneMutator.setFromSettings(settings)
 
     var mutator = GeneMutator.GetMutator()
@@ -34,7 +34,7 @@ class JsRasterizerWorker {
       settings: settings,
     }
 
-    var originalFullFitness = dna.Fitness
+    //var originalFullFitness = dna.Fitness
     var originalPartialFitness = ctx.partialFitness
 
     for (var i = 0; i < settings.iterations; i++) GeneMutator.MutateDna(ctx)

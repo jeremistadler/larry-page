@@ -17,8 +17,6 @@ interface RasterizerState {
   dna: Dna | null
 }
 
-declare var fetch: any
-
 class DnaRenderer extends React.Component<RasterizerProps, RasterizerState> {
   rasterizer: JsRasterizer | null = null
 
@@ -69,9 +67,8 @@ class DnaRenderer extends React.Component<RasterizerProps, RasterizerState> {
   changeSourceDna(dna: Dna) {
     this.dnaUpdated(dna)
 
-    var imageUrl = RenderConfig.imageBaseUrl + '/' + dna.Organism.ImagePath
     DnaApi.loadAndScaleImageData(
-      imageUrl,
+      dna,
       RenderConfig.globalWidth,
       RenderConfig.globalHeight,
     )
@@ -90,7 +87,7 @@ class DnaRenderer extends React.Component<RasterizerProps, RasterizerState> {
   render() {
     var {width, height, dna, settings} = this.state
 
-    if (!dna) dna = Utils.createDna(0, '')
+    if (!dna) dna = Utils.createDna(0, '', '')
 
     return (
       <div className="renderer-container">

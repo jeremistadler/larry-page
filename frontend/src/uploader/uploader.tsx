@@ -1,21 +1,16 @@
 import * as React from 'react'
-import {RenderConfig} from './../scripts/shared'
 import './uploader.css'
+import {DnaApi} from '../scripts/api'
 
 export default function Uploader() {
   const uploadForm = React.useRef<HTMLInputElement>(null)
 
-  const uploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    var fd = new FormData()
+  const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = (uploadForm.current?.files ?? [])[0]
     if (!file) return
-
-    fd.append('file', file)
-
-    fetch(RenderConfig.baseUrl + '/api/upload', {
-      method: 'POST',
-      body: fd,
-    })
+    console.log('Uploading...')
+    const dna = await DnaApi.uploadNewImage(file)
+    console.log(dna)
   }
 
   return (

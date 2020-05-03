@@ -2,42 +2,64 @@ import {RenderConfig} from './shared'
 import {Dna} from './dna'
 
 export class DnaApi {
-  static async fetchRandomDna(): Promise<Dna> {
-    const response = await window.fetch(
-      RenderConfig.baseUrl + '/api/dna/random',
+  static async uploadNewImage(file: File): Promise<Dna> {
+    const base64 = await new Promise<string | ArrayBuffer | null>(
+      (resolve, reject) => {
+        const reader = new FileReader()
+        reader.addEventListener(
+          'load',
+          () => {
+            resolve(reader.result)
+            // convert image file to base64 string
+          },
+          false,
+        )
+        reader.addEventListener('error', ev => {
+          reject(reader.error)
+        })
+
+        reader.readAsDataURL(file)
+      },
     )
+
+    const response = await fetch(RenderConfig.baseUrl + '?route=upload', {
+      method: 'POST',
+      body: base64,
+    })
     const data = await response.json()
-    return <Dna>data
+    return data
+  }
+
+  static async fetchRandomDna(): Promise<Dna> {
+    const response = await fetch(RenderConfig.baseUrl + '?route=random')
+    const data = await response.json()
+    return data as Dna
   }
 
   static async fetchDnaList(): Promise<Dna[]> {
-    const response = await window.fetch(
-      RenderConfig.baseUrl + '/api/organismsWithDna?limit=50',
-    )
+    const response = await fetch(RenderConfig.baseUrl + '?route=list')
     const data = await response.json()
-    return <Dna[]>data
+    return data as Dna[]
   }
 
   static async saveDna(dna: Dna): Promise<any> {
-    const response = await window.fetch(
-      RenderConfig.baseUrl + '/api/dna/save',
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dna),
+    const response = await fetch(RenderConfig.baseUrl + '?route=save', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
-    )
+      body: JSON.stringify(dna),
+    })
     return await response.json()
   }
 
   static loadAndScaleImageData(
-    url: string,
+    dna: Dna,
     width: number,
     height: number,
   ): Promise<ImageData> {
+    const url = RenderConfig.baseUrl + '?route=image&id' + dna.Organism.Id
     return new Promise((resolve, reject) => {
       var image = new Image()
       image.crossOrigin = ''

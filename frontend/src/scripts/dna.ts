@@ -1,6 +1,3 @@
-import {Utils} from './utils'
-import {Raster} from './raster'
-
 export interface IWorkerResult {
   generations: number
   mutations: IMutatorState[]
@@ -30,7 +27,7 @@ export interface IRectangle {
 }
 
 export interface Organism {
-  Id: number
+  Id: string
   ImagePath: string
   Width: number
   Height: number

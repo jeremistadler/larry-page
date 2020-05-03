@@ -7,7 +7,7 @@ import './grid.css'
 
 const DnaGrid = ({}) => {
   const [dnaList, setDnaList] = React.useState<Dna[]>(() =>
-    [1, 2, 3, 4, 5, 6, 7, 8].map(f => Utils.createDna(0, '', f)),
+    [1, 2, 3, 4, 5, 6, 7, 8].map(f => Utils.createDna(0, '', f.toString())),
   )
 
   React.useEffect(() => {

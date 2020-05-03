@@ -55,7 +55,7 @@ export class Utils {
   static createDna(
     numberOfGenes: number,
     image: string,
-    organismId: number = 0,
+    organismId: string,
   ): Dna {
     var dna = {
       Fitness: Infinity,
@@ -94,7 +94,8 @@ export class Utils {
         onComplete(
           Utils.createDna(
             0,
-            RenderConfig.imageBaseUrl + '/' + 'cy0miacv.hrd.jpg',
+            RenderConfig.baseUrl + '/?route=image&id=cy0miacv.hrd.jpg',
+            'debug',
           ),
         )
       else onComplete(JSON.parse(dna))
