@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "esnext",
+    "lib": ["esnext", "webworker"],
+    "jsx": "react",
+    "noImplicitAny": true,
+    "preserveConstEnums": true,
+    "moduleResolution": "node"
+  },
+  "include": ["src/index.ts"]
+}
