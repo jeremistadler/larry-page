@@ -8,7 +8,7 @@ module.exports = {
   target: 'webworker',
 
   output: {
-    filename: 'bundle.js',
+    filename: 'worker.js',
     path: path.join(__dirname, 'dist'),
   },
 
