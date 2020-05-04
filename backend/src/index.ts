@@ -1,8 +1,9 @@
 import { CloudflareWorkerKV } from 'types-cloudflare-worker'
 import { generateChronologicalId } from './generateChronologicalId'
-import { Utils } from '../utils'
+import { Utils } from './utils'
 import { getAssetFromKV } from '@cloudflare/kv-asset-handler'
 
+// eslint-disable-next-line no-restricted-globals
 addEventListener('fetch', (event: FetchEvent) => {
   const params: Record<string, string> = {}
   const url = new URL(event.request.url)

@@ -1,4 +1,4 @@
-import { Dna } from './src/dna'
+import { Dna } from './dna'
 
 export class Utils {
   static randomIndex(arr: any[]) {
