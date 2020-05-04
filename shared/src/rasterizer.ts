@@ -259,7 +259,7 @@ export class JsRasterizer {
   }
 
   createThread() {
-    var worker = new Worker('worker.bundle.js')
+    const worker = new Worker(RenderConfig.baseUrl + '/worker.js')
     this.idleWorkers.push(worker)
     worker.onmessage = f => this.onMessage(f)
     worker.postMessage(this.source)

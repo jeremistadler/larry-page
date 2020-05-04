@@ -1,54 +1,32 @@
 import * as React from 'react'
-import {Raster} from './../scripts/raster'
-import {Utils} from './../scripts/utils'
+import {Utils} from '../../../shared/src/utils'
 import {DnaApi} from './../scripts/api'
-import {RenderConfig} from './../scripts/shared'
-import {Dna, ISettings} from './../scripts/dna'
-import {GeneMutator} from './../scripts/gene-mutator'
-import {JsRasterizer} from './../scripts/rasterizer'
+import {RenderConfig} from '../../../shared/src/shared'
+import {Dna} from '../../../shared/src/dna'
+import {GeneMutator} from '../../../shared/src/gene-mutator'
+import {JsRasterizer} from '../../../shared/src/rasterizer'
 import DnaImage from '../dna-image/dna-image'
 import './renderer.css'
 
-interface RasterizerProps {}
-interface RasterizerState {
-  settings: ISettings
-  width: number
-  height: number
-  dna: Dna | null
-}
+function DnaRenderer() {
+  const [settings] = React.useState({
+    minGridSize: 1,
+    maxGridSize: 3,
 
-class DnaRenderer extends React.Component<RasterizerProps, RasterizerState> {
-  rasterizer: JsRasterizer | null = null
+    newMinOpacity: 0.1,
+    newMaxOpacity: 1,
 
-  constructor(props: RasterizerProps, context: any) {
-    super(props, context)
-    this.state = {
-      width: 200,
-      height: 200,
-      dna: null,
-      settings: {
-        minGridSize: 1,
-        maxGridSize: 3,
+    autoAdjustMutatorWeights: true,
+    mutatorWeights: Utils.CreateNumberArray(GeneMutator.GeneMutators.length),
+    iterations: 50,
+  })
 
-        newMinOpacity: 0.1,
-        newMaxOpacity: 1,
+  const [width, setWidth] = React.useState(200)
+  const [height, setHeight] = React.useState(200)
+  let [dna, setDna] = React.useState<Dna | null>(null)
+  const [_, setRasterizer] = React.useState<JsRasterizer | null>(null)
 
-        autoAdjustMutatorWeights: true,
-        mutatorWeights: Utils.CreateNumberArray(
-          GeneMutator.GeneMutators.length,
-        ),
-        iterations: 50,
-      },
-    }
-  }
-
-  componentWillMount() {
-    DnaApi.fetchRandomDna().then(dna => {
-      this.changeSourceDna(dna)
-    })
-  }
-
-  dnaUpdated(dna: Dna) {
+  const dnaUpdated = (dna: Dna) => {
     var ratioW = 500 / dna.Organism.Width
     var ratioH = 300 / dna.Organism.Height
     var ratio = ratioW < ratioH ? ratioW : ratioH
@@ -56,72 +34,67 @@ class DnaRenderer extends React.Component<RasterizerProps, RasterizerState> {
     var width = dna.Organism.Width * ratio
     var height = dna.Organism.Height * ratio
 
-    this.setState({
-      settings: this.state.settings,
-      width: width,
-      height: height,
-      dna: dna,
-    })
+    setWidth(width)
+    setHeight(height)
+    setDna(dna)
   }
 
-  changeSourceDna(dna: Dna) {
-    this.dnaUpdated(dna)
+  const changeSourceDna = (dna: Dna) => {
+    dnaUpdated(dna)
 
     DnaApi.loadAndScaleImageData(
       dna,
       RenderConfig.globalWidth,
       RenderConfig.globalHeight,
-    )
-      .then(image => {
-        //if(window.devicePixelRatio) return;
-        this.rasterizer = new JsRasterizer(image, dna, this.state.settings)
-        this.rasterizer.onFrameCompleted.push(dna => {
-          this.dnaUpdated(dna)
-        })
+    ).then(image => {
+      //if(window.devicePixelRatio) return;
+      const rasterizer = new JsRasterizer(image, dna, settings)
+      rasterizer.onFrameCompleted.push(dna => {
+        dnaUpdated(dna)
       })
-      .catch(() => {
-        this.componentWillMount()
-      })
+      setRasterizer(rasterizer)
+    })
   }
 
-  render() {
-    var {width, height, dna, settings} = this.state
+  React.useEffect(() => {
+    DnaApi.fetchRandomDna().then(dna => {
+      changeSourceDna(dna)
+    })
+  }, [])
 
-    if (!dna) dna = Utils.createDna(0, '', '')
+  if (!dna) dna = Utils.createDna(0, '')
 
-    return (
-      <div className="renderer-container">
-        <div className="renderer-inner-container">
-          <p className="renderer-header">Currently rendering</p>
-          <div className="renderer-image">
-            <DnaImage dna={dna} width={width} height={height} />
-          </div>
-          <div className="renderer-text-container">
-            <p>
-              Generation:{' '}
-              <span className="renderer-value-text">{dna.Generation}</span>
-            </p>
-            <p>
-              Mutation:{' '}
-              <span className="renderer-value-text">{dna.Mutation}</span>
-            </p>
-            <p>
-              Fitness:{' '}
-              <span className="renderer-value-text">{dna.Fitness}</span>
-            </p>
-            <p>
-              Weights:{' '}
-              <span className="renderer-value-text">
-                {settings.mutatorWeights
-                  .map(f => Math.round(f * 10) / 10)
-                  .join(', ')}
-              </span>
-            </p>
-          </div>
+  return (
+    <div className="renderer-container">
+      <div className="renderer-inner-container">
+        <p className="renderer-header">Currently rendering</p>
+        <div className="renderer-image">
+          <DnaImage dna={dna} width={width} height={height} />
+        </div>
+        <div className="renderer-text-container">
+          <p>
+            Generation:{' '}
+            <span className="renderer-value-text">{dna.Generation}</span>
+          </p>
+          <p>
+            Mutation:{' '}
+            <span className="renderer-value-text">{dna.Mutation}</span>
+          </p>
+          <p>
+            Fitness: <span className="renderer-value-text">{dna.Fitness}</span>
+          </p>
+          <p>
+            Weights:{' '}
+            <span className="renderer-value-text">
+              {settings.mutatorWeights
+                .map(f => Math.round(f * 10) / 10)
+                .join(', ')}
+            </span>
+          </p>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 export default DnaRenderer

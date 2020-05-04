@@ -52,11 +52,7 @@ export class Utils {
     return Math.min(Math.max(num, min), max)
   }
 
-  static createDna(
-    numberOfGenes: number,
-    image: string,
-    organismId: string,
-  ): Dna {
+  static createDna(numberOfGenes: number, organismId: string): Dna {
     var dna = {
       Fitness: Infinity,
       Genes: new Array(numberOfGenes),
@@ -64,7 +60,6 @@ export class Utils {
       Mutation: 0,
       Organism: {
         Id: organismId,
-        ImagePath: image,
         GeneCount: numberOfGenes,
         Width: 200,
         Height: 200,
@@ -90,14 +85,7 @@ export class Utils {
   static loadDebugDna(onComplete: (dna: Dna) => void) {
     window.setTimeout(function () {
       var dna = localStorage.getItem(RenderConfig.tempName)
-      if (!dna)
-        onComplete(
-          Utils.createDna(
-            0,
-            RenderConfig.baseUrl + '/?route=image&id=cy0miacv.hrd.jpg',
-            'debug',
-          ),
-        )
+      if (!dna) onComplete(Utils.createDna(0, 'debug'))
       else onComplete(JSON.parse(dna))
     })
   }

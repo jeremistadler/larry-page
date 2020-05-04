@@ -1,0 +1,13 @@
+{
+  "name": "worker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Jeremi Stadler",
+  "license": "MIT",
+  "dependencies": {
+    "shared": "1.0.0"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.4"
+  }
+}

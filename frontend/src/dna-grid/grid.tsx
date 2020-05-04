@@ -1,20 +1,20 @@
 import * as React from 'react'
-import {Dna} from './../scripts/dna'
+import {Dna} from '../../../shared/src/dna'
 import {DnaApi} from './../scripts/api'
-import {Utils} from './../scripts/utils'
+import {Utils} from '../../../shared/src/utils'
 import DnaImage from '../dna-image/dna-image'
 import './grid.css'
 
 const DnaGrid = ({}) => {
   const [dnaList, setDnaList] = React.useState<Dna[]>(() =>
-    [1, 2, 3, 4, 5, 6, 7, 8].map(f => Utils.createDna(0, '', f.toString())),
+    [1, 2, 3, 4, 5, 6, 7, 8].map(f => Utils.createDna(0, f.toString())),
   )
 
   React.useEffect(() => {
     DnaApi.fetchDnaList().then(response => {
       setDnaList(response)
     })
-  })
+  }, [])
 
   return (
     <div>

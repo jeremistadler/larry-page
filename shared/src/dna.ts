@@ -28,7 +28,6 @@ export interface IRectangle {
 
 export interface Organism {
   Id: string
-  ImagePath: string
   Width: number
   Height: number
 }

@@ -4,9 +4,11 @@ import {
   IRectangle,
   IDnaRenderContext,
   IWorkerResult,
-} from './dna'
-import {GeneMutator, GeneHelper} from './gene-mutator'
-import {FitnessCalculator} from './fitness-calculator'
+} from 'shared/src/dna'
+import {GeneMutator, GeneHelper} from 'shared/src/gene-mutator'
+import {FitnessCalculator} from 'shared/src/fitness-calculator'
+
+/* eslint-disable no-restricted-globals */
 
 class JsRasterizerWorker {
   constructor(public sourceImageData: ImageData) {}
@@ -61,6 +63,7 @@ class JsRasterizerWorker {
 }
 
 var childRasterizer: JsRasterizerWorker | null = null
+
 self.onmessage = function (e: any) {
   if (childRasterizer == null) childRasterizer = new JsRasterizerWorker(e.data)
   else childRasterizer.go(e.data.dna, e.data.rect, e.data.settings)

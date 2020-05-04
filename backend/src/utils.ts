@@ -39,19 +39,14 @@ export class Utils {
     return Math.min(Math.max(num, min), max)
   }
 
-  static createDna(
-    numberOfGenes: number,
-    image: string,
-    organismId: string,
-  ): Dna {
+  static createDna(numberOfGenes: number, organismId: string): Dna {
     var dna = {
-      Fitness: Infinity,
+      Fitness: Number.MAX_SAFE_INTEGER - 1,
       Genes: new Array(numberOfGenes),
       Generation: 0,
       Mutation: 0,
       Organism: {
         Id: organismId,
-        ImagePath: image,
         GeneCount: numberOfGenes,
         Width: 200,
         Height: 200,

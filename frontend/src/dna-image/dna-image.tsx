@@ -1,5 +1,5 @@
 import * as React from 'react'
-import {Dna} from './../scripts/dna'
+import {Dna} from '../../../shared/src/dna'
 import './dna-image.css'
 
 interface DnaImageProps {
