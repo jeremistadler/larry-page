@@ -2,4 +2,5 @@
 .cargo-ok
 node_modules/
 dist/
+worker/
 build/
