@@ -1,7 +1,7 @@
 import * as React from 'react'
-import {Dna} from '../../../shared/src/dna'
+import {Dna} from 'shared/src/dna'
 import {DnaApi} from './../scripts/api'
-import {Utils} from '../../../shared/src/utils'
+import {Utils} from 'shared/src/utils'
 import DnaImage from '../dna-image/dna-image'
 import './grid.css'
 

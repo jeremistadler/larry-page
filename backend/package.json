@@ -22,6 +22,7 @@
     "workers-preview": "^1.0.6"
   },
   "dependencies": {
-    "@cloudflare/kv-asset-handler": "^0.0.10"
+    "@cloudflare/kv-asset-handler": "^0.0.10",
+    "shared": "1.0.0"
   }
 }
