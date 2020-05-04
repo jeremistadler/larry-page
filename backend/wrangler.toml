@@ -11,5 +11,5 @@ kv-namespaces = [
 ]
 
 [site]
-bucket = "../frontend/build"
+bucket = "../frontend/dist"
 entry-point = "./"

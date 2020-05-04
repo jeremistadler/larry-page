@@ -1,8 +1,9 @@
-import {Dna, ISettings, IRectangle, IWorkerResult} from './dna'
-import {FitnessCalculator} from './fitness-calculator'
-import {Utils} from './utils'
-import {RenderConfig} from './shared'
-import {GeneMutator, GeneHelper} from './gene-mutator'
+import {Dna, ISettings, IRectangle, IWorkerResult} from 'shared/src/dna'
+import {FitnessCalculator} from 'shared/src/fitness-calculator'
+import {Utils} from 'shared/src/utils'
+import {RenderConfig} from 'shared/src/shared'
+import {GeneMutator, GeneHelper} from 'shared/src/gene-mutator'
+import {DnaApi} from './api'
 
 export class JsRasterizer {
   idleWorkers: Worker[] = []
@@ -252,14 +253,14 @@ export class JsRasterizer {
         )
       this.Dna.Fitness = fitnessAfter
 
-      if (this.currentIteration % 50 == 0) this.Save()
+      if (this.currentIteration % 100 == 0) this.Save()
 
       //localStorage.setItem(tempName, JSON.stringify(this.Dna));
     }
   }
 
   createThread() {
-    const worker = new Worker(RenderConfig.baseUrl + '/worker.js')
+    const worker = new Worker(RenderConfig.baseAssets + '/rasterizer.worker.js')
     this.idleWorkers.push(worker)
     worker.onmessage = f => this.onMessage(f)
     worker.postMessage(this.source)
@@ -267,10 +268,7 @@ export class JsRasterizer {
   }
 
   Save() {
-    var xhr = new XMLHttpRequest()
-    xhr.open('POST', RenderConfig.baseUrl + '/api/dna/save', true)
-    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8')
-    xhr.send(JSON.stringify(this.Dna))
+    DnaApi.saveDna(this.Dna)
   }
 
   Stop() {

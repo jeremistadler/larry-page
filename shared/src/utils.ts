@@ -2,18 +2,6 @@ import {RenderConfig} from './shared'
 import {Dna} from './dna'
 
 export class Utils {
-  static StartTick(tickMethod: (dt: number) => void) {
-    var oldTime = 0
-    var tickLoop = (time: number) => {
-      var deltaTime = time - oldTime
-      oldTime = time
-
-      tickMethod(deltaTime / 1000)
-      window.requestAnimationFrame(tickLoop)
-    }
-    tickLoop(0)
-  }
-
   static randomIndex(arr: any[]) {
     return Math.floor(Math.random() * arr.length)
   }
@@ -80,13 +68,5 @@ export class Utils {
     }
 
     return dna
-  }
-
-  static loadDebugDna(onComplete: (dna: Dna) => void) {
-    window.setTimeout(function () {
-      var dna = localStorage.getItem(RenderConfig.tempName)
-      if (!dna) onComplete(Utils.createDna(0, 'debug'))
-      else onComplete(JSON.parse(dna))
-    })
   }
 }

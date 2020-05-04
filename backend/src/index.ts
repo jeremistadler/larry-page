@@ -2,6 +2,7 @@ import {KVNamespace} from '@cloudflare/workers-types'
 import {generateChronologicalId} from './generateChronologicalId'
 import {Utils} from 'shared/src/utils'
 import {getAssetFromKV, mapRequestToAsset} from '@cloudflare/kv-asset-handler'
+import {Dna} from 'shared/src/dna'
 
 declare global {
   const KV: KVNamespace
@@ -63,6 +64,19 @@ async function handleApiRequest(
     const stream = await KV.get('image:' + query.id, 'stream')
     return new Response(stream, {
       headers: {'content-type': 'image/png'},
+    })
+  } else if (query.route === 'save') {
+    const dna = (await request.json()) as Dna
+    const json = JSON.stringify(dna)
+    const id = dna.Organism.Id
+
+    await KV.put('generations:' + id + ':' + dna.Generation, json)
+    await KV.put('currentGeneration:' + id, json)
+    await KV.put('dnaIds:' + id, id)
+    await updateDnaCurrentList()
+
+    return new Response(JSON.stringify({}), {
+      headers: {'content-type': 'application/json'},
     })
   }
 

@@ -3,6 +3,7 @@ export const RenderConfig = {
   globalHeight: 128,
 
   baseUrl: 'https://jeremi.se/larry/api',
+  baseAssets: 'https://jeremi.se/larry',
 
   debug: false,
   tempName: 'dnaLocalized1',

@@ -1,5 +1,6 @@
 import {IRectangle, Dna, IGeneRectangleState} from './dna'
 import {Raster} from './raster'
+import {ImageData} from './ImageData'
 
 export class FitnessCalculator {
   static Buffers: Record<string, Uint8Array> = {}

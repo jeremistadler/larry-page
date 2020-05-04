@@ -4,9 +4,10 @@ import {DnaApi} from './../scripts/api'
 import {RenderConfig} from 'shared/src/shared'
 import {Dna} from 'shared/src/dna'
 import {GeneMutator} from 'shared/src/gene-mutator'
-import {JsRasterizer} from 'shared/src/rasterizer'
+import {JsRasterizer} from '../scripts/rasterizer'
 import DnaImage from '../dna-image/dna-image'
 import './renderer.css'
+import {useDebouncedCallback} from 'use-debounce'
 
 function DnaRenderer() {
   const [settings] = React.useState({
@@ -25,6 +26,10 @@ function DnaRenderer() {
   const [height, setHeight] = React.useState(200)
   let [dna, setDna] = React.useState<Dna | null>(null)
   const [_, setRasterizer] = React.useState<JsRasterizer | null>(null)
+  const [s, ss] = React.useState(0)
+  const [onNewFrame] = useDebouncedCallback((number: number) => {
+    ss(number)
+  }, 500)
 
   const dnaUpdated = (dna: Dna) => {
     var ratioW = 500 / dna.Organism.Width
@@ -37,6 +42,7 @@ function DnaRenderer() {
     setWidth(width)
     setHeight(height)
     setDna(dna)
+    onNewFrame(dna.Generation)
   }
 
   const changeSourceDna = (dna: Dna) => {

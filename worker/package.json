@@ -5,7 +5,7 @@
   "author": "Jeremi Stadler",
   "license": "MIT",
   "scripts": {
-    "build": "yarn parcel build rasterizer.worker.ts && cp dist/* ../frontend/build/"
+    "build": "yarn parcel build rasterizer.worker.ts --public-url /larry && cp dist/* ../frontend/dist/"
   },
   "dependencies": {
     "shared": "1.0.0"
