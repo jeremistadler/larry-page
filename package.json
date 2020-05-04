@@ -7,6 +7,6 @@
         "worker"
     ],
     "scripts": {
-        "deploy": "cd frontend && yarn build && cd ../worker && yarn parcel build rasterizer.worker.ts && cp dist/* ../frontend/build/ && cd ../backend && wrangler publish"
+        "deploy": "cd frontend && yarn build && cd ../worker && yarn build && cd ../backend && wrangler publish"
     }
 }

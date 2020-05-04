@@ -4,6 +4,9 @@
   "main": "index.js",
   "author": "Jeremi Stadler",
   "license": "MIT",
+  "scripts": {
+    "build": "yarn parcel build rasterizer.worker.ts && cp dist/* ../frontend/build/"
+  },
   "dependencies": {
     "shared": "1.0.0"
   },
