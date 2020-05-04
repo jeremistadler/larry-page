@@ -1,10 +1,13 @@
 name = "backend"
 type = "webpack"
-webpack_config = "webpack.config.js"
 account_id = "71b746635051545ad66a96846ea64800"
 workers_dev = false
 route = "jeremi.se/larry"
 zone_id = "971fa3e74042d3d8f70d317db262795e"
+
+bucket = "./build"
+entry-point = "./backend"
+webpack_config = "./backend/webpack.config.js"
 
 kv-namespaces = [
     { binding = "KV", id = "8c3db898d06c4fb083d72ad268763459" }
