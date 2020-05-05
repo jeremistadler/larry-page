@@ -16,10 +16,18 @@ const DnaGrid = ({}) => {
     })
   }, [])
 
+  const [isVisible, setIsVisible] = React.useState(false)
+
+  React.useEffect(() => {
+    setTimeout(() => {
+      setIsVisible(true)
+    }, 100)
+  })
+
   return (
     <div>
       <ul className="grid">
-        {dnaList.map(dna => {
+        {dnaList.map((dna, index) => {
           var ratioW = 300 / dna.Organism.Width
           var ratioH = 200 / dna.Organism.Height
           var ratio = ratioW < ratioH ? ratioW : ratioH
@@ -32,8 +40,12 @@ const DnaGrid = ({}) => {
           } as const
 
           return (
-            <div className="grid-image" key={dna.Organism.Id}>
-              <DnaImage dna={dna} width={width} height={height} />
+            <div
+              className={
+                'grid-image' + (isVisible ? ' grid-image-visible' : '')
+              }
+              key={dna.Organism.Id}>
+              <DnaImage dna={dna} width={width} height={height} index={index} />
               <div className="grid-image-info">
                 <span>{dna.Genes.length} genes</span>
                 <span style={floatRightStyle}>{dna.Mutation} mutations</span>

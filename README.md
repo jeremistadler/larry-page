@@ -9,3 +9,4 @@
 - Make random api return oldest returned item
 - Animate in triangels
 - Web assembly script the workers :)
+- Let center of images have highter fitness penalty to focus on them

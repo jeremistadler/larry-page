@@ -24,9 +24,24 @@
 }
 
 
-.grid-image:hover polygon{
+.grid-image:hover polygon {
      animation: kaboom 5s ease infinite;
 }
+
+.grid-image polygon{
+    opacity: 0;
+}
+
+.grid-image-visible polygon{
+    animation: shoow 2s ease;
+    animation-fill-mode: forwards;
+}
+
+@keyframes shoow {
+    0% { opacity: 0; }
+   100% { opacity: 1; }
+ }
+ 
 
 @keyframes kaboom {
    0% { opacity: 1; }
