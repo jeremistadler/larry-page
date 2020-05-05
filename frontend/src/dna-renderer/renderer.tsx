@@ -27,9 +27,6 @@ function DnaRenderer() {
   let [dna, setDna] = React.useState<Dna | null>(null)
   const [_, setRasterizer] = React.useState<JsRasterizer | null>(null)
   const [s, ss] = React.useState(0)
-  const [onNewFrame] = useDebouncedCallback((number: number) => {
-    ss(number)
-  }, 500)
 
   const dnaUpdated = (dna: Dna) => {
     var ratioW = 500 / dna.Organism.Width
@@ -39,10 +36,12 @@ function DnaRenderer() {
     var width = dna.Organism.Width * ratio
     var height = dna.Organism.Height * ratio
 
-    setWidth(width)
-    setHeight(height)
-    setDna(dna)
-    onNewFrame(dna.Generation)
+    requestAnimationFrame(() => {
+      setWidth(width)
+      setHeight(height)
+      setDna(dna)
+      ss(dna.Generation)
+    })
   }
 
   const changeSourceDna = (dna: Dna) => {
