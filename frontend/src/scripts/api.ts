@@ -61,7 +61,7 @@ export class DnaApi {
     width: number,
     height: number,
   ): Promise<ImageData> {
-    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.Organism.Id
+    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.organism.id
     return new Promise((resolve, reject) => {
       var image = new Image()
       image.crossOrigin = ''
@@ -69,9 +69,9 @@ export class DnaApi {
         var canvas = document.createElement('canvas')
         canvas.width = width
         canvas.height = height
-        var ctx = <CanvasRenderingContext2D>(
-          canvas.getContext('2d', {alpha: false})
-        )
+        var ctx = canvas.getContext('2d', {
+          alpha: false,
+        }) as CanvasRenderingContext2D
         ctx.fillStyle = 'white'
         ctx.fillRect(0, 0, width, height)
         ctx.drawImage(image, 0, 0, width, height)

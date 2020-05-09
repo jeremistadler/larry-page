@@ -28,12 +28,12 @@ const DnaGrid = ({}) => {
     <div>
       <ul className="grid">
         {dnaList.map((dna, index) => {
-          var ratioW = 300 / dna.Organism.Width
-          var ratioH = 200 / dna.Organism.Height
+          var ratioW = 300 / dna.organism.width
+          var ratioH = 200 / dna.organism.height
           var ratio = ratioW < ratioH ? ratioW : ratioH
 
-          var width = dna.Organism.Width * ratio
-          var height = dna.Organism.Height * ratio
+          var width = dna.organism.width * ratio
+          var height = dna.organism.height * ratio
 
           var floatRightStyle = {
             float: 'right',
@@ -44,11 +44,11 @@ const DnaGrid = ({}) => {
               className={
                 'grid-image' + (isVisible ? ' grid-image-visible' : '')
               }
-              key={dna.Organism.Id}>
+              key={dna.organism.id}>
               <DnaImage dna={dna} width={width} height={height} index={index} />
               <div className="grid-image-info">
-                <span>{dna.Genes.length} genes</span>
-                <span style={floatRightStyle}>{dna.Mutation} mutations</span>
+                <span>{dna.genes.length} genes</span>
+                <span style={floatRightStyle}>{dna.mutation} mutations</span>
               </div>
             </div>
           )

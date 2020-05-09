@@ -13,7 +13,7 @@ function DnaImage({
   height: number
   index: number
 }) {
-  if (!dna || !dna.Genes) {
+  if (!dna || !dna.genes) {
     var style = {
       width: width + 'px',
       height: height + 'px',
@@ -24,22 +24,22 @@ function DnaImage({
 
   var animationLength = 2
   var spaceBetweenImages = 0.3
-  var lengthPerPoly = animationLength / dna.Genes.length
+  var lengthPerPoly = animationLength / dna.genes.length
 
-  var polygons = dna.Genes.map((gene, i) => {
+  var polygons = dna.genes.map((gene, i) => {
     var str = ''
-    for (let i = 0; i < gene.Pos.length; i += 2)
-      str += gene.Pos[i] * width + ',' + gene.Pos[i + 1] * height + ' '
+    for (let i = 0; i < gene.pos.length; i += 2)
+      str += gene.pos[i] * width + ',' + gene.pos[i + 1] * height + ' '
 
     var color =
       'rgba(' +
-      Math.floor(gene.Color[0] * 255) +
+      Math.floor(gene.color[0] * 255) +
       ',' +
-      Math.floor(gene.Color[1] * 255) +
+      Math.floor(gene.color[1] * 255) +
       ',' +
-      Math.floor(gene.Color[2] * 255) +
+      Math.floor(gene.color[2] * 255) +
       ',' +
-      gene.Color[3] +
+      gene.color[3] +
       ')'
 
     var style = {

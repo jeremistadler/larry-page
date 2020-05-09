@@ -18,7 +18,7 @@ class JsRasterizerWorker {
     GeneMutator.setFromSettings(settings)
 
     var mutator = GeneMutator.GetMutator()
-    var geneStates = dna.Genes.map(f => GeneHelper.CalculateState(f, rect))
+    var geneStates = dna.genes.map(f => GeneHelper.CalculateState(f, rect))
 
     var ctx: IDnaRenderContext = {
       dna: dna,

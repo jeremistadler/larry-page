@@ -1,3 +1,5 @@
+import {ImageData} from './ImageData'
+
 export interface IWorkerResult {
   generations: number
   mutations: IMutatorState[]
@@ -27,22 +29,22 @@ export interface IRectangle {
 }
 
 export interface Organism {
-  Id: string
-  Width: number
-  Height: number
+  id: string
+  width: number
+  height: number
 }
 
 export interface Gene {
-  Pos: number[]
-  Color: number[]
+  pos: number[]
+  color: number[]
 }
 
 export interface Dna {
-  Genes: Gene[]
-  Generation: number
-  Mutation: number
-  Fitness: number
-  Organism: Organism
+  genes: Gene[]
+  generation: number
+  mutation: number
+  fitness: number
+  organism: Organism
 }
 
 export interface IDnaRenderContext {

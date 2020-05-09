@@ -1,5 +1,4 @@
-import {RenderConfig} from './shared'
-import {Dna} from './dna'
+import {Dna, Gene} from './dna'
 
 export class Utils {
   static randomIndex(arr: any[]) {
@@ -42,29 +41,28 @@ export class Utils {
 
   static createDna(numberOfGenes: number, organismId: string): Dna {
     var dna = {
-      Fitness: Infinity,
-      Genes: new Array(numberOfGenes),
-      Generation: 0,
-      Mutation: 0,
-      Organism: {
-        Id: organismId,
-        GeneCount: numberOfGenes,
-        Width: 200,
-        Height: 200,
+      fitness: Infinity,
+      genes: new Array(numberOfGenes),
+      generation: 0,
+      mutation: 0,
+      organism: {
+        id: organismId,
+        width: 200,
+        height: 200,
       },
     }
 
     for (var i = 0; i < numberOfGenes; i++) {
-      var gene = (dna.Genes[i] = {
-        Color: [
+      var gene: Gene = (dna.genes[i] = {
+        color: [
           Math.random(),
           Math.random(),
           Math.random(),
           Math.random() * 0.8 + 0.2,
         ],
-        Pos: new Array(6),
+        pos: new Array(6),
       })
-      for (var q = 0; q < gene.Pos.length; q++) gene.Pos[q] = Math.random()
+      for (var q = 0; q < gene.pos.length; q++) gene.pos[q] = Math.random()
     }
 
     return dna

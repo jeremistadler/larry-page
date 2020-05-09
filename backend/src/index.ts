@@ -41,7 +41,7 @@ async function handleApiRequest(
     const json = JSON.stringify(dna)
 
     await KV.put('image:' + id, buf)
-    await KV.put('generations:' + id + ':' + dna.Generation, json)
+    await KV.put('generations:' + id + ':' + dna.generation, json)
     await KV.put('currentGeneration:' + id, json)
     await KV.put('dnaIds:' + id, id)
     await updateDnaCurrentList()
@@ -68,9 +68,9 @@ async function handleApiRequest(
   } else if (query.route === 'save') {
     const dna = (await request.json()) as Dna
     const json = JSON.stringify(dna)
-    const id = dna.Organism.Id
+    const id = dna.organism.id
 
-    await KV.put('generations:' + id + ':' + dna.Generation, json)
+    await KV.put('generations:' + id + ':' + dna.generation, json)
     await KV.put('currentGeneration:' + id, json)
     await KV.put('dnaIds:' + id, id)
     await updateDnaCurrentList()

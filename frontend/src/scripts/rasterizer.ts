@@ -1,8 +1,8 @@
-import {Dna, ISettings, IRectangle, IWorkerResult} from 'shared/src/dna'
+import {Dna, ISettings, IRectangle, IWorkerResult, Gene} from 'shared/src/dna'
 import {FitnessCalculator} from 'shared/src/fitness-calculator'
 import {Utils} from 'shared/src/utils'
 import {RenderConfig} from 'shared/src/shared'
-import {GeneMutator, GeneHelper} from 'shared/src/gene-mutator'
+import {GeneMutator} from 'shared/src/gene-mutator'
 import {DnaApi} from './api'
 
 export class JsRasterizer {
@@ -19,10 +19,10 @@ export class JsRasterizer {
 
   constructor(
     public source: ImageData,
-    public Dna: Dna,
-    public Settings: ISettings,
+    public dna: Dna,
+    public settings: ISettings,
   ) {
-    Dna.Fitness = FitnessCalculator.GetFitness(Dna, this.source)
+    dna.fitness = FitnessCalculator.GetFitness(dna, this.source)
 
     for (var i = 0; i < 4; i++) this.createThread()
 
@@ -32,27 +32,27 @@ export class JsRasterizer {
   removeWorst() {
     var list = []
     var startTime = new Date().getTime()
-    var originalFitness = FitnessCalculator.GetFitness(this.Dna, this.source)
+    var originalFitness = FitnessCalculator.GetFitness(this.dna, this.source)
 
-    var emptyGene = {
-      Color: [0, 0, 0, 0],
-      Pos: Utils.CreateNumberArray(6),
+    var emptyGene: Gene = {
+      color: [0, 0, 0, 0],
+      pos: Utils.CreateNumberArray(6),
     }
 
-    var step = Math.ceil(Math.max(this.Dna.Genes.length / 300, 1))
+    var step = Math.ceil(Math.max(this.dna.genes.length / 300, 1))
 
-    for (var i = 0; i < this.Dna.Genes.length && i < 300; i += step) {
-      var gene = this.Dna.Genes[i]
-      this.Dna.Genes[i] = emptyGene
+    for (var i = 0; i < this.dna.genes.length && i < 300; i += step) {
+      var gene = this.dna.genes[i]
+      this.dna.genes[i] = emptyGene
 
-      var fitness = FitnessCalculator.GetFitness(this.Dna, this.source)
+      var fitness = FitnessCalculator.GetFitness(this.dna, this.source)
       list.push({
         fitness: fitness,
         index: i,
         fitnessDiff: fitness - originalFitness,
       })
 
-      this.Dna.Genes[i] = gene
+      this.dna.genes[i] = gene
     }
 
     list.sort((a, b) => a.fitness - b.fitness)
@@ -68,9 +68,9 @@ export class JsRasterizer {
     indexesToRemove.sort((a, b) => b - a)
 
     for (var g = 0; g < indexesToRemove.length; g++)
-      this.Dna.Genes.splice(indexesToRemove[g], 1)
+      this.dna.genes.splice(indexesToRemove[g], 1)
 
-    this.Dna.Fitness = FitnessCalculator.GetFitness(this.Dna, this.source)
+    this.dna.fitness = FitnessCalculator.GetFitness(this.dna, this.source)
     console.log(
       'Removed ',
       indexesToRemove.length,
@@ -86,27 +86,27 @@ export class JsRasterizer {
 
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, width, height)
-    var geneStates = this.Dna.Genes.map(f =>
-      GeneHelper.CalculateState(f, this.currentRectangles[0]),
-    )
+    // var geneStates = this.dna.genes.map(f =>
+    //   GeneHelper.CalculateState(f, this.currentRectangles[0]),
+    // )
 
-    for (var g = 0; g < this.Dna.Genes.length; g++) {
-      var gene = this.Dna.Genes[g]
+    for (var g = 0; g < this.dna.genes.length; g++) {
+      var gene = this.dna.genes[g]
       ctx.fillStyle =
         'rgba(' +
-        Math.floor(gene.Color[0] * 255) +
+        Math.floor(gene.color[0] * 255) +
         ',' +
-        Math.floor(gene.Color[1] * 255) +
+        Math.floor(gene.color[1] * 255) +
         ',' +
-        Math.floor(gene.Color[2] * 255) +
+        Math.floor(gene.color[2] * 255) +
         ',' +
-        gene.Color[3] +
+        gene.color[3] +
         ')'
 
       ctx.beginPath()
-      ctx.moveTo(gene.Pos[0] * width, gene.Pos[1] * height)
-      ctx.lineTo(gene.Pos[2] * width, gene.Pos[3] * height)
-      ctx.lineTo(gene.Pos[4] * width, gene.Pos[5] * height)
+      ctx.moveTo(gene.pos[0] * width, gene.pos[1] * height)
+      ctx.lineTo(gene.pos[2] * width, gene.pos[3] * height)
+      ctx.lineTo(gene.pos[4] * width, gene.pos[5] * height)
       ctx.closePath()
       ctx.fill()
     }
@@ -146,8 +146,8 @@ export class JsRasterizer {
     //var maxGridSize = (Math.log(this.Dna.Generation + 1) / 2) + 0;
     //DebugView.SetMessage('Max grid size', maxGridSize, '(' + Math.round(maxGridSize) + ')');
     var gridSize = Utils.randomInt(
-      this.Settings.minGridSize,
-      this.Settings.maxGridSize,
+      this.settings.minGridSize,
+      this.settings.maxGridSize,
     )
     //gridSize = 2;
     var gridSlotWidth = this.source.width / gridSize
@@ -159,7 +159,7 @@ export class JsRasterizer {
     //gridOffsetY = 0;
     this.startTime = new Date().getTime()
     this.currentRectangles.length = 0
-    GeneMutator.setSettingsFromMutators(this.Settings)
+    GeneMutator.setSettingsFromMutators(this.settings)
 
     for (
       ;
@@ -173,7 +173,7 @@ export class JsRasterizer {
         x = Utils.randomInt(0, gridSize - 1)
         y = Utils.randomInt(0, gridSize - 1)
         var key = x + ':' + y
-        if (usedSlots.indexOf(key) == -1) {
+        if (usedSlots.indexOf(key) === -1) {
           usedSlots.push(key)
           break
         }
@@ -197,40 +197,40 @@ export class JsRasterizer {
 
       if (worker)
         worker.postMessage({
-          dna: this.Dna,
+          dna: this.dna,
           rect: rect,
-          settings: this.Settings,
+          settings: this.settings,
         })
     }
   }
 
   onMessage(e: MessageEvent) {
-    var worker = <Worker>e.target
-    var data = <IWorkerResult>e.data
+    var worker = e.target as Worker
+    var data = e.data as IWorkerResult
 
     this.activeWorkers.splice(this.activeWorkers.indexOf(worker), 1)
     this.idleWorkers.push(worker)
 
     var mutations = data.mutations
-    this.Dna.Generation += data.generations
-    this.Dna.Mutation += mutations.length
+    this.dna.generation += data.generations
+    this.dna.mutation += mutations.length
 
-    if (this.Settings.autoAdjustMutatorWeights) {
+    if (this.settings.autoAdjustMutatorWeights) {
       var mutator = GeneMutator.getFromName(data.mutatorName)
       GeneMutator.UpdateEffectiveness(data.fitnessImprovement, mutator as any)
     }
 
     for (var i = 0; i < mutations.length; i++) {
       if (mutations[i].oldGene == null)
-        this.Dna.Genes.push(mutations[i].newGene)
-      else this.Dna.Genes[mutations[i].index] = mutations[i].newGene
+        this.dna.genes.push(mutations[i].newGene)
+      else this.dna.genes[mutations[i].index] = mutations[i].newGene
     }
 
-    if (this.activeWorkers.length == 0) {
+    if (this.activeWorkers.length === 0) {
       if (this.clearNextRound) {
         this.clearNextRound = false
-        this.Dna.Genes.length = 0
-        this.Dna.Fitness = Infinity
+        this.dna.genes.length = 0
+        this.dna.fitness = Infinity
       }
 
       this.currentIteration++
@@ -238,22 +238,22 @@ export class JsRasterizer {
       //    this.removeWorst();
 
       for (var g = 0; g < this.onFrameCompleted.length; g++)
-        this.onFrameCompleted[g](this.Dna)
+        this.onFrameCompleted[g](this.dna)
 
       this.startLocalizedDraws()
 
       for (var g = 0; g < this.onFrameStarted.length; g++)
-        this.onFrameStarted[g](this.Dna)
+        this.onFrameStarted[g](this.dna)
 
-      var fitnessAfter = FitnessCalculator.GetFitness(this.Dna, this.source)
-      if (fitnessAfter > this.Dna.Fitness)
+      var fitnessAfter = FitnessCalculator.GetFitness(this.dna, this.source)
+      if (fitnessAfter > this.dna.fitness)
         console.warn(
-          'Fitness diff: ' + (this.Dna.Fitness - fitnessAfter),
+          'Fitness diff: ' + (this.dna.fitness - fitnessAfter),
           ' startLocalizedDraws is mutating the image',
         )
-      this.Dna.Fitness = fitnessAfter
+      this.dna.fitness = fitnessAfter
 
-      if (this.currentIteration % 100 == 0) this.Save()
+      if (this.currentIteration % 100 === 0) this.Save()
 
       //localStorage.setItem(tempName, JSON.stringify(this.Dna));
     }
@@ -268,15 +268,15 @@ export class JsRasterizer {
   }
 
   Save() {
-    DnaApi.saveDna(this.Dna)
+    DnaApi.saveDna(this.dna)
   }
 
   Stop() {
-    for (var i = 0; i < this.idleWorkers.length; i++) {
+    for (let i = 0; i < this.idleWorkers.length; i++) {
       this.idleWorkers[i].terminate()
     }
 
-    for (var i = 0; i < this.activeWorkers.length; i++) {
+    for (let i = 0; i < this.activeWorkers.length; i++) {
       this.activeWorkers[i].terminate()
     }
   }

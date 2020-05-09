@@ -20,20 +20,20 @@ export class FitnessCalculator {
     var buffer = this.GetBuffer(image.width, image.height)
     for (var i = 0; i < buffer.length; i++) buffer[i] = 255
 
-    for (var i = 0; i < dna.Genes.length; i++) {
-      var gene = dna.Genes[i]
+    for (var i = 0; i < dna.genes.length; i++) {
+      var gene = dna.genes[i]
 
-      this.colorBuffer[0] = Math.floor(gene.Color[0] * 255)
-      this.colorBuffer[1] = Math.floor(gene.Color[1] * 255)
-      this.colorBuffer[2] = Math.floor(gene.Color[2] * 255)
-      this.colorBuffer[3] = gene.Color[3]
+      this.colorBuffer[0] = Math.floor(gene.color[0] * 255)
+      this.colorBuffer[1] = Math.floor(gene.color[1] * 255)
+      this.colorBuffer[2] = Math.floor(gene.color[2] * 255)
+      this.colorBuffer[3] = gene.color[3]
 
-      this.posBuffer[0] = gene.Pos[0] * image.width
-      this.posBuffer[1] = gene.Pos[1] * image.height
-      this.posBuffer[2] = gene.Pos[2] * image.width
-      this.posBuffer[3] = gene.Pos[3] * image.height
-      this.posBuffer[4] = gene.Pos[4] * image.width
-      this.posBuffer[5] = gene.Pos[5] * image.height
+      this.posBuffer[0] = gene.pos[0] * image.width
+      this.posBuffer[1] = gene.pos[1] * image.height
+      this.posBuffer[2] = gene.pos[2] * image.width
+      this.posBuffer[3] = gene.pos[3] * image.height
+      this.posBuffer[4] = gene.pos[4] * image.width
+      this.posBuffer[5] = gene.pos[5] * image.height
 
       Raster.drawPolygon(
         buffer,
@@ -56,22 +56,22 @@ export class FitnessCalculator {
     var buffer = this.GetBuffer(image.width, image.height)
     for (var i = 0; i < buffer.length; i++) buffer[i] = 255
 
-    for (var i = 0; i < dna.Genes.length; i++) {
+    for (var i = 0; i < dna.genes.length; i++) {
       if (!geneStates[i].IsIntersecting) continue
 
-      var gene = dna.Genes[i]
+      var gene = dna.genes[i]
 
-      this.colorBuffer[0] = Math.floor(gene.Color[0] * 255)
-      this.colorBuffer[1] = Math.floor(gene.Color[1] * 255)
-      this.colorBuffer[2] = Math.floor(gene.Color[2] * 255)
-      this.colorBuffer[3] = gene.Color[3]
+      this.colorBuffer[0] = Math.floor(gene.color[0] * 255)
+      this.colorBuffer[1] = Math.floor(gene.color[1] * 255)
+      this.colorBuffer[2] = Math.floor(gene.color[2] * 255)
+      this.colorBuffer[3] = gene.color[3]
 
-      this.posBuffer[0] = gene.Pos[0] * image.width
-      this.posBuffer[1] = gene.Pos[1] * image.height
-      this.posBuffer[2] = gene.Pos[2] * image.width
-      this.posBuffer[3] = gene.Pos[3] * image.height
-      this.posBuffer[4] = gene.Pos[4] * image.width
-      this.posBuffer[5] = gene.Pos[5] * image.height
+      this.posBuffer[0] = gene.pos[0] * image.width
+      this.posBuffer[1] = gene.pos[1] * image.height
+      this.posBuffer[2] = gene.pos[2] * image.width
+      this.posBuffer[3] = gene.pos[3] * image.height
+      this.posBuffer[4] = gene.pos[4] * image.width
+      this.posBuffer[5] = gene.pos[5] * image.height
 
       Raster.drawPolygon(
         buffer,

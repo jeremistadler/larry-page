@@ -7,7 +7,6 @@ import {GeneMutator} from 'shared/src/gene-mutator'
 import {JsRasterizer} from '../scripts/rasterizer'
 import DnaImage from '../dna-image/dna-image'
 import './renderer.css'
-import {useDebouncedCallback} from 'use-debounce'
 
 function DnaRenderer() {
   const [settings] = React.useState({
@@ -29,18 +28,18 @@ function DnaRenderer() {
   const [s, ss] = React.useState(0)
 
   const dnaUpdated = (dna: Dna) => {
-    var ratioW = 500 / dna.Organism.Width
-    var ratioH = 300 / dna.Organism.Height
+    var ratioW = 500 / dna.organism.width
+    var ratioH = 300 / dna.organism.height
     var ratio = ratioW < ratioH ? ratioW : ratioH
 
-    var width = dna.Organism.Width * ratio
-    var height = dna.Organism.Height * ratio
+    var width = dna.organism.width * ratio
+    var height = dna.organism.height * ratio
 
     requestAnimationFrame(() => {
       setWidth(width)
       setHeight(height)
       setDna(dna)
-      ss(dna.Generation)
+      ss(dna.generation)
     })
   }
 
@@ -74,19 +73,19 @@ function DnaRenderer() {
       <div className="renderer-inner-container">
         <p className="renderer-header">Currently rendering</p>
         <div className="renderer-image">
-          <DnaImage dna={dna} width={width} height={height} />
+          <DnaImage index={0} dna={dna} width={width} height={height} />
         </div>
         <div className="renderer-text-container">
           <p>
             Generation:{' '}
-            <span className="renderer-value-text">{dna.Generation}</span>
+            <span className="renderer-value-text">{dna.generation}</span>
           </p>
           <p>
             Mutation:{' '}
-            <span className="renderer-value-text">{dna.Mutation}</span>
+            <span className="renderer-value-text">{dna.mutation}</span>
           </p>
           <p>
-            Fitness: <span className="renderer-value-text">{dna.Fitness}</span>
+            Fitness: <span className="renderer-value-text">{dna.fitness}</span>
           </p>
           <p>
             Weights:{' '}
