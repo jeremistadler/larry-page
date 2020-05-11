@@ -14,7 +14,7 @@ class JsRasterizerWorker {
   constructor(public sourceImageData: ImageData) {}
 
   go(dna: Dna, rect: IRectangle, settings: ISettings) {
-    //var startTime = new Date().getTime()
+    //var startTime = Date.now()
     GeneMutator.setFromSettings(settings)
 
     var mutator = GeneMutator.GetMutator()

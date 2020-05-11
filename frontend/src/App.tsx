@@ -2,21 +2,26 @@ import * as React from 'react'
 import DnaGrid from './dna-grid/grid'
 import DnaRenderer from './dna-renderer/renderer'
 import Uploader from './uploader/uploader'
-import {Provider} from 'react-redux'
-import {createStore} from 'redux'
-import {rootReducer} from './scripts/reducers'
 import './form.css'
+import {Dna} from 'shared/src/dna'
+import {DnaApi} from './scripts/api'
 
-const store = createStore(rootReducer, {})
+const App = () => {
+  let [dna, setDna] = React.useState<Dna | null>(null)
 
-const App = () => (
-  <Provider store={store}>
+  React.useEffect(() => {
+    DnaApi.fetchRandomDna().then(dna => {
+      setDna(dna)
+    })
+  }, [])
+
+  return (
     <>
-      <DnaRenderer />
-      <Uploader />
-      <DnaGrid />
+      <DnaRenderer dna={dna} />
+      <Uploader onUploaded={setDna} />
+      <DnaGrid onChangeDna={setDna} />
     </>
-  </Provider>
-)
+  )
+}
 
 export default App

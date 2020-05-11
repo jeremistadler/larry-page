@@ -24,63 +24,56 @@ export class JsRasterizer {
   ) {
     dna.fitness = FitnessCalculator.GetFitness(dna, this.source)
 
-    for (var i = 0; i < 4; i++) this.createThread()
+    for (var i = 0; i < 1; i++) this.createThread()
 
     this.startLocalizedDraws()
   }
 
-  removeWorst() {
-    var list = []
-    var startTime = new Date().getTime()
-    var originalFitness = FitnessCalculator.GetFitness(this.dna, this.source)
-
-    var emptyGene: Gene = {
+  private removeWorst() {
+    const startTime = Date.now()
+    const originalFitness = FitnessCalculator.GetFitness(this.dna, this.source)
+    const emptyGene: Gene = {
       color: [0, 0, 0, 0],
       pos: Utils.CreateNumberArray(6),
     }
 
-    var step = Math.ceil(Math.max(this.dna.genes.length / 300, 1))
+    const targetGeneCount = this.dna.generation / 8000 + 20
+    let removedCount = 0
 
-    for (var i = 0; i < this.dna.genes.length && i < 300; i += step) {
-      var gene = this.dna.genes[i]
-      this.dna.genes[i] = emptyGene
+    while (this.dna.genes.length > targetGeneCount) {
+      const list: {fitness: number; index: number; fitnessDiff: number}[] = []
 
-      var fitness = FitnessCalculator.GetFitness(this.dna, this.source)
-      list.push({
-        fitness: fitness,
-        index: i,
-        fitnessDiff: fitness - originalFitness,
-      })
+      for (var i = 0; i < this.dna.genes.length; i++) {
+        var gene = this.dna.genes[i]
+        this.dna.genes[i] = emptyGene
 
-      this.dna.genes[i] = gene
+        var fitness = FitnessCalculator.GetFitness(this.dna, this.source)
+        list.push({
+          fitness: fitness,
+          index: i,
+          fitnessDiff: fitness - originalFitness,
+        })
+
+        this.dna.genes[i] = gene
+      }
+
+      list.sort((a, b) => a.fitness - b.fitness)
+      this.dna.genes[list[0].index] = emptyGene
+      removedCount++
     }
-
-    list.sort((a, b) => a.fitness - b.fitness)
-    var indexesToRemove = []
-    for (
-      ;
-      list.length > 2000 || (list.length > 0 && list[0].fitnessDiff <= 30);
-
-    ) {
-      indexesToRemove.push(list[0].index)
-      list.splice(0, 1)
-    }
-    indexesToRemove.sort((a, b) => b - a)
-
-    for (var g = 0; g < indexesToRemove.length; g++)
-      this.dna.genes.splice(indexesToRemove[g], 1)
 
     this.dna.fitness = FitnessCalculator.GetFitness(this.dna, this.source)
+
     console.log(
       'Removed ',
-      indexesToRemove.length,
+      removedCount,
       ' genes in ',
-      new Date().getTime() - startTime,
+      Date.now() - startTime,
       ' ms',
     )
   }
 
-  drawPreview(ctx: CanvasRenderingContext2D) {
+  drawCurrentWorkersOnCanvas(ctx: CanvasRenderingContext2D) {
     var width = ctx.canvas.width
     var height = ctx.canvas.height
 
@@ -157,7 +150,7 @@ export class JsRasterizer {
     var gridOffsetY = ((Math.random() - 0.5) * gridSlotHeight) / 2
     //gridOffsetX = 0;
     //gridOffsetY = 0;
-    this.startTime = new Date().getTime()
+    this.startTime = Date.now()
     this.currentRectangles.length = 0
     GeneMutator.setSettingsFromMutators(this.settings)
 
@@ -234,8 +227,6 @@ export class JsRasterizer {
       }
 
       this.currentIteration++
-      //if (this.currentIteration % 50 == 0)
-      //    this.removeWorst();
 
       for (var g = 0; g < this.onFrameCompleted.length; g++)
         this.onFrameCompleted[g](this.dna)
@@ -253,7 +244,10 @@ export class JsRasterizer {
         )
       this.dna.fitness = fitnessAfter
 
-      if (this.currentIteration % 100 === 0) this.Save()
+      if (this.currentIteration % 100 === 0) {
+        this.removeWorst()
+        this.Save()
+      }
 
       //localStorage.setItem(tempName, JSON.stringify(this.Dna));
     }
@@ -272,6 +266,8 @@ export class JsRasterizer {
   }
 
   Stop() {
+    this.onFrameCompleted = []
+
     for (let i = 0; i < this.idleWorkers.length; i++) {
       this.idleWorkers[i].terminate()
     }

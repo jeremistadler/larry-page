@@ -5,10 +5,12 @@ import {RenderConfig} from 'shared/src/shared'
 import {Dna} from 'shared/src/dna'
 import {GeneMutator} from 'shared/src/gene-mutator'
 import {JsRasterizer} from '../scripts/rasterizer'
-import DnaImage from '../dna-image/dna-image'
 import './renderer.css'
 
-function DnaRenderer() {
+function DnaRenderer(props: {dna: Dna | null}) {
+  const {dna} = props
+  const dnaOrEmpty = dna ?? Utils.createDna(0, '')
+
   const [settings] = React.useState({
     minGridSize: 1,
     maxGridSize: 3,
@@ -21,71 +23,77 @@ function DnaRenderer() {
     iterations: 50,
   })
 
-  const [width, setWidth] = React.useState(200)
-  const [height, setHeight] = React.useState(200)
-  let [dna, setDna] = React.useState<Dna | null>(null)
-  const [_, setRasterizer] = React.useState<JsRasterizer | null>(null)
-  const [s, ss] = React.useState(0)
+  const [rasterizer, setRasterizer] = React.useState<JsRasterizer | null>(null)
+  const [, generation] = React.useState(0)
+
+  const ratioW = 500 / dnaOrEmpty.organism.width
+  const ratioH = 300 / dnaOrEmpty.organism.height
+  const ratio = ratioW < ratioH ? ratioW : ratioH
+
+  const width = dnaOrEmpty.organism.width * ratio
+  const height = dnaOrEmpty.organism.height * ratio
 
   const dnaUpdated = (dna: Dna) => {
-    var ratioW = 500 / dna.organism.width
-    var ratioH = 300 / dna.organism.height
-    var ratio = ratioW < ratioH ? ratioW : ratioH
-
-    var width = dna.organism.width * ratio
-    var height = dna.organism.height * ratio
-
-    requestAnimationFrame(() => {
-      setWidth(width)
-      setHeight(height)
-      setDna(dna)
-      ss(dna.generation)
-    })
+    requestAnimationFrame(() => generation(dna.mutation))
   }
 
-  const changeSourceDna = (dna: Dna) => {
-    dnaUpdated(dna)
+  React.useEffect(() => {
+    if (!dna) return
+
+    let isMounted = true
+    let rasterizer: null | JsRasterizer = null
 
     DnaApi.loadAndScaleImageData(
       dna,
       RenderConfig.globalWidth,
       RenderConfig.globalHeight,
-    ).then(image => {
-      //if(window.devicePixelRatio) return;
-      const rasterizer = new JsRasterizer(image, dna, settings)
-      rasterizer.onFrameCompleted.push(dna => {
-        dnaUpdated(dna)
-      })
+    ).then(imageData => {
+      if (!isMounted) return
+
+      rasterizer = new JsRasterizer(imageData, dna, settings)
+      rasterizer.onFrameCompleted.push(dnaUpdated)
       setRasterizer(rasterizer)
+      dnaUpdated(dna)
     })
-  }
+
+    return () => {
+      isMounted = false
+      if (rasterizer) rasterizer.Stop()
+    }
+  }, [dna, settings])
+
+  const canvasRef = React.useRef<HTMLCanvasElement>(null)
 
   React.useEffect(() => {
-    DnaApi.fetchRandomDna().then(dna => {
-      changeSourceDna(dna)
-    })
-  }, [])
-
-  if (!dna) dna = Utils.createDna(0, '')
+    if (dna) {
+      const ctx = canvasRef.current?.getContext('2d')
+      if (ctx && rasterizer) {
+        rasterizer.drawCurrentWorkersOnCanvas(ctx)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dna, dna?.mutation, settings])
 
   return (
     <div className="renderer-container">
       <div className="renderer-inner-container">
         <p className="renderer-header">Currently rendering</p>
         <div className="renderer-image">
-          <DnaImage index={0} dna={dna} width={width} height={height} />
+          <canvas ref={canvasRef} width={width} height={height} />
         </div>
+
         <div className="renderer-text-container">
           <p>
             Generation:{' '}
-            <span className="renderer-value-text">{dna.generation}</span>
+            <span className="renderer-value-text">{dnaOrEmpty.generation}</span>
           </p>
           <p>
             Mutation:{' '}
-            <span className="renderer-value-text">{dna.mutation}</span>
+            <span className="renderer-value-text">{dnaOrEmpty.mutation}</span>
           </p>
           <p>
-            Fitness: <span className="renderer-value-text">{dna.fitness}</span>
+            Fitness:{' '}
+            <span className="renderer-value-text">{dnaOrEmpty.fitness}</span>
           </p>
           <p>
             Weights:{' '}

@@ -1,8 +1,9 @@
 import * as React from 'react'
 import './uploader.css'
 import {DnaApi} from '../scripts/api'
+import {Dna} from 'shared/src/dna'
 
-export default function Uploader() {
+export default function Uploader(props: {onUploaded: (dna: Dna) => void}) {
   const uploadForm = React.useRef<HTMLInputElement>(null)
 
   const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -11,6 +12,7 @@ export default function Uploader() {
     console.log('Uploading...')
     const dna = await DnaApi.uploadNewImage(file)
     console.log(dna)
+    props.onUploaded(dna)
   }
 
   return (

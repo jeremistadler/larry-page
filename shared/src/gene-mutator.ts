@@ -218,24 +218,66 @@ export class GeneMutator {
       },
       undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
     },
-    //{
-    //    name: 'Add Small Triangle',
-    //    effectiveness: 1000,
-    //    func: function (ctx: IDnaRenderContext): IMutatorState {
-    //        var gene = {
-    //            Color: [Math.random(), Math.random(), Math.random(), 1 / (1 + ctx.dna.Generation * 0.0002)],
-    //            Pos: [Math.random() * ctx.rect.width + ctx.rect.x, Math.random() * ctx.rect.height + ctx.rect.y, 0, 0, 0, 0]
-    //        };
-    //        gene.Pos[2] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * ctx.rect.width - 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
-    //        gene.Pos[3] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * ctx.rect.height - 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
-    //        gene.Pos[4] = Utils.Clamp(gene.Pos[0] + Math.random() * 0.2 * ctx.rect.width - 0.1 * ctx.rect.width, ctx.rect.x, ctx.rect.x2);
-    //        gene.Pos[5] = Utils.Clamp(gene.Pos[1] + Math.random() * 0.2 * ctx.rect.height - 0.1 * ctx.rect.height, ctx.rect.y, ctx.rect.y2);
-    //
-    //        ctx.dna.genes.push(gene);
-    //        return { index: ctx.dna.genes.length - 1, oldGene: <Gene>null, newGene: gene };
-    //    },
-    //    undo: (ctx, state) => ctx.dna.genes.splice(state.index, 1)
-    //},
+    {
+      name: 'Add Small Triangle',
+      effectiveness: 1000,
+      func: function (ctx: IDnaRenderContext): IMutatorState | null {
+        if (ctx.geneStates.length > ctx.dna.generation / 7000 + 10) return null
+
+        var gene: Gene = {
+          color: [
+            Math.random(),
+            Math.random(),
+            Math.random(),
+            1 / (1 + ctx.dna.generation * 0.0002),
+          ],
+          pos: [
+            Math.random() * ctx.rect.width + ctx.rect.x,
+            Math.random() * ctx.rect.height + ctx.rect.y,
+            0,
+            0,
+            0,
+            0,
+          ],
+        }
+        gene.pos[2] = Utils.Clamp(
+          gene.pos[0] +
+            Math.random() * 0.2 * ctx.rect.width -
+            0.1 * ctx.rect.width,
+          ctx.rect.x,
+          ctx.rect.x2,
+        )
+        gene.pos[3] = Utils.Clamp(
+          gene.pos[1] +
+            Math.random() * 0.2 * ctx.rect.height -
+            0.1 * ctx.rect.height,
+          ctx.rect.y,
+          ctx.rect.y2,
+        )
+        gene.pos[4] = Utils.Clamp(
+          gene.pos[0] +
+            Math.random() * 0.2 * ctx.rect.width -
+            0.1 * ctx.rect.width,
+          ctx.rect.x,
+          ctx.rect.x2,
+        )
+        gene.pos[5] = Utils.Clamp(
+          gene.pos[1] +
+            Math.random() * 0.2 * ctx.rect.height -
+            0.1 * ctx.rect.height,
+          ctx.rect.y,
+          ctx.rect.y2,
+        )
+
+        ctx.dna.genes.push(gene)
+        return {
+          index: ctx.dna.genes.length - 1,
+          oldGene: null as any,
+          newGene: gene,
+        }
+      },
+      undo: (ctx, state) => ctx.dna.genes.splice(state.index, 1),
+    },
     {
       name: 'Add Big Triangle',
       effectiveness: 1000,

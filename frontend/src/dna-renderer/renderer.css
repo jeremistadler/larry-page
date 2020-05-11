@@ -19,6 +19,7 @@
 .renderer-image{
     background: white;
     display: inline-block;
+    font-size: 0;
 }
 
 .renderer-text-container{

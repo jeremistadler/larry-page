@@ -5,7 +5,7 @@ import {Utils} from 'shared/src/utils'
 import DnaImage from '../dna-image/dna-image'
 import './grid.css'
 
-const DnaGrid = ({}) => {
+const DnaGrid = ({onChangeDna}: {onChangeDna: (dna: Dna) => void}) => {
   const [dnaList, setDnaList] = React.useState<Dna[]>(() =>
     [1, 2, 3, 4, 5, 6, 7, 8].map(f => Utils.createDna(0, f.toString())),
   )
@@ -44,7 +44,8 @@ const DnaGrid = ({}) => {
               className={
                 'grid-image' + (isVisible ? ' grid-image-visible' : '')
               }
-              key={dna.organism.id}>
+              key={dna.organism.id}
+              onClick={() => onChangeDna(dna)}>
               <DnaImage dna={dna} width={width} height={height} index={index} />
               <div className="grid-image-info">
                 <span>{dna.genes.length} genes</span>
