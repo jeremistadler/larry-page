@@ -13,45 +13,29 @@ import {FitnessCalculator} from 'shared/src/fitness-calculator'
 class JsRasterizerWorker {
   constructor(public sourceImageData: ImageData) {}
 
-  go(dna: Dna, rect: IRectangle, settings: ISettings) {
+  go(dna: Dna, settings: ISettings) {
     //var startTime = Date.now()
     GeneMutator.setFromSettings(settings)
 
     var mutator = GeneMutator.GetMutator()
-    var geneStates = dna.genes.map(f => GeneHelper.CalculateState(f, rect))
 
     var ctx: IDnaRenderContext = {
       dna: dna,
-      rect: rect,
       mutations: [],
-      geneStates: geneStates,
       mutator: mutator,
       source: this.sourceImageData,
-      partialFitness: FitnessCalculator.GetConstrainedFitness(
-        dna,
-        this.sourceImageData,
-        rect,
-        geneStates,
-      ),
+      fitness: dna.fitness,
       settings: settings,
     }
 
-    //var originalFullFitness = dna.Fitness
-    var originalPartialFitness = ctx.partialFitness
+    const originalFitness = ctx.fitness
 
-    for (var i = 0; i < settings.iterations; i++) GeneMutator.MutateDna(ctx)
+    for (let i = 0; i < settings.iterations; i++) GeneMutator.MutateDna(ctx)
 
-    var fitnessImprovement =
-      (originalPartialFitness - ctx.partialFitness) / settings.iterations
+    const fitnessImprovement =
+      (originalFitness - ctx.fitness) / settings.iterations
 
-    //if (originalPartialFitness < ctx.partialFitness)
-    //    debugger;
-
-    //var newFitness = FitnessCalculator.GetFitness(dna, this.sourceImageData);
-    //if (originalFullFitness < newFitness)
-    //    debugger;
-
-    var workerResult: IWorkerResult = {
+    const workerResult: IWorkerResult = {
       generations: settings.iterations,
       mutations: ctx.mutations,
       mutatorName: mutator.name,
@@ -66,5 +50,5 @@ var childRasterizer: JsRasterizerWorker | null = null
 
 self.onmessage = function (e: any) {
   if (childRasterizer == null) childRasterizer = new JsRasterizerWorker(e.data)
-  else childRasterizer.go(e.data.dna, e.data.rect, e.data.settings)
+  else childRasterizer.go(e.data.dna, e.data.settings)
 }

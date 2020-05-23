@@ -1,8 +1,8 @@
-import {Dna, ISettings, IRectangle, IWorkerResult, Gene} from 'shared/src/dna'
+import {Dna, ISettings, IWorkerResult, Gene} from 'shared/src/dna'
 import {FitnessCalculator} from 'shared/src/fitness-calculator'
 import {Utils} from 'shared/src/utils'
 import {RenderConfig} from 'shared/src/shared'
-import {GeneMutator} from 'shared/src/gene-mutator'
+import {GeneMutator, GeneHelper} from 'shared/src/gene-mutator'
 import {DnaApi} from './api'
 
 export class JsRasterizer {
@@ -10,12 +10,9 @@ export class JsRasterizer {
   activeWorkers: Worker[] = []
   allMutations: any[] = []
   startTime: number = 0
-  currentRectangles: IRectangle[] = []
   onFrameCompleted: {(dna: Dna): void}[] = []
   onFrameStarted: {(dna: Dna): void}[] = []
   currentIteration = 0
-
-  clearNextRound: boolean = false
 
   constructor(
     public source: ImageData,
@@ -24,7 +21,7 @@ export class JsRasterizer {
   ) {
     dna.fitness = FitnessCalculator.GetFitness(dna, this.source)
 
-    for (var i = 0; i < 1; i++) this.createThread()
+    for (var i = 0; i < settings.workerThreads; i++) this.createThread()
 
     this.startLocalizedDraws()
   }
@@ -37,10 +34,10 @@ export class JsRasterizer {
       pos: Utils.CreateNumberArray(6),
     }
 
-    const targetGeneCount = this.dna.generation / 8000 + 20
+    const targetGeneCount = this.dna.generation / 8000 + 10
     let removedCount = 0
 
-    while (this.dna.genes.length > targetGeneCount) {
+    while (this.dna.genes.length - removedCount > targetGeneCount) {
       const list: {fitness: number; index: number; fitnessDiff: number}[] = []
 
       for (var i = 0; i < this.dna.genes.length; i++) {
@@ -58,8 +55,29 @@ export class JsRasterizer {
       }
 
       list.sort((a, b) => a.fitness - b.fitness)
-      this.dna.genes[list[0].index] = emptyGene
-      removedCount++
+
+      const removedGenes: Gene[] = []
+
+      // Remove all genes that are not intersecting
+      for (
+        let i = 0;
+        i < list.length && this.dna.genes.length > targetGeneCount;
+        i++
+      ) {
+        const oldGene = this.dna.genes[list[i].index]
+        this.dna.genes[list[i].index] = emptyGene
+        removedCount++
+
+        if (
+          removedGenes.some(gene =>
+            GeneHelper.trianglesIntersect(oldGene, gene),
+          )
+        ) {
+          break
+        }
+
+        removedGenes.push(oldGene)
+      }
     }
 
     this.dna.fitness = FitnessCalculator.GetFitness(this.dna, this.source)
@@ -79,9 +97,9 @@ export class JsRasterizer {
 
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, width, height)
-    // var geneStates = this.dna.genes.map(f =>
-    //   GeneHelper.CalculateState(f, this.currentRectangles[0]),
-    // )
+
+    // ctx.putImageData(this.source, 0, 0)
+    // return
 
     for (var g = 0; g < this.dna.genes.length; g++) {
       var gene = this.dna.genes[g]
@@ -103,95 +121,19 @@ export class JsRasterizer {
       ctx.closePath()
       ctx.fill()
     }
-
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)'
-    ctx.beginPath()
-
-    for (var g = 0; g < this.currentRectangles.length; g++) {
-      ctx.moveTo(
-        this.currentRectangles[g].x * width,
-        this.currentRectangles[g].y * height,
-      )
-      ctx.lineTo(
-        this.currentRectangles[g].x2 * width,
-        this.currentRectangles[g].y * height,
-      )
-      ctx.lineTo(
-        this.currentRectangles[g].x2 * width,
-        this.currentRectangles[g].y2 * height,
-      )
-      ctx.lineTo(
-        this.currentRectangles[g].x * width,
-        this.currentRectangles[g].y2 * height,
-      )
-      ctx.lineTo(
-        this.currentRectangles[g].x * width,
-        this.currentRectangles[g].y * height,
-      )
-    }
-
-    ctx.fill()
-    ctx.stroke()
   }
 
   startLocalizedDraws() {
-    //var maxGridSize = (Math.log(this.Dna.Generation + 1) / 2) + 0;
-    //DebugView.SetMessage('Max grid size', maxGridSize, '(' + Math.round(maxGridSize) + ')');
-    var gridSize = Utils.randomInt(
-      this.settings.minGridSize,
-      this.settings.maxGridSize,
-    )
-    //gridSize = 2;
-    var gridSlotWidth = this.source.width / gridSize
-    var gridSlotHeight = this.source.height / gridSize
-    var usedSlots = []
-    var gridOffsetX = ((Math.random() - 0.5) * gridSlotWidth) / 2
-    var gridOffsetY = ((Math.random() - 0.5) * gridSlotHeight) / 2
-    //gridOffsetX = 0;
-    //gridOffsetY = 0;
     this.startTime = Date.now()
-    this.currentRectangles.length = 0
     GeneMutator.setSettingsFromMutators(this.settings)
 
-    for (
-      ;
-      this.idleWorkers.length > 0 && usedSlots.length < gridSize * gridSize;
-
-    ) {
-      var x = 0
-      var y = 0
-
-      while (true) {
-        x = Utils.randomInt(0, gridSize - 1)
-        y = Utils.randomInt(0, gridSize - 1)
-        var key = x + ':' + y
-        if (usedSlots.indexOf(key) === -1) {
-          usedSlots.push(key)
-          break
-        }
-      }
-      var rect = {
-        x: (x * gridSlotWidth + gridOffsetX) / this.source.width,
-        y: (y * gridSlotHeight + gridOffsetY) / this.source.height,
-        x2:
-          (x * gridSlotWidth + gridSlotWidth + gridOffsetX) / this.source.width,
-        y2:
-          (y * gridSlotHeight + gridSlotHeight + gridOffsetY) /
-          this.source.height,
-        width: gridSlotHeight / this.source.height,
-        height: gridSlotHeight / this.source.height,
-      }
-
-      this.currentRectangles.push(rect)
-
+    for (; this.idleWorkers.length > 0; ) {
       var worker = this.idleWorkers.pop()
       this.activeWorkers.push(worker as any)
 
       if (worker)
         worker.postMessage({
           dna: this.dna,
-          rect: rect,
           settings: this.settings,
         })
     }
@@ -220,20 +162,14 @@ export class JsRasterizer {
     }
 
     if (this.activeWorkers.length === 0) {
-      if (this.clearNextRound) {
-        this.clearNextRound = false
-        this.dna.genes.length = 0
-        this.dna.fitness = Infinity
-      }
-
       this.currentIteration++
 
-      for (var g = 0; g < this.onFrameCompleted.length; g++)
+      for (let g = 0; g < this.onFrameCompleted.length; g++)
         this.onFrameCompleted[g](this.dna)
 
       this.startLocalizedDraws()
 
-      for (var g = 0; g < this.onFrameStarted.length; g++)
+      for (let g = 0; g < this.onFrameStarted.length; g++)
         this.onFrameStarted[g](this.dna)
 
       var fitnessAfter = FitnessCalculator.GetFitness(this.dna, this.source)
