@@ -8,6 +8,18 @@ declare global {
   const KV: KVNamespace
 }
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Origin': 'http://localhost:1234',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+const DEFAULT_HEADERS = {
+  ...CORS_HEADERS,
+  'content-type': 'application/json',
+}
+
 // eslint-disable-next-line no-restricted-globals
 addEventListener('fetch', (event: FetchEvent) => {
   const params: Record<string, string> = {}
@@ -17,12 +29,7 @@ addEventListener('fetch', (event: FetchEvent) => {
   if (event.request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Origin': 'http://localhost:1234',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+      headers: CORS_HEADERS,
     })
   }
 
@@ -67,7 +74,22 @@ async function handleApiRequest(
     await updateDnaCurrentList()
 
     return new Response(JSON.stringify({dna}), {
-      headers: {'content-type': 'application/json'},
+      headers: DEFAULT_HEADERS,
+    })
+  } else if (query.route === 'dna') {
+    const dnaId = query.id
+    const dna = await getFittestDnaAsJsonTextById(dnaId)
+
+    if (dna) {
+      await KV.put('lastReturnedId', dnaId)
+      return new Response(dna, {
+        headers: DEFAULT_HEADERS,
+      })
+    }
+
+    return new Response(JSON.stringify({errorMessage: 'No dna found'}), {
+      status: 500,
+      headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'random') {
     const dnaIds = (await KV.get('dnaIdsList', 'json')) as string[]
@@ -82,7 +104,7 @@ async function handleApiRequest(
       if (dna) {
         await KV.put('lastReturnedId', dnaId)
         return new Response(dna, {
-          headers: {'content-type': 'application/json'},
+          headers: DEFAULT_HEADERS,
         })
       } else {
         index = (index + 1) % dnaIds.length
@@ -91,17 +113,17 @@ async function handleApiRequest(
 
     return new Response(JSON.stringify({errorMessage: 'No dna found'}), {
       status: 500,
-      headers: {'content-type': 'application/json'},
+      headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'list') {
     const list = await KV.get('fittestDnaList', 'text')
     return new Response(list, {
-      headers: {'content-type': 'application/json'},
+      headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'image') {
     const stream = await KV.get('image:' + query.id, 'stream')
     return new Response(stream, {
-      headers: {'content-type': 'image/png'},
+      headers: {...DEFAULT_HEADERS, 'content-type': 'image/png'},
     })
   } else if (query.route === 'save') {
     const dna = (await request.json()) as Dna
@@ -115,7 +137,7 @@ async function handleApiRequest(
     await updateDnaCurrentList()
 
     return new Response(JSON.stringify({}), {
-      headers: {'content-type': 'application/json'},
+      headers: DEFAULT_HEADERS,
     })
   }
 
@@ -180,7 +202,7 @@ async function handleStaticRequest(event: FetchEvent) {
     const customKeyModifier = (request: Request) => {
       let url = request.url
       //custom key mapping optional
-      url = url.replace('/larry', '').replace(/^\/+/, '')
+      url = url.replace('/larry', '').replace(/^\/+/, '').replace(/\?.*$/, '')
       return mapRequestToAsset(new Request(url, request as any))
     }
 

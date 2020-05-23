@@ -10,16 +10,35 @@ const App = () => {
   let [dna, setDna] = React.useState<Dna | null>(null)
 
   React.useEffect(() => {
-    DnaApi.fetchRandomDna().then(dna => {
-      setDna(dna)
-    })
+    const urlParams = new URLSearchParams(window.location.search)
+    const dnaId = urlParams.get('dna')
+
+    if (dnaId) DnaApi.fetchDnaById(dnaId).then(dna => setDna(dna))
+    else DnaApi.fetchRandomDna().then(dna => setDna(dna))
   }, [])
+
+  const setDnaAndUrl = (dna: Dna) => {
+    const urlParams = new URLSearchParams(window.location.search)
+    urlParams.set('dna', dna.organism.id)
+
+    const newurl =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      window.location.pathname +
+      '?' +
+      urlParams.toString()
+
+    window.history.pushState({path: newurl}, '', newurl)
+
+    setDna(dna)
+  }
 
   return (
     <>
       <DnaRenderer dna={dna} />
-      <Uploader onUploaded={setDna} />
-      <DnaGrid onChangeDna={setDna} />
+      <Uploader onUploaded={setDnaAndUrl} />
+      <DnaGrid onChangeDna={setDnaAndUrl} />
     </>
   )
 }

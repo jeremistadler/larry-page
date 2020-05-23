@@ -2,7 +2,7 @@ name = "backend"
 type = "webpack"
 account_id = "71b746635051545ad66a96846ea64800"
 workers_dev = false
-route = "jeremi.se/larry/*"
+route = "jeremi.se/larry*"
 zone_id = "971fa3e74042d3d8f70d317db262795e"
 webpack_config = "./webpack.config.js"
 

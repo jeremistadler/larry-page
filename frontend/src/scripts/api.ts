@@ -38,6 +38,12 @@ export class DnaApi {
     return data as Dna
   }
 
+  static async fetchDnaById(id: string): Promise<Dna> {
+    const response = await fetch(RenderConfig.baseUrl + '?route=dna&id=' + id)
+    const data = await response.json()
+    return data as Dna
+  }
+
   static async fetchDnaList(): Promise<Dna[]> {
     const response = await fetch(RenderConfig.baseUrl + '?route=list')
     const data = await response.json()
