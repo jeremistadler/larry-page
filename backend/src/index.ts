@@ -105,13 +105,15 @@ async function handleApiRequest(
     return new Response(JSON.stringify({}), {
       headers: {'content-type': 'application/json'},
     })
-  } else if (query.route === 'deleteall') {
-    const items = await KV.list({})
-    await Promise.all(items.keys.map(f => KV.delete(f.name)))
-    return new Response(JSON.stringify({deleted: true}), {
-      headers: {'content-type': 'application/json'},
-    })
   }
+
+  // else if (query.route === 'deleteall') {
+  //   const items = await KV.list({})
+  //   await Promise.all(items.keys.map(f => KV.delete(f.name)))
+  //   return new Response(JSON.stringify({deleted: true}), {
+  //     headers: {'content-type': 'application/json'},
+  //   })
+  // }
 
   return new Response('Hello from api!', {
     headers: {'content-type': 'text/plain'},
