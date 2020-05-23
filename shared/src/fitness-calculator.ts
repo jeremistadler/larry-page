@@ -6,7 +6,7 @@ export class FitnessCalculator {
   static Buffers: Record<string, Uint8Array> = {}
 
   static posBuffer: number[] = new Array(6)
-  static colorBuffer: number[] = new Array(6)
+  static colorBuffer: number[] = new Array(4)
 
   static GetBuffer(width: number, height: number) {
     var buffer = this.Buffers[width + ':' + height]
