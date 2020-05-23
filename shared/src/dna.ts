@@ -17,6 +17,8 @@ export interface ISettings {
   mutatorWeights: number[]
   autoAdjustMutatorWeights: boolean
   iterations: number
+
+  workerThreads: number
 }
 
 export interface IRectangle {
@@ -49,12 +51,10 @@ export interface Dna {
 
 export interface IDnaRenderContext {
   mutator: IGeneMutator
-  rect: IRectangle
   dna: Dna
   mutations: IMutatorState[]
-  geneStates: IGeneRectangleState[]
   source: ImageData
-  partialFitness: number
+  fitness: number
   settings: ISettings
 }
 
