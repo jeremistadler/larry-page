@@ -11,6 +11,149 @@ import {FitnessCalculator} from './fitness-calculator'
 import {Utils} from './utils'
 
 export class GeneHelper {
+  static RectFromGene(f: Gene): IRectangle {
+    var minX = f.pos[0]
+    var maxX = f.pos[0]
+    var minY = f.pos[1]
+    var maxY = f.pos[1]
+
+    for (var i = 2; i < f.pos.length; i += 2) {
+      minX = Math.min(minX, f.pos[i])
+      maxX = Math.max(maxX, f.pos[i])
+    }
+
+    for (var i = 3; i < f.pos.length; i += 2) {
+      minY = Math.min(minY, f.pos[i])
+      maxY = Math.max(maxY, f.pos[i])
+    }
+
+    return {
+      x: minX,
+      x2: maxX,
+      y: minY,
+      y2: maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+    }
+  }
+
+  static trianglesIntersect(gene1: Gene, gene2: Gene) {
+    gene1.pos
+    return (
+      this.linesIntersect(
+        gene1.pos[0], // a
+        gene1.pos[1], // a
+        gene1.pos[2], // b
+        gene1.pos[3], // b
+        gene2.pos[0], // other.a
+        gene1.pos[1], // other.a
+        gene2.pos[2], // other.b
+        gene2.pos[3], // other.b
+      ) ||
+      this.linesIntersect(
+        gene1.pos[0],
+        gene1.pos[1],
+        gene1.pos[2],
+        gene1.pos[3],
+        gene2.pos[0],
+        gene1.pos[1],
+        gene2.pos[4],
+        gene2.pos[5],
+      ) ||
+      this.linesIntersect(
+        gene1.pos[0],
+        gene1.pos[1],
+        gene1.pos[2],
+        gene1.pos[3],
+        gene2.pos[2],
+        gene1.pos[3],
+        gene2.pos[4],
+        gene2.pos[5],
+      ) ||
+      this.linesIntersect(
+        gene1.pos[0],
+        gene1.pos[1],
+        gene1.pos[4],
+        gene1.pos[5],
+        gene2.pos[0],
+        gene1.pos[1],
+        gene2.pos[2],
+        gene2.pos[3],
+      ) ||
+      this.linesIntersect(
+        gene1.pos[0],
+        gene1.pos[1],
+        gene1.pos[4],
+        gene1.pos[5],
+        gene2.pos[0],
+        gene1.pos[1],
+        gene2.pos[4],
+        gene2.pos[5],
+      ) ||
+      this.linesIntersect(
+        gene1.pos[0],
+        gene1.pos[1],
+        gene1.pos[4],
+        gene1.pos[5],
+        gene2.pos[2],
+        gene1.pos[3],
+        gene2.pos[4],
+        gene2.pos[5],
+      ) ||
+      this.linesIntersect(
+        gene1.pos[2],
+        gene1.pos[3],
+        gene1.pos[4],
+        gene1.pos[5],
+        gene2.pos[0],
+        gene1.pos[1],
+        gene2.pos[2],
+        gene2.pos[3],
+      ) ||
+      this.linesIntersect(
+        gene1.pos[2],
+        gene1.pos[3],
+        gene1.pos[4],
+        gene1.pos[5],
+        gene2.pos[0],
+        gene1.pos[1],
+        gene2.pos[4],
+        gene2.pos[5],
+      ) ||
+      this.linesIntersect(
+        gene1.pos[2],
+        gene1.pos[3],
+        gene1.pos[4],
+        gene1.pos[5],
+        gene2.pos[2],
+        gene1.pos[3],
+        gene2.pos[4],
+        gene2.pos[5],
+      )
+    )
+  }
+
+  static linesIntersect(
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    p: number,
+    q: number,
+    r: number,
+    s: number,
+  ): boolean {
+    var det, gamma, lambda
+    det = (c - a) * (s - q) - (r - p) * (d - b)
+    if (det === 0) {
+      return false
+    } else {
+      lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det
+      gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det
+      return 0 < lambda && lambda < 1 && 0 < gamma && gamma < 1
+    }
+  }
+
   static CalculateState(f: Gene, rect: IRectangle): IGeneRectangleState {
     var minX = f.pos[0]
     var maxX = f.pos[0]
@@ -45,21 +188,13 @@ export class GeneMutator {
   static MaxEffectiveness = 3000
 
   static MutateDna(ctx: IDnaRenderContext) {
-    var mutatorState = ctx.mutator.func(ctx)
+    const mutatorState = ctx.mutator.func(ctx)
     if (mutatorState === null) return
 
-    var geneState = GeneHelper.CalculateState(mutatorState.newGene, ctx.rect)
-    ctx.geneStates[mutatorState.index] = geneState
+    const fitness = FitnessCalculator.GetFitness(ctx.dna, ctx.source)
 
-    var partialFitness = FitnessCalculator.GetConstrainedFitness(
-      ctx.dna,
-      ctx.source,
-      ctx.rect,
-      ctx.geneStates,
-    )
-
-    if (partialFitness < ctx.partialFitness) {
-      ctx.partialFitness = partialFitness
+    if (fitness < ctx.fitness) {
+      ctx.fitness = fitness
       ctx.mutations.push(mutatorState)
       ctx.dna.mutation++
     } else ctx.mutator.undo(ctx, mutatorState)
@@ -90,25 +225,16 @@ export class GeneMutator {
   ): IMutatorState | null {
     if (ctx.dna.genes.length === 0) return null
 
-    var oldGene: Gene | null = null
-    var index = 0
+    const index = Utils.randomIndex(ctx.dna.genes)
+    const oldGene = ctx.dna.genes[index]
 
-    for (var i = 0; i < 100; i++) {
-      index = Utils.randomIndex(ctx.geneStates)
-      if (ctx.geneStates[index].IsContained) {
-        oldGene = ctx.dna.genes[index]
-        break
-      }
-    }
+    const newGene = ({
+      pos: null,
+      color: null,
+    } as any) as Gene
+    ctx.dna.genes[index] = newGene
 
-    if (oldGene === null) return null
-
-    var gene = {
-      Pos: null,
-      Color: null,
-    }
-    ctx.dna.genes[index] = gene as any
-    return {index: index, oldGene: oldGene, newGene: gene as any}
+    return {index, oldGene, newGene}
   }
 
   public static GeneMutators: IGeneMutator[] = [
@@ -116,13 +242,13 @@ export class GeneMutator {
       name: 'ColorOnly',
       effectiveness: 1000,
       func: function (ctx: IDnaRenderContext): IMutatorState | null {
-        var state = GeneMutator.DefaultMutateGene(ctx)
+        const state = GeneMutator.DefaultMutateGene(ctx)
         if (state === null) return null
 
         state.newGene.color = state.oldGene.color.slice()
         state.newGene.pos = state.oldGene.pos.slice()
 
-        var indexToChange = Utils.randomInt(0, 2)
+        const indexToChange = Utils.randomInt(0, 2)
         state.newGene.color[indexToChange] = Utils.ClampFloat(
           (Math.random() - 0.5) * 0.1 + state.newGene.color[indexToChange],
         )
@@ -157,9 +283,9 @@ export class GeneMutator {
         state.newGene.color = state.oldGene.color.slice()
         state.newGene.pos = new Array(6)
         for (var i = 0; i < state.newGene.pos.length; i += 2)
-          state.newGene.pos[i] = Math.random() * ctx.rect.width + ctx.rect.x
+          state.newGene.pos[i] = Math.random()
         for (var i = 1; i < state.newGene.pos.length; i += 2)
-          state.newGene.pos[i] = Math.random() * ctx.rect.height + ctx.rect.y
+          state.newGene.pos[i] = Math.random()
         return state
       },
       undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
@@ -176,19 +302,11 @@ export class GeneMutator {
 
         var indexToMove = Utils.randomIndex(state.newGene.pos)
         if (indexToMove % 2 === 0)
-          state.newGene.pos[indexToMove] = Utils.Clamp(
-            state.newGene.pos[indexToMove] +
-              (Math.random() - 0.5) * 0.1 * ctx.rect.width,
-            ctx.rect.x,
-            ctx.rect.x2,
-          )
+          state.newGene.pos[indexToMove] =
+            state.newGene.pos[indexToMove] + (Math.random() - 0.5) * 0.1
         else
-          state.newGene.pos[indexToMove] = Utils.Clamp(
-            state.newGene.pos[indexToMove] +
-              (Math.random() - 0.5) * 0.1 * ctx.rect.height,
-            ctx.rect.y,
-            ctx.rect.y2,
-          )
+          state.newGene.pos[indexToMove] =
+            state.newGene.pos[indexToMove] + (Math.random() - 0.5) * 0.1
         return state
       },
       undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
@@ -209,10 +327,10 @@ export class GeneMutator {
         state.newGene.pos = new Array(6)
 
         for (var i = 0; i < state.newGene.pos.length; i += 2)
-          state.newGene.pos[i] = Math.random() * ctx.rect.width + ctx.rect.x
+          state.newGene.pos[i] = Math.random()
 
         for (var i = 1; i < state.newGene.pos.length; i += 2)
-          state.newGene.pos[i] = Math.random() * ctx.rect.height + ctx.rect.y
+          state.newGene.pos[i] = Math.random()
 
         return state
       },
@@ -222,7 +340,7 @@ export class GeneMutator {
       name: 'Add Small Triangle',
       effectiveness: 1000,
       func: function (ctx: IDnaRenderContext): IMutatorState | null {
-        if (ctx.geneStates.length > ctx.dna.generation / 7000 + 10) return null
+        if (ctx.dna.genes.length > ctx.dna.generation / 7000 + 10) return null
 
         var gene: Gene = {
           color: [
@@ -231,43 +349,12 @@ export class GeneMutator {
             Math.random(),
             1 / (1 + ctx.dna.generation * 0.0002),
           ],
-          pos: [
-            Math.random() * ctx.rect.width + ctx.rect.x,
-            Math.random() * ctx.rect.height + ctx.rect.y,
-            0,
-            0,
-            0,
-            0,
-          ],
+          pos: [Math.random(), Math.random(), 0, 0, 0, 0],
         }
-        gene.pos[2] = Utils.Clamp(
-          gene.pos[0] +
-            Math.random() * 0.2 * ctx.rect.width -
-            0.1 * ctx.rect.width,
-          ctx.rect.x,
-          ctx.rect.x2,
-        )
-        gene.pos[3] = Utils.Clamp(
-          gene.pos[1] +
-            Math.random() * 0.2 * ctx.rect.height -
-            0.1 * ctx.rect.height,
-          ctx.rect.y,
-          ctx.rect.y2,
-        )
-        gene.pos[4] = Utils.Clamp(
-          gene.pos[0] +
-            Math.random() * 0.2 * ctx.rect.width -
-            0.1 * ctx.rect.width,
-          ctx.rect.x,
-          ctx.rect.x2,
-        )
-        gene.pos[5] = Utils.Clamp(
-          gene.pos[1] +
-            Math.random() * 0.2 * ctx.rect.height -
-            0.1 * ctx.rect.height,
-          ctx.rect.y,
-          ctx.rect.y2,
-        )
+        gene.pos[2] = gene.pos[0] + Math.random() * 0.2 - 0.1
+        gene.pos[3] = gene.pos[1] + Math.random() * 0.2 - 0.1
+        gene.pos[4] = gene.pos[0] + Math.random() * 0.2 - 0.1
+        gene.pos[5] = gene.pos[1] + Math.random() * 0.2 - 0.1
 
         ctx.dna.genes.push(gene)
         return {
@@ -282,7 +369,7 @@ export class GeneMutator {
       name: 'Add Big Triangle',
       effectiveness: 1000,
       func: function (ctx: IDnaRenderContext): IMutatorState | null {
-        if (ctx.geneStates.length > ctx.dna.generation / 5000 + 20) return null
+        if (ctx.dna.genes.length > ctx.dna.generation / 5000 + 10) return null
 
         var gene: Gene = {
           color: [
@@ -297,11 +384,7 @@ export class GeneMutator {
           pos: new Array(6),
         }
 
-        for (var i = 0; i < gene.pos.length; i += 2)
-          gene.pos[i] = Math.random() * ctx.rect.width + ctx.rect.x
-
-        for (var i = 1; i < gene.pos.length; i += 2)
-          gene.pos[i] = Math.random() * ctx.rect.height + ctx.rect.y
+        for (var i = 0; i < gene.pos.length; i++) gene.pos[i] = Math.random()
 
         ctx.dna.genes.push(gene)
         return {
