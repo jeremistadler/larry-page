@@ -2,7 +2,7 @@ import * as React from 'react'
 import {Utils} from 'shared/src/utils'
 import {DnaApi} from './../scripts/api'
 import {RenderConfig} from 'shared/src/shared'
-import {Dna} from 'shared/src/dna'
+import {Dna, ISettings} from 'shared/src/dna'
 import {GeneMutator} from 'shared/src/gene-mutator'
 import {JsRasterizer} from '../scripts/rasterizer'
 import './renderer.css'
@@ -11,7 +11,7 @@ function DnaRenderer(props: {dna: Dna | null}) {
   const {dna} = props
   const dnaOrEmpty = dna ?? Utils.createDna(0, '')
 
-  const [settings] = React.useState({
+  const [settings] = React.useState<ISettings>({
     minGridSize: 1,
     maxGridSize: 3,
 
@@ -20,18 +20,23 @@ function DnaRenderer(props: {dna: Dna | null}) {
 
     autoAdjustMutatorWeights: true,
     mutatorWeights: Utils.CreateNumberArray(GeneMutator.GeneMutators.length),
-    iterations: 50,
+    iterations: 200,
+
+    workerThreads: 1,
   })
 
   const [rasterizer, setRasterizer] = React.useState<JsRasterizer | null>(null)
   const [, generation] = React.useState(0)
 
-  const ratioW = 500 / dnaOrEmpty.organism.width
-  const ratioH = 300 / dnaOrEmpty.organism.height
-  const ratio = ratioW < ratioH ? ratioW : ratioH
+  // const ratioW = 500 / dnaOrEmpty.organism.width
+  // const ratioH = 300 / dnaOrEmpty.organism.height
+  // const ratio = ratioW < ratioH ? ratioW : ratioH
 
-  const width = dnaOrEmpty.organism.width * ratio
-  const height = dnaOrEmpty.organism.height * ratio
+  // const width = dnaOrEmpty.organism.width * ratio
+  // const height = dnaOrEmpty.organism.height * ratio
+
+  const width = RenderConfig.globalWidth
+  const height = RenderConfig.globalHeight
 
   const dnaUpdated = (dna: Dna) => {
     requestAnimationFrame(() => generation(dna.mutation))
@@ -84,6 +89,12 @@ function DnaRenderer(props: {dna: Dna | null}) {
 
         <div className="renderer-text-container">
           <p>
+            Genes / triangles:{' '}
+            <span className="renderer-value-text">
+              {dnaOrEmpty.genes.length}
+            </span>
+          </p>
+          <p>
             Generation:{' '}
             <span className="renderer-value-text">{dnaOrEmpty.generation}</span>
           </p>
@@ -93,7 +104,9 @@ function DnaRenderer(props: {dna: Dna | null}) {
           </p>
           <p>
             Fitness:{' '}
-            <span className="renderer-value-text">{dnaOrEmpty.fitness}</span>
+            <span className="renderer-value-text">
+              {(Math.log10(dnaOrEmpty.fitness) * 1000).toFixed(0)}
+            </span>
           </p>
           <p>
             Weights:{' '}
