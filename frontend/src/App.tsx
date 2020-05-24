@@ -36,7 +36,7 @@ const App = () => {
 
   return (
     <>
-      <DnaRenderer dna={dna} />
+      <DnaRenderer key={dna?.organism.id} dna={dna} />
       <Uploader onUploaded={setDnaAndUrl} />
       <DnaGrid onChangeDna={setDnaAndUrl} />
     </>

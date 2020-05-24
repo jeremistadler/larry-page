@@ -25,16 +25,12 @@
 
 
 .grid-image:hover polygon {
-     animation: kaboom 5s ease infinite;
-}
-
-.grid-image polygon{
-    opacity: 0;
+    animation: kaboom 5s ease infinite;
 }
 
 .grid-image-visible polygon{
-    animation: shoow 2s ease;
-    animation-fill-mode: forwards;
+    /* animation: shoow 2s ease;
+    animation-fill-mode: forwards; */
 }
 
 @keyframes shoow {
@@ -47,7 +43,7 @@
    0% { opacity: 1; }
 
   10% { opacity: 1; }
-  20% { opacity: 0.6; }
+  20% { opacity: 0.3; }
   30% { opacity: 1; }
 
   100% { opacity: 1; }

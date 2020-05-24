@@ -22,8 +22,7 @@ function DnaImage({
     return <div style={style}></div>
   }
 
-  var animationLength = 2
-  var spaceBetweenImages = 0.3
+  var animationLength = 5
   var lengthPerPoly = animationLength / dna.genes.length
 
   var polygons = dna.genes.map((gene, i) => {
@@ -46,7 +45,7 @@ function DnaImage({
       fill: color,
       stroke: 'rgba(0, 0, 0, 0.05)',
       strokeWidth: 0,
-      animationDelay: index * spaceBetweenImages + i * lengthPerPoly + 's',
+      animationDelay: i * lengthPerPoly + 's',
     }
     return <polygon points={str} style={style} key={i} />
   })
