@@ -5,6 +5,7 @@
   "homepage": "https://jeremi.se/larry",
   "dependencies": {
     "core-js": "^3.6.5",
+    "gifencoder": "^2.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-redux": "^7.2.0",
