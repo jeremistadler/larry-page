@@ -7,6 +7,10 @@ import {GeneMutator} from 'shared/src/gene-mutator'
 import {JsRasterizer} from '../scripts/rasterizer'
 import './renderer.css'
 
+function rollingAvg(old: number, newValue: number, partOfNew: number) {
+  return old * (1 - partOfNew) + newValue * partOfNew
+}
+
 function DnaRenderer(props: {dna: Dna | null}) {
   const {dna} = props
   const dnaOrEmpty = dna ?? Utils.createDna(0, '')
@@ -20,7 +24,7 @@ function DnaRenderer(props: {dna: Dna | null}) {
 
     autoAdjustMutatorWeights: true,
     mutatorWeights: Utils.CreateNumberArray(GeneMutator.GeneMutators.length),
-    iterations: 200,
+    iterations: 40,
 
     workerThreads: 1,
   })
@@ -37,6 +41,40 @@ function DnaRenderer(props: {dna: Dna | null}) {
 
   const width = RenderConfig.globalWidth
   const height = RenderConfig.globalHeight
+
+  const lastDnaUpdateTime = React.useRef(0)
+  const lastDnaGenerations = React.useRef(0)
+  const lastDnaMutations = React.useRef(0)
+  const generationsPerSecond = React.useRef(0)
+  const mutationsPerSecond = React.useRef(0)
+
+  const now = Date.now()
+
+  if (lastDnaUpdateTime.current === 0) {
+    lastDnaUpdateTime.current = now
+    lastDnaGenerations.current = dna?.generation ?? 0
+    lastDnaMutations.current = dna?.mutation ?? 0
+  } else {
+    const secondsPassed = (now - lastDnaUpdateTime.current) / 1000
+
+    if (secondsPassed > 0) {
+      generationsPerSecond.current = rollingAvg(
+        generationsPerSecond.current,
+        ((dna?.generation ?? 0) - lastDnaGenerations.current) / secondsPassed,
+        0.1,
+      )
+
+      mutationsPerSecond.current = rollingAvg(
+        mutationsPerSecond.current,
+        ((dna?.mutation ?? 0) - lastDnaMutations.current) / secondsPassed,
+        0.1,
+      )
+
+      lastDnaUpdateTime.current = now
+      lastDnaGenerations.current = dna?.generation ?? 0
+      lastDnaMutations.current = dna?.mutation ?? 0
+    }
+  }
 
   const dnaUpdated = (dna: Dna) => {
     requestAnimationFrame(() => generation(dna.mutation))
@@ -114,6 +152,15 @@ function DnaRenderer(props: {dna: Dna | null}) {
               {settings.mutatorWeights
                 .map(f => Math.round(f * 10) / 10)
                 .join(', ')}
+            </span>
+          </p>
+          <p>
+            Speed:{' '}
+            <span className="renderer-value-text">
+              {mutationsPerSecond.current.toFixed(1)} mutations/s{' '}
+            </span>
+            <span className="renderer-value-text">
+              {generationsPerSecond.current.toFixed(1)} generations/s{' '}
             </span>
           </p>
         </div>
