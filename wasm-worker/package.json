@@ -6,18 +6,21 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn asbuild:untouched && yarn asbuild:optimized && cp build/* ../frontend/dist/",
-    "asbuild:untouched": "asc assembly/raster.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --debug --runtime none --importMemory --memoryBase 1024",
-    "asbuild:optimized": "asc assembly/raster.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap -O3 --converge --measure --runtime none --importMemory --memoryBase 1024",
+    "asbuild:untouched": "asc assembly/raster.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --debug --runtime none --importMemory --memoryBase 1040911",
+    "asbuild:optimized": "asc assembly/raster.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap -O3 --converge --measure --runtime none --importMemory --memoryBase 1040911",
     "test": "yarn asbuild:untouched && node tests/test.js"
   },
   "dependencies": {
     "@assemblyscript/loader": "^0.10.0",
     "assemblyscript": "^0.10.0",
+    "nodemark": "^0.3.0",
     "shared": "1.0.0"
   },
   "devDependencies": {
     "assemblyscript": "^0.10.0",
     "chalk": "^4.0.0",
-    "parcel-bundler": "^1.12.4"
+    "parcel-bundler": "^1.12.4",
+    "ts-node": "^8.10.1",
+    "typescript": "^3.9.3"
   }
 }
