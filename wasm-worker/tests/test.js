@@ -1,84 +1,82 @@
-const SIZE = 15
+const SIZE = 25
+const MAX_TRIANGLES = 100
 
-const assert = require('assert')
-const {wasm, memory} = require('./initTest')(SIZE)
+const {wasm, memory} = require('./initTest')(SIZE, MAX_TRIANGLES)
 const chalk = require('chalk')
-const {
-  rasterizeTriangle,
-  baryRenderer,
-  calcMinMax,
-  rasterizeFloat,
-} = wasm.exports
+const {rasterizeAtPos, calcMinMax} = wasm.exports
 
-const pixelDataCount = SIZE * SIZE * 3
-const pixelDataByteLength = pixelDataCount * 4
-const pixelPointer = 0
-const pixelData = new Float32Array(memory.buffer, pixelPointer, pixelDataCount)
+// const pixelDataCount = SIZE * SIZE * 3
+// const pixelDataByteLength = pixelDataCount * 4
+// const pixelPointer = 0
+// const pixelData = new Float32Array(memory.buffer, pixelPointer, pixelDataCount)
 
-const minMaxDataCount = SIZE * 2
+const minMaxDataCount = SIZE * 2 * MAX_TRIANGLES
 const minMaxByteLength = minMaxDataCount
-const minMaxPointer = pixelPointer + pixelDataByteLength
+const minMaxPointer = 0
 const minMaxData = new Uint8Array(memory.buffer, minMaxPointer, minMaxDataCount)
 
-for (let y = 0; y < SIZE; y++) {
-  minMaxData[y * 2 + 0] = SIZE
+const srcColorCount = 4 * MAX_TRIANGLES
+const srcColorByteLength = srcColorCount * 4
+const srcColorPointer = minMaxPointer + minMaxByteLength
+const srcColorData = new Float32Array(
+  memory.buffer,
+  srcColorPointer,
+  srcColorCount,
+)
+
+const dstColorCount = 4
+const dstColorByteLength = dstColorCount * 4
+const dstColorPointer = srcColorPointer + srcColorByteLength
+const dstColorData = new Float32Array(
+  memory.buffer,
+  dstColorPointer,
+  dstColorCount,
+)
+
+let triangleIndex = 0
+
+function prepareTriangle(r, g, b, a, ax, ay, bx, by, cx, cy) {
+  srcColorData[triangleIndex * 4 + 0] = r
+  srcColorData[triangleIndex * 4 + 1] = g
+  srcColorData[triangleIndex * 4 + 2] = b
+  srcColorData[triangleIndex * 4 + 3] = a
+
+  calcMinMax(minMaxPointer, triangleIndex, ax, ay, bx, by, cx, cy)
+  triangleIndex++
+}
+
+for (let y = 0; y < SIZE * MAX_TRIANGLES; y++) {
+  minMaxData[y * 2 + 0] = 255
   minMaxData[y * 2 + 1] = 0
 }
 
-// rasterizeTriangle(
-//   pixelPointer,
-//   minMaxPointer,
-//   2,
-//   0,
-//   SIZE + 1,
-//   SIZE + 1,
-//   SIZE + 1,
-//   0,
-//   1,
-//   0.2,
-//   0.2,
-//   1,
-// )
+prepareTriangle(1, 0, 0, 0.4, 0, 0, 8, 2, 4, 11)
+prepareTriangle(0, 0.3, 0, 0.4, 0, 3, 14, 11, 7, 14)
 
-calcMinMax(minMaxPointer, 9, 3, 0, 3, 8, 0)
-rasterizeFloat(pixelPointer, minMaxPointer, 1, 0, 0, 0.5)
-
-for (let y = 0; y < SIZE; y++) {
-  minMaxData[y * 2 + 0] = SIZE
-  minMaxData[y * 2 + 1] = 0
-}
-
-calcMinMax(minMaxPointer, 0, 0, 13, 10, 10, 14)
-rasterizeFloat(pixelPointer, minMaxPointer, 0, 1, 0, 0.5)
-
-//baryRenderer(pixelPointer, 2, 0, SIZE + 1, SIZE + 1, SIZE + 1, 0)
-
-// for (let y = 0; y < SIZE; y++) {
-//   minMaxData[y * 2 + 0] = SIZE
-//   minMaxData[y * 2 + 1] = 0
-// }
-
-// rasterizeTriangle(
-//   pixelPointer,
-//   minMaxPointer,
-//   SIZE + 1,
-//   SIZE + 1,
-//   SIZE + 1,
-//   0,
-//   0,
-//   SIZE + 1,
-//   0.2,
-//   0.2,
-//   1,
-//   1,
-// )
+const TRIANGLES_DRAWN = triangleIndex
 
 for (let y = 0; y < SIZE; y++) {
   const a = [minMaxData[y * 2 + 0].toString().padEnd(3, ' ') + '|']
   for (let x = 0; x < SIZE; x++) {
-    const r = pixelData[(y * SIZE + x) * 3 + 0]
-    const g = pixelData[(y * SIZE + x) * 3 + 1]
-    const b = pixelData[(y * SIZE + x) * 3 + 2]
+    dstColorData[0] = 0
+    dstColorData[1] = 0
+    dstColorData[2] = 0
+
+    rasterizeAtPos(
+      srcColorPointer,
+      dstColorPointer,
+      minMaxPointer,
+
+      x,
+      y,
+
+      0,
+      TRIANGLES_DRAWN - 1,
+    )
+
+    const r = dstColorData[0]
+    const g = dstColorData[1]
+    const b = dstColorData[2]
 
     const num = (r + g + b)
       .toString()

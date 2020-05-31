@@ -1,28 +1,72 @@
 const SIZE = 255
-const {wasm, memory} = require('./initTest')(255)
-const {calcMinMax, rasterizeFloat} = wasm.exports
+const MAX_TRIANGLES = 100
+const {wasm, memory} = require('./initTest')(SIZE, MAX_TRIANGLES)
+const {calcMinMax, calculateFitness} = wasm.exports
 
-const pixelDataCount = SIZE * SIZE * 3
-const pixelDataByteLength = pixelDataCount * 4
-const pixelPointer = 0
-const pixelData = new Float32Array(memory.buffer, pixelPointer, pixelDataCount)
-
-const minMaxDataCount = SIZE * 2
+const minMaxDataCount = SIZE * 2 * MAX_TRIANGLES
 const minMaxByteLength = minMaxDataCount
-const minMaxPointer = pixelPointer + pixelDataByteLength
+const minMaxPointer = 0
 const minMaxData = new Uint8Array(memory.buffer, minMaxPointer, minMaxDataCount)
 
-module.exports.renderDnaWasm = function renderDnaWasm(dna) {
+const srcColorCount = 4 * MAX_TRIANGLES
+const srcColorByteLength = srcColorCount * 4
+const srcColorPointer = minMaxPointer + minMaxByteLength
+const srcColorData = new Float32Array(
+  memory.buffer,
+  srcColorPointer,
+  srcColorCount,
+)
+
+const dstColorCount = 4
+const dstColorByteLength = dstColorCount * 4
+const dstColorPointer = srcColorPointer + srcColorByteLength
+const dstColorData = new Float32Array(
+  memory.buffer,
+  dstColorPointer,
+  dstColorCount,
+)
+
+const comparePixelCount = SIZE * SIZE * 3
+const comparePixelByteLength = comparePixelCount
+const comparePixelPointer = dstColorPointer + dstColorByteLength
+const comparePixelData = new Uint8Array(
+  memory.buffer,
+  comparePixelPointer,
+  comparePixelCount,
+)
+
+let triangleIndex = 0
+
+function prepareTriangle(r, g, b, a, ax, ay, bx, by, cx, cy) {
+  srcColorData[triangleIndex * 4 + 0] = r
+  srcColorData[triangleIndex * 4 + 1] = g
+  srcColorData[triangleIndex * 4 + 2] = b
+  srcColorData[triangleIndex * 4 + 3] = a
+
+  calcMinMax(minMaxPointer, triangleIndex, ax, ay, bx, by, cx, cy)
+  triangleIndex++
+}
+
+for (let y = 0; y < SIZE * MAX_TRIANGLES; y++) {
+  minMaxData[y * 2 + 0] = 255
+  minMaxData[y * 2 + 1] = 0
+}
+
+module.exports.prepareWasmDna = function prepareWasmDna(dna) {
+  triangleIndex = 0
+  for (let y = 0; y < SIZE * MAX_TRIANGLES; y++) {
+    minMaxData[y * 2 + 0] = 255
+    minMaxData[y * 2 + 1] = 0
+  }
+
   for (var i = 0; i < dna.genes.length; i++) {
     const gene = dna.genes[i]
 
-    for (let y = 0; y < SIZE; y++) {
-      minMaxData[y * 2 + 0] = SIZE
-      minMaxData[y * 2 + 1] = 0
-    }
-
-    calcMinMax(
-      minMaxPointer,
+    prepareTriangle(
+      gene.color[0],
+      gene.color[1],
+      gene.color[2],
+      gene.color[3],
       gene.pos[0] * SIZE,
       gene.pos[1] * SIZE,
       gene.pos[2] * SIZE,
@@ -30,14 +74,23 @@ module.exports.renderDnaWasm = function renderDnaWasm(dna) {
       gene.pos[4] * SIZE,
       gene.pos[5] * SIZE,
     )
-
-    rasterizeFloat(
-      pixelPointer,
-      minMaxPointer,
-      gene.color[0],
-      gene.color[1],
-      gene.color[2],
-      gene.color[3],
-    )
   }
+}
+
+module.exports.calculateFitnessWasm = function calculateFitnessWasm(dna) {
+  triangleIndex = 0
+  for (let y = 0; y < SIZE * MAX_TRIANGLES; y++) {
+    minMaxData[y * 2 + 0] = 255
+    minMaxData[y * 2 + 1] = 0
+  }
+
+  calculateFitness(
+    srcColorPointer,
+    dstColorPointer,
+    comparePixelPointer,
+    minMaxPointer,
+
+    0,
+    triangleIndex - 1,
+  )
 }

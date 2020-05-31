@@ -6,8 +6,8 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn asbuild:untouched && yarn asbuild:optimized && cp build/* ../frontend/dist/",
-    "asbuild:untouched": "asc assembly/raster.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --debug --runtime none --importMemory --memoryBase 1040911",
-    "asbuild:optimized": "asc assembly/raster.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap -O3 --converge --measure --runtime none --importMemory --memoryBase 1040911",
+    "asbuild:untouched": "asc assembly/raster.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --debug --runtime none --importMemory --memoryBase 640000",
+    "asbuild:optimized": "asc assembly/raster.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap -O3 --converge --measure --runtime none --noAssert --importMemory --memoryBase 640000",
     "test": "yarn asbuild:untouched && node tests/test.js"
   },
   "dependencies": {

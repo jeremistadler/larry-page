@@ -1,7 +1,7 @@
 import {FitnessCalculator} from 'shared/src/fitness-calculator'
 const benchmark = require('nodemark')
 import {Dna, Gene} from 'shared/src/dna'
-import {renderDnaWasm} from './scanlineRenderDna'
+import {prepareWasmDna, calculateFitnessWasm} from './scanlineRenderDna'
 
 const dna: Dna = {
   fitness: 10,
@@ -35,16 +35,26 @@ const imageData: ImageData = {
   data: new Uint8ClampedArray(256 * 256 * 4),
 }
 
-console.log('Benching WASM')
+console.log('Benching WASM prepare')
 console.log(
   benchmark(() => {
-    renderDnaWasm(dna)
-  }),
+    prepareWasmDna(dna)
+  }).milliseconds(3),
+  ' ms',
+)
+
+console.log('Benching WASM fitness')
+console.log(
+  benchmark(() => {
+    calculateFitnessWasm(dna)
+  }).milliseconds(3),
+  ' ms',
 )
 
 console.log('Benching JS renderer:')
 console.log(
   benchmark(() => {
     FitnessCalculator.GetFitness(dna, imageData)
-  }),
+  }).milliseconds(3),
+  ' ms',
 )
