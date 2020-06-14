@@ -8,6 +8,6 @@
         "wasm-worker"
     ],
     "scripts": {
-        "deploy": "cd frontend && yarn build && cd ../worker && yarn build && cd ../backend && wrangler publish"
+        "deploy": "cd ./worker && yarn build && cd ../frontend && yarn build && cd ../backend && wrangler publish"
     }
 }

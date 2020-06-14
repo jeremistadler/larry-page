@@ -102,7 +102,11 @@ function scanlineFloat(
   var row: i32 = <i32>y1 // the offset the start writing at (into the array)
 
   for (; y1 <= y2; y1++) {
-    const xByte: u8 = <u8>x
+    let xByte1 = x
+    if (xByte1 < 0) xByte1 = 0
+    if (xByte1 > 255) xByte1 = 255
+
+    const xByte: u8 = <u8>xByte1
 
     if (
       row >= 0 &&
@@ -134,6 +138,10 @@ export function rasterizeAtPos(
   fromTriangle: i32,
   toTriangle: i32,
 ): void {
+  store<f32>(DEST_COLOR_BUFFER + 4 * 0, 1)
+  store<f32>(DEST_COLOR_BUFFER + 4 * 1, 1)
+  store<f32>(DEST_COLOR_BUFFER + 4 * 2, 1)
+
   for (var triIndex = fromTriangle; triIndex <= toTriangle; triIndex++) {
     const min: u8 = load<u8>(getMinMaxIndex(MIN_MAX_BUFFER, y, triIndex, 0))
     const max: u8 = load<u8>(getMinMaxIndex(MIN_MAX_BUFFER, y, triIndex, 1))
@@ -144,14 +152,20 @@ export function rasterizeAtPos(
   }
 }
 
+function MARKER1(): void {}
+
+function MARKER2(): void {}
+
 @inline
 function drawPixel(SRC_COLOR_BUFFER: i32, DEST_COLOR_BUFFER: i32): void {
-  const R = load<f32>(SRC_COLOR_BUFFER + 0 * 4)
-  const G = load<f32>(SRC_COLOR_BUFFER + 1 * 4)
-  const B = load<f32>(SRC_COLOR_BUFFER + 2 * 4)
-  const A = load<f32>(SRC_COLOR_BUFFER + 3 * 4)
+  const R: f32 = load<f32>(SRC_COLOR_BUFFER + 0 * 4)
+  const G: f32 = load<f32>(SRC_COLOR_BUFFER + 1 * 4)
+  const B: f32 = load<f32>(SRC_COLOR_BUFFER + 2 * 4)
+  const A: f32 = load<f32>(SRC_COLOR_BUFFER + 3 * 4)
 
   const inverseAlpha: f32 = 1.0 - A
+
+  MARKER1()
 
   let index: i32 = DEST_COLOR_BUFFER + 0 * 4
   store<f32>(index, A * R + load<f32>(index) * inverseAlpha)
@@ -171,14 +185,14 @@ export function calculateFitness(
 
   fromTriangle: i32,
   toTriangle: i32,
-): u32 {
-  let fitness: u32 = 0
+): f32 {
+  let fitness: f32 = 0
 
   for (let y: i32 = 0; y < SIZE; y++) {
     for (let x: i32 = 0; x < SIZE; x++) {
-      store<f32>(DEST_COLOR_BUFFER + 4 * 0, 0)
-      store<f32>(DEST_COLOR_BUFFER + 4 * 1, 0)
-      store<f32>(DEST_COLOR_BUFFER + 4 * 2, 0)
+      store<f32>(DEST_COLOR_BUFFER + 4 * 0, 1)
+      store<f32>(DEST_COLOR_BUFFER + 4 * 1, 1)
+      store<f32>(DEST_COLOR_BUFFER + 4 * 2, 1)
 
       for (var triIndex = fromTriangle; triIndex <= toTriangle; triIndex++) {
         const min: i32 = <i32>(
@@ -193,21 +207,23 @@ export function calculateFitness(
         }
       }
 
+      MARKER2()
+
       const pixelDiff: f32 =
         NativeMathf.abs(
           load<f32>(DEST_COLOR_BUFFER + 0 * 4) -
-            load<f32>(COMPARE_COLOR_BUFFER + y * SIZE * 3 + x * 3 + 0),
+            load<f32>(COMPARE_COLOR_BUFFER + ((y * SIZE + x) * 3 + 0) * 4),
         ) +
         NativeMathf.abs(
           load<f32>(DEST_COLOR_BUFFER + 1 * 4) -
-            load<f32>(COMPARE_COLOR_BUFFER + y * SIZE * 3 + x * 3 + 1),
+            load<f32>(COMPARE_COLOR_BUFFER + ((y * SIZE + x) * 3 + 1) * 4),
         ) +
         NativeMathf.abs(
           load<f32>(DEST_COLOR_BUFFER + 2 * 4) -
-            load<f32>(COMPARE_COLOR_BUFFER + y * SIZE * 3 + x * 3 + 2),
+            load<f32>(COMPARE_COLOR_BUFFER + ((y * SIZE + x) * 3 + 2) * 4),
         )
 
-      fitness = fitness + <u32>(pixelDiff * 2)
+      fitness = fitness + pixelDiff * pixelDiff
     }
   }
 
@@ -225,10 +241,10 @@ export function calculateFitnessAtPos(
 
   fromTriangle: i32,
   toTriangle: i32,
-): u32 {
-  store<f32>(DEST_COLOR_BUFFER + 4 * 0, 0)
-  store<f32>(DEST_COLOR_BUFFER + 4 * 1, 0)
-  store<f32>(DEST_COLOR_BUFFER + 4 * 2, 0)
+): f32 {
+  store<f32>(DEST_COLOR_BUFFER + 4 * 0, 1)
+  store<f32>(DEST_COLOR_BUFFER + 4 * 1, 1)
+  store<f32>(DEST_COLOR_BUFFER + 4 * 2, 1)
 
   for (var triIndex = fromTriangle; triIndex <= toTriangle; triIndex++) {
     const min: i32 = <i32>(
@@ -246,16 +262,16 @@ export function calculateFitnessAtPos(
   const pixelDiff: f32 =
     NativeMathf.abs(
       load<f32>(DEST_COLOR_BUFFER + 0 * 4) -
-        load<f32>(COMPARE_COLOR_BUFFER + y * SIZE * 3 + x * 3 + 0),
+        load<f32>(COMPARE_COLOR_BUFFER + ((y * SIZE + x) * 3 + 0) * 4),
     ) +
     NativeMathf.abs(
       load<f32>(DEST_COLOR_BUFFER + 1 * 4) -
-        load<f32>(COMPARE_COLOR_BUFFER + y * SIZE * 3 + x * 3 + 1),
+        load<f32>(COMPARE_COLOR_BUFFER + ((y * SIZE + x) * 3 + 1) * 4),
     ) +
     NativeMathf.abs(
       load<f32>(DEST_COLOR_BUFFER + 2 * 4) -
-        load<f32>(COMPARE_COLOR_BUFFER + y * SIZE * 3 + x * 3 + 2),
+        load<f32>(COMPARE_COLOR_BUFFER + ((y * SIZE + x) * 3 + 2) * 4),
     )
 
-  return <u32>(pixelDiff * 2)
+  return pixelDiff * 2
 }

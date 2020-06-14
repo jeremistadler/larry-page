@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-globals */
 import {
   Dna,
   ISettings,
@@ -8,7 +9,6 @@ import {
 import {
   MutateDna,
   GetMutator,
-  getFromName,
   UpdateEffectiveness,
   trianglesIntersect,
 } from 'shared/src/gene-mutator'
@@ -19,6 +19,7 @@ function startRasterizing(
   sourceImageData: ImageData,
   dna: Dna,
   settings: ISettings,
+  epoc: number,
 ) {
   removeWorst(dna, sourceImageData)
 
@@ -27,11 +28,7 @@ function startRasterizing(
   while (true) {
     const startTime = Date.now()
 
-    for (
-      let runIndex = 0;
-      runIndex < settings.updateScreenInterval;
-      runIndex++
-    ) {
+    for (let runIndex = 0; runIndex < targetIterations; runIndex++) {
       //var startTime = Date.now()
 
       var mutator = GetMutator()
@@ -49,34 +46,28 @@ function startRasterizing(
 
       for (let i = 0; i < settings.iterations; i++) MutateDna(ctx)
 
-      const fitnessImprovement =
-        (originalFitness - ctx.fitness) / settings.iterations
+      const fitnessImprovement = originalFitness - ctx.fitness
 
       UpdateEffectiveness(fitnessImprovement, mutator)
 
       dna.generation += settings.iterations
       dna.mutation += ctx.mutations.length
-
-      for (var i = 0; i < ctx.mutations.length; i++) {
-        if (ctx.mutations[i].oldGene == null)
-          dna.genes.push(ctx.mutations[i].newGene)
-        else dna.genes[ctx.mutations[i].index] = ctx.mutations[i].newGene
-      }
-
       dna.fitness = ctx.fitness
     }
 
     const elapsedMs = Date.now() - startTime
-    targetIterations =
-      (settings.updateScreenInterval / elapsedMs) * targetIterations
+    targetIterations = Math.max(
+      10,
+      (settings.updateScreenInterval / elapsedMs) * targetIterations,
+    )
 
-    const workerResult: IWorkerResult = {dna}
+    const workerResult: IWorkerResult = {dna, epoc}
     self.postMessage(workerResult, null as any)
   }
 }
 
 self.onmessage = function (e: any) {
-  startRasterizing(e.data.image, e.data.dna, e.data.settings)
+  startRasterizing(e.data.image, e.data.dna, e.data.settings, e.data.epoc)
 }
 
 function removeWorst(dna: Dna, sourceImageData: ImageData) {

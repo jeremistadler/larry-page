@@ -1,6 +1,10 @@
 const SIZE = 25
 const MAX_TRIANGLES = 100
 
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 const {wasm, memory} = require('./initTest')(SIZE, MAX_TRIANGLES)
 const chalk = require('chalk')
 const {rasterizeAtPos, calcMinMax} = wasm.exports
@@ -51,7 +55,25 @@ for (let y = 0; y < SIZE * MAX_TRIANGLES; y++) {
 }
 
 prepareTriangle(1, 0, 0, 0.4, 0, 0, 8, 2, 4, 11)
+
 prepareTriangle(0, 0.3, 0, 0.4, 0, 3, 14, 11, 7, 14)
+prepareTriangle(0, 0.3, 0, 0.4, 14, 11, 7, 14, 0, 3)
+prepareTriangle(0, 0.3, 0, 0.4, 7, 14, 0, 3, 14, 11)
+
+// for (let i = 0; i < 20; i++) {
+//   prepareTriangle(
+//     Math.random(),
+//     Math.random(),
+//     Math.random(),
+//     0.7,
+//     randomInt(0, SIZE),
+//     randomInt(0, SIZE),
+//     randomInt(0, SIZE),
+//     randomInt(0, SIZE),
+//     randomInt(0, SIZE),
+//     randomInt(0, SIZE),
+//   )
+// }
 
 const TRIANGLES_DRAWN = triangleIndex
 
@@ -71,7 +93,7 @@ for (let y = 0; y < SIZE; y++) {
       y,
 
       0,
-      TRIANGLES_DRAWN - 1,
+      MAX_TRIANGLES,
     )
 
     const r = dstColorData[0]
@@ -84,7 +106,7 @@ for (let y = 0; y < SIZE; y++) {
       .padEnd(2, ' ')
       .slice(0, 2)
 
-    a.push(chalk.rgb(r * 255, g * 255, b * 255)(num))
+    a.push(chalk.rgb(r * 255, g * 255, b * 255)('██'))
   }
   a.push('|' + minMaxData[y * 2 + 1].toString().padStart(3, ' '))
   console.log(a.join(''))

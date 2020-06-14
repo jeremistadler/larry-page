@@ -67,11 +67,18 @@ export class DnaApi {
     width: number,
     height: number,
   ): Promise<ImageData> {
+    if (!dna.organism.maxGenes) dna.organism.maxGenes = 100
+    if (!dna.organism.genesPerGeneration)
+      dna.organism.genesPerGeneration = 0.0001
+
     const url = RenderConfig.baseUrl + '?route=image&id=' + dna.organism.id
     return new Promise((resolve, reject) => {
       var image = new Image()
       image.crossOrigin = ''
       image.onload = () => {
+        dna.organism.width = image.naturalWidth
+        dna.organism.height = image.naturalHeight
+
         var canvas = document.createElement('canvas')
         canvas.width = width
         canvas.height = height

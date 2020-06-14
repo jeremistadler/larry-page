@@ -5,6 +5,7 @@
   "author": "Jeremi Stadler",
   "license": "MIT",
   "scripts": {
+    "buildWorker": "yarn parcel build rasterizer.worker.ts --public-url /larry && cp dist/* ../frontend/src/scripts/",
     "build": "yarn asbuild:untouched && yarn asbuild:optimized && cp build/* ../frontend/dist/",
     "asbuild:untouched": "asc assembly/raster.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --debug --runtime none --importMemory --memoryBase 640000",
     "asbuild:optimized": "asc assembly/raster.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap -O3 --converge --measure --runtime none --noAssert --importMemory --memoryBase 640000",

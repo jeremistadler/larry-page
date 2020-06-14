@@ -1,36 +1,42 @@
 import * as React from 'react'
 import {Utils} from 'shared/src/utils'
 import {DnaApi} from './../scripts/api'
-import {RenderConfig} from 'shared/src/shared'
 import {Dna, ISettings} from 'shared/src/dna'
-import {GeneMutator} from 'shared/src/gene-mutator'
 import {JsRasterizer} from '../scripts/rasterizer'
 import './renderer.css'
+import {
+  drawDnaOnCanvas,
+  drawFitnessDiffOnCanvas,
+} from '../scripts/drawDnaOnCanvas'
 
 function rollingAvg(old: number, newValue: number, partOfNew: number) {
   return old * (1 - partOfNew) + newValue * partOfNew
 }
 
 function DnaRenderer(props: {dna: Dna | null}) {
-  const {dna} = props
-  const dnaOrEmpty = dna ?? Utils.createDna(0, '')
+  const originalDna = props.dna
 
-  const [settings] = React.useState<ISettings>({
+  const [settings, setSettings] = React.useState<ISettings>({
     minGridSize: 1,
     maxGridSize: 3,
 
     newMinOpacity: 0.1,
     newMaxOpacity: 1,
 
-    autoAdjustMutatorWeights: true,
-    mutatorWeights: Utils.CreateNumberArray(GeneMutator.GeneMutators.length),
-    iterations: 40,
+    iterations: 1,
+
+    saveInterval: 10,
+    updateScreenInterval: 100,
+
+    size: 128,
 
     workerThreads: 1,
   })
 
   const [rasterizer, setRasterizer] = React.useState<JsRasterizer | null>(null)
-  const [, generation] = React.useState(0)
+  const [updatedDna, updateDna] = React.useState<Dna | null>(null)
+  const dnaOrEmpty = updatedDna ?? originalDna ?? Utils.createDna(0, '')
+  const originalOrNewDna = updatedDna ?? originalDna
 
   // const ratioW = 500 / dnaOrEmpty.organism.width
   // const ratioH = 300 / dnaOrEmpty.organism.height
@@ -39,83 +45,109 @@ function DnaRenderer(props: {dna: Dna | null}) {
   // const width = dnaOrEmpty.organism.width * ratio
   // const height = dnaOrEmpty.organism.height * ratio
 
-  const width = RenderConfig.globalWidth
-  const height = RenderConfig.globalHeight
+  const width = 256
+  const height = 256 * (dnaOrEmpty.organism.width / dnaOrEmpty.organism.height)
 
   const lastDnaUpdateTime = React.useRef(0)
   const lastDnaGenerations = React.useRef(0)
   const lastDnaMutations = React.useRef(0)
+  const lastFitness = React.useRef(0)
   const generationsPerSecond = React.useRef(0)
   const mutationsPerSecond = React.useRef(0)
+  const fitnessPerSecond = React.useRef(0)
 
   const now = Date.now()
 
-  if (lastDnaUpdateTime.current === 0) {
+  if (lastDnaUpdateTime.current === 0 && updatedDna) {
     lastDnaUpdateTime.current = now
-    lastDnaGenerations.current = dna?.generation ?? 0
-    lastDnaMutations.current = dna?.mutation ?? 0
-  } else {
+    lastDnaGenerations.current = updatedDna.generation
+    lastDnaMutations.current = updatedDna.mutation
+    lastFitness.current = updatedDna.fitness
+  } else if (updatedDna) {
     const secondsPassed = (now - lastDnaUpdateTime.current) / 1000
 
     if (secondsPassed > 0) {
       generationsPerSecond.current = rollingAvg(
         generationsPerSecond.current,
-        ((dna?.generation ?? 0) - lastDnaGenerations.current) / secondsPassed,
+        (updatedDna.generation - lastDnaGenerations.current) / secondsPassed,
         0.1,
       )
 
       mutationsPerSecond.current = rollingAvg(
         mutationsPerSecond.current,
-        ((dna?.mutation ?? 0) - lastDnaMutations.current) / secondsPassed,
+        (updatedDna.mutation - lastDnaMutations.current) / secondsPassed,
+        0.1,
+      )
+
+      fitnessPerSecond.current = rollingAvg(
+        fitnessPerSecond.current,
+        (lastFitness.current - updatedDna.fitness) / secondsPassed,
         0.1,
       )
 
       lastDnaUpdateTime.current = now
-      lastDnaGenerations.current = dna?.generation ?? 0
-      lastDnaMutations.current = dna?.mutation ?? 0
+      lastDnaGenerations.current = updatedDna.generation
+      lastDnaMutations.current = updatedDna.mutation
+      lastFitness.current = updatedDna.fitness
     }
   }
 
   const dnaUpdated = (dna: Dna) => {
-    requestAnimationFrame(() => generation(dna.mutation))
+    requestAnimationFrame(() => updateDna(dna))
   }
 
   React.useEffect(() => {
-    if (!dna) return
+    if (!originalOrNewDna) return
 
     let isMounted = true
     let rasterizer: null | JsRasterizer = null
 
     DnaApi.loadAndScaleImageData(
-      dna,
-      RenderConfig.globalWidth,
-      RenderConfig.globalHeight,
+      originalOrNewDna,
+      settings.size,
+      settings.size,
     ).then(imageData => {
       if (!isMounted) return
 
-      rasterizer = new JsRasterizer(imageData, dna, settings)
+      rasterizer = new JsRasterizer(imageData, originalOrNewDna, settings)
       rasterizer.onFrameCompleted.push(dnaUpdated)
       setRasterizer(rasterizer)
-      dnaUpdated(dna)
+      dnaUpdated(originalOrNewDna)
     })
 
     return () => {
       isMounted = false
       if (rasterizer) rasterizer.Stop()
     }
-  }, [dna, settings])
+  }, [originalOrNewDna, settings])
 
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  const fitnessCanvasRef = React.useRef<HTMLCanvasElement>(null)
+  const originalCanvasRef = React.useRef<HTMLCanvasElement>(null)
 
   React.useEffect(() => {
-    if (dna) {
-      const ctx = canvasRef.current?.getContext('2d')
+    if (updatedDna) {
+      let ctx = canvasRef.current?.getContext('2d')
       if (ctx && rasterizer) {
-        rasterizer.drawCurrentWorkersOnCanvas(ctx)
+        drawDnaOnCanvas(ctx, updatedDna ?? dnaOrEmpty)
+      }
+
+      ctx = fitnessCanvasRef.current?.getContext('2d')
+      if (ctx && rasterizer) {
+        drawFitnessDiffOnCanvas(
+          ctx,
+          updatedDna ?? dnaOrEmpty,
+          rasterizer.source,
+        )
+      }
+
+      ctx = originalCanvasRef.current?.getContext('2d')
+      if (ctx && rasterizer) {
+        ctx.putImageData(rasterizer.source, 0, 0)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dna, dna?.mutation, settings])
+  }, [updatedDna, settings])
 
   return (
     <div className="renderer-container">
@@ -123,6 +155,20 @@ function DnaRenderer(props: {dna: Dna | null}) {
         <p className="renderer-header">Currently rendering</p>
         <div className="renderer-image">
           <canvas ref={canvasRef} width={width} height={height} />
+        </div>
+        <div className="renderer-image">
+          <canvas
+            ref={fitnessCanvasRef}
+            width={settings.size}
+            height={settings.size}
+          />
+        </div>
+        <div className="renderer-image">
+          <canvas
+            ref={originalCanvasRef}
+            width={settings.size}
+            height={settings.size}
+          />
         </div>
 
         <div className="renderer-text-container">
@@ -143,17 +189,17 @@ function DnaRenderer(props: {dna: Dna | null}) {
           <p>
             Fitness:{' '}
             <span className="renderer-value-text">
-              {(Math.log10(dnaOrEmpty.fitness) * 1000).toFixed(0)}
+              {((1 - dnaOrEmpty.fitness / 65536) * 100).toFixed(2)} %
             </span>
           </p>
-          <p>
+          {/*       <p>
             Weights:{' '}
             <span className="renderer-value-text">
               {settings.mutatorWeights
                 .map(f => Math.round(f * 10) / 10)
                 .join(', ')}
             </span>
-          </p>
+          </p> */}
           <p>
             Speed:{' '}
             <span className="renderer-value-text">
@@ -162,7 +208,24 @@ function DnaRenderer(props: {dna: Dna | null}) {
             <span className="renderer-value-text">
               {generationsPerSecond.current.toFixed(1)} generations/s{' '}
             </span>
+            <span className="renderer-value-text">
+              {fitnessPerSecond.current.toFixed(1)} fitness/s{' '}
+            </span>
           </p>
+
+          <button onClick={() => rasterizer?.nudge()}>Nudge</button>
+          <button
+            onClick={() =>
+              setSettings({...settings, size: settings.size - 32})
+            }>
+            Lower resolution
+          </button>
+          <button
+            onClick={() =>
+              setSettings({...settings, size: settings.size + 32})
+            }>
+            Higher resolution
+          </button>
         </div>
       </div>
     </div>

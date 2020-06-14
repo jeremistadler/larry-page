@@ -1,10 +1,8 @@
 import {ImageData} from './ImageData'
 
 export interface IWorkerResult {
-  generations: number
-  mutations: IMutatorState[]
-  mutatorName: string
-  fitnessImprovement: number
+  dna: Dna
+  epoc: number
 }
 
 export interface ISettings {
@@ -14,11 +12,12 @@ export interface ISettings {
   newMinOpacity: number
   newMaxOpacity: number
 
-  mutatorWeights: number[]
-  autoAdjustMutatorWeights: boolean
   iterations: number
+  updateScreenInterval: number
+  saveInterval: number
 
   workerThreads: number
+  size: number
 }
 
 export interface IRectangle {
@@ -34,6 +33,8 @@ export interface Organism {
   id: string
   width: number
   height: number
+  maxGenes: number
+  genesPerGeneration: number
 }
 
 export interface Gene {

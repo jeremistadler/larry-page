@@ -49,6 +49,8 @@ export class Utils {
         id: organismId,
         width: 200,
         height: 200,
+        maxGenes: 100,
+        genesPerGeneration: 0.0001,
       },
     }
 

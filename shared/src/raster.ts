@@ -5,7 +5,7 @@ export class Raster {
   static _rowMax: number[] = Utils.CreateNumberArray(1024)
 
   private static drawHLine(
-    buffer: Uint8Array,
+    buffer: Uint8ClampedArray,
     width: number,
     height: number,
     x1: number,
@@ -71,7 +71,7 @@ export class Raster {
   }
 
   private static _drawPolygon(
-    buffer: Uint8Array,
+    buffer: Uint8ClampedArray,
     width: number,
     height: number,
     points: number[],
@@ -158,7 +158,7 @@ export class Raster {
   }
 
   static drawPolygon(
-    buffer: Uint8Array,
+    buffer: Uint8ClampedArray,
     width: number,
     height: number,
     points: number[],

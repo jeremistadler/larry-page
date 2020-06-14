@@ -1,4 +1,4 @@
-import {FitnessCalculator} from 'shared/src/fitness-calculator'
+import {GetFitness} from 'shared/src/fitness-calculator'
 const benchmark = require('nodemark')
 import {Dna, Gene} from 'shared/src/dna'
 import {prepareWasmDna, calculateFitnessWasm} from './scanlineRenderDna'
@@ -54,7 +54,7 @@ console.log(
 console.log('Benching JS renderer:')
 console.log(
   benchmark(() => {
-    FitnessCalculator.GetFitness(dna, imageData)
+    GetFitness(dna, imageData)
   }).milliseconds(3),
   ' ms',
 )

@@ -62,7 +62,7 @@ async function handleApiRequest(
   if (query.route === 'upload') {
     let buf = await request.arrayBuffer()
     const id = generateChronologicalId()
-    const dna = Utils.createDna(10, id)
+    const dna = Utils.createDna(1, id)
     const json = JSON.stringify(dna)
 
     await KV.put('image:' + id, buf)
