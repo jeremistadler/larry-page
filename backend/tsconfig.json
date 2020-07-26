@@ -6,7 +6,9 @@
     "jsx": "react",
     "noImplicitAny": true,
     "preserveConstEnums": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "types": ["@cloudflare/workers-types"]
+
   },
   "include": ["src/index.ts"]
 }
