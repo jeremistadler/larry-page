@@ -34,6 +34,7 @@ function DnaRenderer(props: {dna: Dna | null}) {
   const [updatedDna, updateDna] = React.useState<Dna | null>(null)
   const dnaOrEmpty = updatedDna ?? originalDna ?? Utils.createDna(0, '')
   const originalOrNewDna = updatedDna ?? originalDna
+  const dnaRef = React.useRef(originalOrNewDna)
 
   const width = 256
   const height =
@@ -84,33 +85,38 @@ function DnaRenderer(props: {dna: Dna | null}) {
   }
 
   const dnaUpdated = (dna: Dna) => {
+    dnaRef.current = dna
     requestAnimationFrame(() => updateDna(dna))
   }
 
   React.useEffect(() => {
-    if (!originalOrNewDna) return
+    if (!originalDna) return
 
     let isMounted = true
     let rasterizer: null | JsRasterizer = null
 
     DnaApi.loadAndScaleImageData(
-      originalOrNewDna,
+      dnaRef.current || originalDna,
       settings.size,
       settings.size,
     ).then(imageData => {
       if (!isMounted) return
 
-      rasterizer = new JsRasterizer(imageData, originalOrNewDna, settings)
+      rasterizer = new JsRasterizer(
+        imageData,
+        dnaRef.current || originalDna,
+        settings,
+      )
       rasterizer.onFrameCompleted.push(dnaUpdated)
       setRasterizer(rasterizer)
-      dnaUpdated(originalOrNewDna)
+      dnaUpdated(dnaRef.current || originalDna)
     })
 
     return () => {
       isMounted = false
       if (rasterizer) rasterizer.Stop()
     }
-  }, [originalOrNewDna, settings])
+  }, [originalDna, settings])
 
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const fitnessCanvasRef = React.useRef<HTMLCanvasElement>(null)
