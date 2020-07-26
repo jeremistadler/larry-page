@@ -28,12 +28,12 @@ const DnaGrid = ({onChangeDna}: {onChangeDna: (dna: Dna) => void}) => {
     <div>
       <ul className="grid">
         {dnaList.map((dna, index) => {
-          var ratioW = 300 / dna.organism.width
-          var ratioH = 200 / dna.organism.height
+          var ratioW = 300 / dna.sourceImageWidth
+          var ratioH = 200 / dna.sourceImageHeight
           var ratio = ratioW < ratioH ? ratioW : ratioH
 
-          var width = dna.organism.width * ratio
-          var height = dna.organism.height * ratio
+          var width = dna.sourceImageWidth * ratio
+          var height = dna.sourceImageHeight * ratio
 
           var floatRightStyle = {
             float: 'right',
@@ -44,7 +44,7 @@ const DnaGrid = ({onChangeDna}: {onChangeDna: (dna: Dna) => void}) => {
               className={
                 'grid-image' + (isVisible ? ' grid-image-visible' : '')
               }
-              key={dna.organism.id}
+              key={dna.id}
               onClick={() => onChangeDna(dna)}>
               <DnaImage dna={dna} width={width} height={height} index={index} />
               <div className="grid-image-info">

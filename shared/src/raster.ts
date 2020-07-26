@@ -168,7 +168,7 @@ export class Raster {
   }
 
   static drawCircle(
-    buffer: Uint8Array,
+    buffer: Uint8ClampedArray,
     width: number,
     height: number,
     x: number,
@@ -186,7 +186,7 @@ export class Raster {
   }
 
   static drawEllipse(
-    buffer: Uint8Array,
+    buffer: Uint8ClampedArray,
     width: number,
     height: number,
     x: number,
@@ -209,7 +209,7 @@ export class Raster {
   }
 
   static drawBox(
-    buffer: Uint8Array,
+    buffer: Uint8ClampedArray,
     width: number,
     height: number,
     x: number,

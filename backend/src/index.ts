@@ -2,7 +2,7 @@ import {KVNamespace} from '@cloudflare/workers-types'
 import {generateChronologicalId} from './generateChronologicalId'
 import {Utils} from 'shared/src/utils'
 import {getAssetFromKV, mapRequestToAsset} from '@cloudflare/kv-asset-handler'
-import {Dna} from 'shared/src/dna'
+import {Dna, DnaOld} from 'shared/src/dna'
 
 declare global {
   const KV: KVNamespace
@@ -67,7 +67,7 @@ async function handleApiRequest(
 
     await KV.put('image:' + id, buf)
     await KV.put(
-      'fitness:' + id + ':' + formatFitnessChronological(dna.fitness),
+      'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness),
       json,
     )
     await KV.put('dnaIds:' + id, id)
@@ -115,6 +115,22 @@ async function handleApiRequest(
       status: 500,
       headers: DEFAULT_HEADERS,
     })
+  } else if (query.route === 'dnaInfo') {
+    const dnaIds = (await KV.get('dnaIdsList', 'json')) as string[]
+
+    const result = await Promise.all(
+      dnaIds.map(async id => {
+        const listResult = await KV.list({
+          prefix: 'fitness4:' + id + ':',
+          limit: 100,
+        })
+        return {id, count: listResult.keys.length}
+      }),
+    )
+
+    return new Response(JSON.stringify(result), {
+      headers: DEFAULT_HEADERS,
+    })
   } else if (query.route === 'list') {
     const list = await KV.get('fittestDnaList', 'text')
     return new Response(list, {
@@ -128,34 +144,84 @@ async function handleApiRequest(
   } else if (query.route === 'save') {
     const dna = (await request.json()) as Dna
     const json = JSON.stringify(dna)
-    const id = dna.organism.id
+    const id = dna.id
 
-    await KV.put(
-      'fitness:' + id + ':' + formatFitnessChronological(dna.fitness),
-      json,
-    )
+    const key = 'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness)
+    await KV.put(key, json)
     await updateDnaCurrentList()
 
-    return new Response(JSON.stringify({}), {
+    return new Response(JSON.stringify({message: 'Saved to ' + key}), {
+      headers: DEFAULT_HEADERS,
+    })
+  } else if (query.route === 'updateCurrentList') {
+    const result = await updateDnaCurrentList()
+
+    return new Response(
+      JSON.stringify({
+        dnaCount: result.dnaIds.length,
+        dnaWithFitnessCount: result.fittestDnaList.length,
+      }),
+      {
+        headers: DEFAULT_HEADERS,
+      },
+    )
+  } else if (query.route === 'updateFitness') {
+    const keys = await KV.list({
+      prefix: 'fitness:',
+      limit: 100,
+      cursor: query.cursor,
+    })
+
+    const dnaList = await Promise.all(
+      keys.keys
+        .map(f => f.name)
+        .map(async originalKey => {
+          const jsonText = await KV.get(originalKey, 'text')
+          const oldDna = JSON.parse(jsonText) as DnaOld
+          const newDna: Dna = {
+            id: oldDna.organism.id,
+            genes: oldDna.genes,
+            generation: oldDna.generation,
+            mutation: oldDna.mutation,
+            fitness: oldDna.fitness,
+            sourceImageWidth: oldDna.organism.width,
+            sourceImageHeight: oldDna.organism.height,
+            maxGenes: Math.max(oldDna.genes.length, 100),
+            genesPerGeneration: 0.0004,
+            lastRenderSize: 128,
+          }
+
+          return newDna
+        }),
+    )
+
+    return new Response(JSON.stringify({keys, dnaList, cursor: keys.cursor}), {
+      headers: DEFAULT_HEADERS,
+    })
+  } else if (query.route === 'deleteall') {
+    const fit2 = await KV.list({prefix: 'fitness2:'}).then(async items => {
+      for (const item of items.keys) await KV.delete(item.name)
+      return items.keys.length
+    })
+
+    const fit3 = await KV.list({prefix: 'fitness3:'}).then(async items => {
+      for (const item of items.keys) await KV.delete(item.name)
+      return items.keys.length
+    })
+
+    return new Response(JSON.stringify({fit2, fit3}), {
       headers: DEFAULT_HEADERS,
     })
   }
 
-  // else if (query.route === 'deleteall') {
-  //   const items = await KV.list({})
-  //   await Promise.all(items.keys.map(f => KV.delete(f.name)))
-  //   return new Response(JSON.stringify({deleted: true}), {
-  //     headers: {'content-type': 'application/json'},
-  //   })
-  // }
-
   return new Response('Hello from api!', {
-    headers: {'content-type': 'text/plain'},
+    headers: DEFAULT_HEADERS,
   })
 }
 
 function formatFitnessChronological(fitness: number) {
-  fitness = Math.ceil(fitness)
+  if (!isFinite(fitness)) fitness = 10000000000000
+  fitness = Math.ceil(fitness * 100)
   fitness = Math.min(fitness, 10000000000000)
   fitness = Math.max(0, fitness)
   return fitness.toString().padStart(14, '0')
@@ -176,8 +242,8 @@ async function KvListAll(prefix: string): Promise<string[]> {
 
 async function getFittestDnaAsJsonTextById(id: string): Promise<string | null> {
   const listResult = await KV.list({
-    prefix: 'fitness:' + id + ':',
-    limit: 1,
+    prefix: 'fitness4:' + id + ':',
+    limit: 10,
   })
   if (listResult.keys.length === 0) return null
   const dnaAsText = await KV.get(listResult.keys[0].name, 'text')
@@ -195,6 +261,11 @@ async function updateDnaCurrentList() {
   ).filter(Boolean)
 
   await KV.put('fittestDnaList', '[' + fittestDnaList.join(',') + ']')
+
+  return {
+    dnaIds,
+    fittestDnaList,
+  }
 }
 
 async function handleStaticRequest(event: FetchEvent) {

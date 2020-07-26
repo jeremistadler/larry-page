@@ -78,7 +78,7 @@ function removeWorst(dna: Dna, sourceImageData: ImageData) {
     pos: Utils.CreateNumberArray(6),
   }
 
-  const targetGeneCount = dna.organism.maxGenes || 100
+  const targetGeneCount = dna.maxGenes || 100
   let removedCount = 0
 
   while (dna.genes.length - removedCount > targetGeneCount) {

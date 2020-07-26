@@ -3,3 +3,5 @@ node_modules
 dist
 cache
 build
+frontend/src/scripts/rasterizer.worker.js
+frontend/src/scripts/rasterizer.worker.js.map

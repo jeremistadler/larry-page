@@ -17,9 +17,6 @@ function DnaRenderer(props: {dna: Dna | null}) {
   const originalDna = props.dna
 
   const [settings, setSettings] = React.useState<ISettings>({
-    minGridSize: 1,
-    maxGridSize: 3,
-
     newMinOpacity: 0.1,
     newMaxOpacity: 1,
 
@@ -38,15 +35,9 @@ function DnaRenderer(props: {dna: Dna | null}) {
   const dnaOrEmpty = updatedDna ?? originalDna ?? Utils.createDna(0, '')
   const originalOrNewDna = updatedDna ?? originalDna
 
-  // const ratioW = 500 / dnaOrEmpty.organism.width
-  // const ratioH = 300 / dnaOrEmpty.organism.height
-  // const ratio = ratioW < ratioH ? ratioW : ratioH
-
-  // const width = dnaOrEmpty.organism.width * ratio
-  // const height = dnaOrEmpty.organism.height * ratio
-
   const width = 256
-  const height = 256 * (dnaOrEmpty.organism.width / dnaOrEmpty.organism.height)
+  const height =
+    256 * (dnaOrEmpty.sourceImageWidth / dnaOrEmpty.sourceImageHeight)
 
   const lastDnaUpdateTime = React.useRef(0)
   const lastDnaGenerations = React.useRef(0)

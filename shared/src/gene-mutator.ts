@@ -326,10 +326,10 @@ export const GeneMutators: IGeneMutator[] = [
     name: 'Add Small Triangle',
     effectiveness: 1000,
     func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      if (ctx.dna.genes.length >= ctx.dna.organism.maxGenes) return null
+      if (ctx.dna.genes.length >= ctx.dna.maxGenes) return null
       if (
         ctx.dna.genes.length >
-        ctx.dna.generation * ctx.dna.organism.genesPerGeneration + 1
+        ctx.dna.generation * ctx.dna.genesPerGeneration + 1
       )
         return null
 
@@ -360,10 +360,10 @@ export const GeneMutators: IGeneMutator[] = [
     name: 'Add Big Triangle',
     effectiveness: 1000,
     func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      if (ctx.dna.genes.length >= ctx.dna.organism.maxGenes) return null
+      if (ctx.dna.genes.length >= ctx.dna.maxGenes) return null
       if (
         ctx.dna.genes.length >
-        ctx.dna.generation * ctx.dna.organism.genesPerGeneration + 1
+        ctx.dna.generation * ctx.dna.genesPerGeneration + 1
       )
         return null
 

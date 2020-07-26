@@ -6,9 +6,6 @@ export interface IWorkerResult {
 }
 
 export interface ISettings {
-  minGridSize: number
-  maxGridSize: number
-
   newMinOpacity: number
   newMaxOpacity: number
 
@@ -43,6 +40,19 @@ export interface Gene {
 }
 
 export interface Dna {
+  id: string
+  genes: Gene[]
+  generation: number
+  mutation: number
+  fitness: number
+  sourceImageWidth: number
+  sourceImageHeight: number
+  maxGenes: number
+  genesPerGeneration: number
+  lastRenderSize: number
+}
+
+export interface DnaOld {
   genes: Gene[]
   generation: number
   mutation: number

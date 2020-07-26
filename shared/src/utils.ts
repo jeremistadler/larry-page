@@ -40,18 +40,17 @@ export class Utils {
   }
 
   static createDna(numberOfGenes: number, organismId: string): Dna {
-    var dna = {
+    var dna: Dna = {
       fitness: Infinity,
       genes: new Array(numberOfGenes),
       generation: 0,
       mutation: 0,
-      organism: {
-        id: organismId,
-        width: 200,
-        height: 200,
-        maxGenes: 100,
-        genesPerGeneration: 0.0001,
-      },
+      id: organismId,
+      sourceImageWidth: 200,
+      sourceImageHeight: 200,
+      maxGenes: 100,
+      genesPerGeneration: 0.0001,
+      lastRenderSize: 128,
     }
 
     for (var i = 0; i < numberOfGenes; i++) {

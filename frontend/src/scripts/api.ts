@@ -44,6 +44,14 @@ export class DnaApi {
     return data as Dna
   }
 
+  static async fetchDnaToUpdate(cursor: undefined | string) {
+    const response = await fetch(
+      RenderConfig.baseUrl + '?route=updateFitness&cursor=' + (cursor || ''),
+    )
+    const data = await response.json()
+    return data as {dnaList: Dna[]; keys: string[]; cursor: string}
+  }
+
   static async fetchDnaList(): Promise<Dna[]> {
     const response = await fetch(RenderConfig.baseUrl + '?route=list')
     const data = await response.json()
@@ -67,17 +75,13 @@ export class DnaApi {
     width: number,
     height: number,
   ): Promise<ImageData> {
-    if (!dna.organism.maxGenes) dna.organism.maxGenes = 100
-    if (!dna.organism.genesPerGeneration)
-      dna.organism.genesPerGeneration = 0.0001
-
-    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.organism.id
+    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.id
     return new Promise((resolve, reject) => {
       var image = new Image()
       image.crossOrigin = ''
       image.onload = () => {
-        dna.organism.width = image.naturalWidth
-        dna.organism.height = image.naturalHeight
+        dna.sourceImageWidth = image.naturalWidth
+        dna.sourceImageHeight = image.naturalHeight
 
         var canvas = document.createElement('canvas')
         canvas.width = width

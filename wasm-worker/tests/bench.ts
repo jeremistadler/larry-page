@@ -8,11 +8,12 @@ const dna: Dna = {
   genes: new Array(50),
   generation: 0,
   mutation: 0,
-  organism: {
-    id: 'test',
-    width: 256,
-    height: 256,
-  },
+  id: 'test',
+  sourceImageHeight: 256,
+  sourceImageWidth: 256,
+  lastRenderSize: 128,
+  maxGenes: 50,
+  genesPerGeneration: 0.001,
 }
 
 let randomSeed = 1
