@@ -23,6 +23,8 @@
   },
   "dependencies": {
     "@cloudflare/kv-asset-handler": "^0.0.10",
-    "shared": "1.0.0"
+    "prettier": "^2.1.1",
+    "shared": "1.0.0",
+    "webpack": "^4.44.1"
   }
 }
