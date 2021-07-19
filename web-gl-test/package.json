@@ -1,0 +1,16 @@
+{
+  "name": "web-gl-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "snowpack dev",
+    "build": "snowpack build"
+  },
+  "devDependencies": {
+    "snowpack": "^3.8.2"
+  },
+  "dependencies": {
+    "regl": "^2.1.0"
+  }
+}
