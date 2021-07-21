@@ -41,6 +41,7 @@ export const renderTexture = regl({
     texture: regl.prop('texture'),
   },
   depth: {enable: false},
+  framebuffer: null,
 
   count: 3,
 })

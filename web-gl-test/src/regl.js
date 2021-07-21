@@ -6,4 +6,5 @@ export const regl = reglI({
     'oes_texture_float',
     'WEBGL_color_buffer_float',
   ],
+  // preserveDrawingBuffer: 'gl',
 })

@@ -39,7 +39,7 @@ export function gpuReduceCreate() {
     },
 
     framebuffer: regl.prop('outFbo'),
-
+    depth: {enable: false},
     count: 3,
   })
 
@@ -65,6 +65,13 @@ export function gpuReduceCreate() {
   // those FBOs takes quite a bit of time, so the GPU would always be
   // slower than the CPU.
   return function (inputTexture) {
+    for (const fbo of fbos) {
+      regl.clear({
+        color: [0, 0, 0, 0],
+        framebuffer: fbo,
+      })
+    }
+
     // first pass.
     reducePass({
       inTex: inputTexture,
@@ -85,7 +92,7 @@ export function gpuReduceCreate() {
     }
 
     // now retrieve the result from the GPU
-    var result
+    var result = 0
     regl({framebuffer: fbos[fbos.length - 1]})(() => {
       result = regl.read()[0]
     })

@@ -1,6 +1,6 @@
 import {regl} from './regl'
 
-export const TEXTURE_SIZE = 128
+export const TEXTURE_SIZE = 256
 
 export const triangles = [
   {
@@ -30,17 +30,17 @@ export const triangles = [
 ]
 
 triangles.length = 0
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 60; i++) {
   triangles.push({
     pos: [
-      [0, 0],
-      [0, 0],
-      [0, 0],
+      [2 - Math.random() * 4, 2 - Math.random() * 4],
+      [2 - Math.random() * 4, 2 - Math.random() * 4],
+      [2 - Math.random() * 4, 2 - Math.random() * 4],
     ],
     color: [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
+      [Math.random(), Math.random(), Math.random(), 0],
+      [Math.random(), Math.random(), Math.random(), 0],
+      [Math.random(), Math.random(), Math.random(), 0],
     ],
   })
 }

@@ -5,23 +5,29 @@ import {regl} from './regl'
 import {renderTexture} from './renderTexture'
 import {posBuffer, triangles, colorBuffer, TEXTURE_SIZE} from './triangles'
 
-export var tempTexture = regl.framebuffer({
+export var triangleResultFbo = regl.framebuffer({
   width: TEXTURE_SIZE,
   height: TEXTURE_SIZE,
-  format: 'rgba',
-  type: 'float',
+  colorFormat: 'rgba',
+  colorType: 'uint8',
   mag: 'nearest',
   min: 'nearest',
 })
 
-var temp3Texture = regl.framebuffer({
+var diffResultFbo = regl.framebuffer({
   width: TEXTURE_SIZE,
   height: TEXTURE_SIZE,
-  format: 'rgba',
-  type: 'float',
+  colorFormat: 'rgba', //luminance
+  colorType: 'float',
   mag: 'nearest',
   min: 'nearest',
 })
+
+const pixelReadBuffer = new Float32Array(TEXTURE_SIZE * TEXTURE_SIZE * 4)
+
+// console.log(regl.limits.textureFormats)
+
+var gpuReduce = gpuReduceCreate()
 
 var image = new Image()
 image.src = 'test.jpg'
@@ -31,56 +37,87 @@ image.onload = function () {
   let lastFitness = 100000000
 
   regl.frame(() => {
-    regl.clear({
-      color: [1, 1, 1, 1],
-      framebuffer: tempTexture,
-    })
-    regl.clear({
-      color: [1, 1, 1, 1],
-      framebuffer: temp3Texture,
-    })
-
-    const indexToChange = Math.floor(Math.random() * triangles.length)
-    const oldTriangle = triangles[indexToChange]
-    triangles[indexToChange] = {
-      pos: [
-        [2 - Math.random() * 4, 2 - Math.random() * 4],
-        [2 - Math.random() * 4, 2 - Math.random() * 4],
-        [2 - Math.random() * 4, 2 - Math.random() * 4],
-      ],
-      color: [
-        [Math.random(), Math.random(), Math.random(), Math.random()],
-        [Math.random(), Math.random(), Math.random(), Math.random()],
-        [Math.random(), Math.random(), Math.random(), Math.random()],
-      ],
-    }
-
-    posBuffer.subdata(triangles.map(f => f.pos))
-    colorBuffer.subdata(triangles.map(f => f.color))
-
-    drawTriangles({
-      outFbo: tempTexture,
-    })
-
-    diffTextures({
-      texture1: tempTexture,
-      texture2: imageTexture,
-      outFbo: temp3Texture,
-    })
-
-    var gpuReduce = gpuReduceCreate()
-    const result = gpuReduce(temp3Texture)
-
-    if (lastFitness > result) {
-      lastFitness = result
-      console.log(result)
-
+    for (let renderSample = 0; renderSample < 30; renderSample++) {
       regl.clear({
         color: [1, 1, 1, 1],
+        framebuffer: triangleResultFbo,
       })
-      renderTexture({texture: tempTexture})
-    } else {
-      triangles[indexToChange] = oldTriangle
+      regl.clear({
+        color: [0, 0, 0, 1],
+        framebuffer: diffResultFbo,
+      })
+
+      const indexToChange = Math.floor(Math.random() * triangles.length)
+      const oldTriangle = triangles[indexToChange]
+
+      const newColor = [
+        (Math.random() - 0.5) * 0.2 + oldTriangle.color[0][0],
+        (Math.random() - 0.5) * 0.2 + oldTriangle.color[1][0],
+        (Math.random() - 0.5) * 0.2 + oldTriangle.color[2][0],
+      ]
+      triangles[indexToChange] = {
+        pos: [
+          [
+            (Math.random() - 0.5) * 0.2 + oldTriangle.pos[0][0],
+            (Math.random() - 0.5) * 0.2 + oldTriangle.pos[0][1],
+          ],
+          [
+            (Math.random() - 0.5) * 0.2 + oldTriangle.pos[1][0],
+            (Math.random() - 0.5) * 0.2 + oldTriangle.pos[1][1],
+          ],
+          [
+            (Math.random() - 0.5) * 0.2 + oldTriangle.pos[2][0],
+            (Math.random() - 0.5) * 0.2 + oldTriangle.pos[2][1],
+          ],
+        ],
+        color: [
+          [...newColor, Math.random()],
+          [...newColor, Math.random()],
+          [...newColor, Math.random()],
+        ],
+      }
+
+      posBuffer.subdata(triangles.map(f => f.pos))
+      colorBuffer.subdata(triangles.map(f => f.color))
+
+      drawTriangles({
+        outFbo: triangleResultFbo,
+      })
+
+      diffTextures({
+        texture1: triangleResultFbo,
+        texture2: imageTexture,
+        outFbo: diffResultFbo,
+      })
+
+      // renderTexture({texture: diffResultFbo})
+
+      regl({framebuffer: diffResultFbo})(() => {
+        // const gpuResult = gpuReduce(diffResultFbo)
+        // const result = gpuResult
+
+        const buff = regl.read()
+        let result = 0
+
+        for (let i = 0; i < pixelReadBuffer.length; i++) {
+          result += buff[i]
+        }
+
+        // console.log({gpuResult, result})
+
+        if (result < lastFitness || Math.random() < 0.05) {
+          console.log('New best fitness', result)
+          lastFitness = result
+
+          regl.clear({
+            color: [1, 1, 1, 1],
+            framebuffer: null,
+          })
+          renderTexture({texture: diffResultFbo})
+        } else {
+          triangles[indexToChange] = oldTriangle
+        }
+      })
     }
   })
 }

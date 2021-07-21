@@ -9,7 +9,8 @@ export const diffTextures = regl({
 
   void main () {
     vec4 v = texture2D(texture1, uv) - texture2D(texture2, uv);
-    gl_FragColor = vec4(abs(v * v).xyz, 1);
+    float luminance = 0.299 * v.r + 0.587 * v.g + 0.114 * v.b;
+    gl_FragColor = vec4(abs(luminance), 0, 0, 1);
   }`,
 
   vert: `
