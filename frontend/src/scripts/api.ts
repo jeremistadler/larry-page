@@ -95,7 +95,7 @@ export class DnaApi {
         var data = ctx.getImageData(0, 0, width, height)
         resolve(data)
       }
-      image.onerror = e => {
+      image.onerror = (e: any) => {
         console.error('Could not load image', e)
         reject(e)
       }
