@@ -47,7 +47,10 @@ image.onload = function () {
   let lastFitness = 100000000
 
   regl.frame(() => {
-    for (let renderSample = 0; renderSample < 30; renderSample++) {
+    const RENDER_SAMPLES = 30
+    const startTime = performance.now()
+
+    for (let renderSample = 0; renderSample < RENDER_SAMPLES; renderSample++) {
       regl.clear({
         color: [1, 1, 1, 1],
         framebuffer: triangleResultFbo,
@@ -100,20 +103,20 @@ image.onload = function () {
       // renderTexture({texture: diffResultFbo})
 
       regl({framebuffer: diffResultFbo})(() => {
-        // const gpuResult = gpuReduce(diffResultFbo)
-        // const result = gpuResult
+        const gpuResult = gpuReduce(diffResultFbo)
+        const result = gpuResult
 
-        const buff = regl.read()
-        let result = 0
+        // const buff = regl.read()
+        // let result = 0
 
-        for (let i = 0; i < pixelReadBuffer.length; i++) {
-          result += buff[i]
-        }
+        // for (let i = 0; i < pixelReadBuffer.length; i++) {
+        //   result += buff[i]
+        // }
 
         // console.log({gpuResult, result})
 
         if (result < lastFitness || Math.random() < 0.02) {
-          console.log('New best fitness', result)
+          // console.log('New best fitness', result)
           lastFitness = result
 
           regl.clear({
@@ -126,5 +129,8 @@ image.onload = function () {
         }
       })
     }
+
+    const endTime = performance.now()
+    console.log('Render took', (endTime - startTime) / RENDER_SAMPLES)
   })
 }
