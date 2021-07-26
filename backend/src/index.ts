@@ -2,7 +2,7 @@ import {KVNamespace} from '@cloudflare/workers-types'
 import {generateChronologicalId} from './generateChronologicalId'
 import {Utils} from 'shared/src/utils'
 import {getAssetFromKV, mapRequestToAsset} from '@cloudflare/kv-asset-handler'
-import {Dna, DnaOld} from 'shared/src/dna'
+import {Dna} from 'shared/src/dna'
 
 declare global {
   const KV: KVNamespace
@@ -62,18 +62,8 @@ async function handleApiRequest(
   if (query.route === 'upload') {
     let buf = await request.arrayBuffer()
     const id = generateChronologicalId()
-    const dna = Utils.createDna(1, id)
-    const json = JSON.stringify(dna)
-
     await KV.put('image:' + id, buf)
-    await KV.put(
-      'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness),
-      json,
-    )
-    await KV.put('dnaIds:' + id, id)
-    await updateDnaCurrentList()
-
-    return new Response(JSON.stringify({dna}), {
+    return new Response(JSON.stringify({id}), {
       headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'dna') {
@@ -144,9 +134,10 @@ async function handleApiRequest(
   } else if (query.route === 'save') {
     const dna = (await request.json()) as Dna
     const json = JSON.stringify(dna)
-    const id = dna.id
+    const id = dna.imageId
 
-    const key = 'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness)
+    const key =
+      'fitness4:' + id + ':' + formatFitnessChronological(dna.stats.fitness)
     await KV.put(key, json)
     await updateDnaCurrentList()
 
@@ -167,7 +158,7 @@ async function handleApiRequest(
     )
   } else if (query.route === 'updateFitness') {
     const keys = await KV.list({
-      prefix: 'fitness:',
+      prefix: 'fitness4:',
       limit: 100,
       cursor: query.cursor,
     })
@@ -177,21 +168,8 @@ async function handleApiRequest(
         .map(f => f.name)
         .map(async originalKey => {
           const jsonText = await KV.get(originalKey, 'text')
-          const oldDna = JSON.parse(jsonText) as DnaOld
-          const newDna: Dna = {
-            id: oldDna.organism.id,
-            genes: oldDna.genes,
-            generation: oldDna.generation,
-            mutation: oldDna.mutation,
-            fitness: oldDna.fitness,
-            sourceImageWidth: oldDna.organism.width,
-            sourceImageHeight: oldDna.organism.height,
-            maxGenes: Math.max(oldDna.genes.length, 100),
-            genesPerGeneration: 0.0004,
-            lastRenderSize: 128,
-          }
-
-          return newDna
+          const dna = JSON.parse(jsonText) as Dna
+          return dna
         }),
     )
 

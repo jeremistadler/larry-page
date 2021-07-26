@@ -38,7 +38,7 @@ function DnaRenderer(props: {dna: Dna | null}) {
 
   const width = 256
   const height =
-    256 * (dnaOrEmpty.sourceImageWidth / dnaOrEmpty.sourceImageHeight)
+    256 * (dnaOrEmpty.sourceImageHeight / dnaOrEmpty.sourceImageWidth)
 
   const lastDnaUpdateTime = React.useRef(0)
   const lastDnaGenerations = React.useRef(0)
@@ -52,8 +52,8 @@ function DnaRenderer(props: {dna: Dna | null}) {
 
   if (lastDnaUpdateTime.current === 0 && updatedDna) {
     lastDnaUpdateTime.current = now
-    lastDnaGenerations.current = updatedDna.generation
-    lastDnaMutations.current = updatedDna.mutation
+    lastDnaGenerations.current = updatedDna.triedChanges
+    lastDnaMutations.current = updatedDna.changedTriangles
     lastFitness.current = updatedDna.fitness
   } else if (updatedDna) {
     const secondsPassed = (now - lastDnaUpdateTime.current) / 1000
@@ -61,13 +61,14 @@ function DnaRenderer(props: {dna: Dna | null}) {
     if (secondsPassed > 0) {
       generationsPerSecond.current = rollingAvg(
         generationsPerSecond.current,
-        (updatedDna.generation - lastDnaGenerations.current) / secondsPassed,
+        (updatedDna.triedChanges - lastDnaGenerations.current) / secondsPassed,
         0.1,
       )
 
       mutationsPerSecond.current = rollingAvg(
         mutationsPerSecond.current,
-        (updatedDna.mutation - lastDnaMutations.current) / secondsPassed,
+        (updatedDna.changedTriangles - lastDnaMutations.current) /
+          secondsPassed,
         0.1,
       )
 
@@ -78,8 +79,8 @@ function DnaRenderer(props: {dna: Dna | null}) {
       )
 
       lastDnaUpdateTime.current = now
-      lastDnaGenerations.current = updatedDna.generation
-      lastDnaMutations.current = updatedDna.mutation
+      lastDnaGenerations.current = updatedDna.triedChanges
+      lastDnaMutations.current = updatedDna.changedTriangles
       lastFitness.current = updatedDna.fitness
     }
   }
@@ -172,16 +173,20 @@ function DnaRenderer(props: {dna: Dna | null}) {
           <p>
             Genes / triangles:{' '}
             <span className="renderer-value-text">
-              {dnaOrEmpty.genes.length}
+              {dnaOrEmpty.triangles.length}
             </span>
           </p>
           <p>
             Generation:{' '}
-            <span className="renderer-value-text">{dnaOrEmpty.generation}</span>
+            <span className="renderer-value-text">
+              {dnaOrEmpty.triedChanges}
+            </span>
           </p>
           <p>
             Mutation:{' '}
-            <span className="renderer-value-text">{dnaOrEmpty.mutation}</span>
+            <span className="renderer-value-text">
+              {dnaOrEmpty.changedTriangles}
+            </span>
           </p>
           <p>
             Fitness:{' '}

@@ -1,10 +1,10 @@
-import {Dna} from './dna'
+import {Pos, TransparentColor, Dna} from './dna'
 import {Raster} from './raster'
 import {ImageData} from './ImageData'
 
 const Buffers: Record<string, Uint8ClampedArray> = {}
-const posBuffer: number[] = new Array(6)
-const colorBuffer: number[] = new Array(4)
+const posBuffer: Pos = [0, 0, 0, 0, 0, 0]
+const colorBuffer: TransparentColor = [0, 0, 0, 0]
 
 function GetBuffer(width: number, height: number) {
   var buffer = Buffers[width + ':' + height]
@@ -18,8 +18,8 @@ export function drawOnBuffer(dna: Dna, image: ImageData) {
   var buffer = GetBuffer(image.width, image.height)
   for (var i = 0; i < buffer.length; i++) buffer[i] = 255
 
-  for (var i = 0; i < dna.genes.length; i++) {
-    var gene = dna.genes[i]
+  for (var i = 0; i < dna.triangles.length; i++) {
+    var gene = dna.triangles[i]
 
     colorBuffer[0] = Math.floor(gene.color[0] * 255)
     colorBuffer[1] = Math.floor(gene.color[1] * 255)
@@ -49,8 +49,8 @@ export function GetFitness(dna: Dna, image: ImageData) {
   var buffer = GetBuffer(image.width, image.height)
   for (var i = 0; i < buffer.length; i++) buffer[i] = 255
 
-  for (var i = 0; i < dna.genes.length; i++) {
-    var gene = dna.genes[i]
+  for (var i = 0; i < dna.triangles.length; i++) {
+    var gene = dna.triangles[i]
 
     colorBuffer[0] = Math.floor(gene.color[0] * 255)
     colorBuffer[1] = Math.floor(gene.color[1] * 255)

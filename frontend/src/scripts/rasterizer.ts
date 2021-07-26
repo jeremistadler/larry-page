@@ -12,10 +12,10 @@ export class JsRasterizer {
 
   constructor(
     public source: ImageData,
-    public dna: Dna,
+    public image: Dna,
     public settings: ISettings,
   ) {
-    dna.fitness = GetFitness(dna, this.source)
+    image.fitness = GetFitness(image, this.source)
 
     const blured = new ImageData(
       source.data.slice(),
@@ -33,22 +33,22 @@ export class JsRasterizer {
 
     if (data.epoc !== this.epoc) return
 
-    this.dna = data.dna
+    this.image = data.dna
     this.currentIteration++
 
     for (let g = 0; g < this.onFrameCompleted.length; g++)
-      this.onFrameCompleted[g](this.dna)
+      this.onFrameCompleted[g](this.image)
 
-    var fitnessAfter = GetFitness(this.dna, this.source)
-    if (fitnessAfter > this.dna.fitness)
+    var fitnessAfter = GetFitness(this.image, this.source)
+    if (fitnessAfter > this.image.fitness)
       console.warn(
-        'Fitness diff: ' + (this.dna.fitness - fitnessAfter),
+        'Fitness diff: ' + (this.image.fitness - fitnessAfter),
         ' worker calculates diff differently',
       )
-    this.dna.fitness = fitnessAfter
+    this.image.fitness = fitnessAfter
 
     if (this.currentIteration % this.settings.saveInterval === 0) {
-      DnaApi.saveDna(this.dna)
+      DnaApi.saveDna(this.image)
     }
   }
 
@@ -60,7 +60,7 @@ export class JsRasterizer {
 
     worker.postMessage({
       image: this.source,
-      dna: this.dna,
+      dna: this.image,
       settings: this.settings,
       epoc: this.epoc,
     })
@@ -73,7 +73,7 @@ export class JsRasterizer {
       this.workers[i].terminate()
     }
     this.workers.length = 0
-    this.dna.genes.forEach(gene => {
+    this.image.triangles.forEach(gene => {
       for (let i = 0; i < gene.pos.length; i++) {
         gene.pos[i] = gene.pos[i] + (Math.random() - 0.5) * 0.1
         gene.color[i] = Math.min(

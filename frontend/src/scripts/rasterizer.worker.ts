@@ -4,7 +4,7 @@ import {
   ISettings,
   IDnaRenderContext,
   IWorkerResult,
-  Gene,
+  Triangle,
 } from 'shared/src/dna'
 import {
   MutateDna,
@@ -15,7 +15,7 @@ import {
 import {GetFitness} from 'shared/src/fitness-calculator'
 import {Utils} from 'shared/src/utils'
 
-function startRasterizing(
+async function startRasterizing(
   sourceImageData: ImageData,
   dna: Dna,
   settings: ISettings,
@@ -26,6 +26,8 @@ function startRasterizing(
   let targetIterations = 10
 
   while (true) {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
     const startTime = Date.now()
 
     for (let runIndex = 0; runIndex < targetIterations; runIndex++) {
@@ -50,8 +52,8 @@ function startRasterizing(
 
       UpdateEffectiveness(fitnessImprovement, mutator)
 
-      dna.generation += settings.iterations
-      dna.mutation += ctx.mutations.length
+      dna.triedChanges += settings.iterations
+      dna.changedTriangles += ctx.mutations.length
       dna.fitness = ctx.fitness
     }
 
@@ -73,20 +75,20 @@ self.onmessage = function (e: any) {
 function removeWorst(dna: Dna, sourceImageData: ImageData) {
   const startTime = Date.now()
   const originalFitness = GetFitness(dna, sourceImageData)
-  const emptyGene: Gene = {
+  const emptyGene: Triangle = {
     color: [0, 0, 0, 0],
     pos: Utils.CreateNumberArray(6),
   }
 
-  const targetGeneCount = dna.maxGenes || 100
+  const targetGeneCount = dna.maxTriangles || 100
   let removedCount = 0
 
-  while (dna.genes.length - removedCount > targetGeneCount) {
+  while (dna.triangles.length - removedCount > targetGeneCount) {
     const list: {fitness: number; index: number; fitnessDiff: number}[] = []
 
-    for (var i = 0; i < dna.genes.length; i++) {
-      var gene = dna.genes[i]
-      dna.genes[i] = emptyGene
+    for (var i = 0; i < dna.triangles.length; i++) {
+      var gene = dna.triangles[i]
+      dna.triangles[i] = emptyGene
 
       var fitness = GetFitness(dna, sourceImageData)
       list.push({
@@ -95,21 +97,21 @@ function removeWorst(dna: Dna, sourceImageData: ImageData) {
         fitnessDiff: fitness - originalFitness,
       })
 
-      dna.genes[i] = gene
+      dna.triangles[i] = gene
     }
 
     list.sort((a, b) => a.fitness - b.fitness)
 
-    const removedGenes: Gene[] = []
+    const removedGenes: Triangle[] = []
 
     // Remove all genes that are not intersecting
     for (
       let i = 0;
-      i < list.length && dna.genes.length > targetGeneCount;
+      i < list.length && dna.triangles.length > targetGeneCount;
       i++
     ) {
-      const oldGene = dna.genes[list[i].index]
-      dna.genes[list[i].index] = emptyGene
+      const oldGene = dna.triangles[list[i].index]
+      dna.triangles[list[i].index] = emptyGene
       removedCount++
 
       if (removedGenes.some(gene => trianglesIntersect(oldGene, gene))) {

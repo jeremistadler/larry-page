@@ -34,30 +34,41 @@ export interface Organism {
   genesPerGeneration: number
 }
 
-export interface Gene {
-  pos: number[]
-  color: number[]
+export interface Triangle {
+  pos: Pos
+  color: TransparentColor
 }
+
+export type SolidColor = [r: number, g: number, b: number]
+export type TransparentColor = [r: number, g: number, b: number, a: number]
+export type PosX = number
+export type PosY = number
+export type Pos = [PosX, PosY, PosX, PosY, PosX, PosY]
+
+export type ImageId = string
+export type SettingsId = string
 
 export interface Dna {
-  id: string
-  genes: Gene[]
+  imageId: ImageId
+  settingsId: SettingsId
   generation: number
-  mutation: number
   fitness: number
+
+  parent: {imageId: ImageId; settingsId: SettingsId; generation: number} | null
+
+  triangles: Triangle[]
+  renderSize: number
+
   sourceImageWidth: number
   sourceImageHeight: number
-  maxGenes: number
-  genesPerGeneration: number
-  lastRenderSize: number
+
+  colorSetup: ColorSetup
 }
 
-export interface DnaOld {
-  genes: Gene[]
-  generation: number
-  mutation: number
-  fitness: number
-  organism: Organism
+export type ColorSetup = {
+  solidColors: SolidColor[]
+  minOpacity: number
+  maxOpacity: number
 }
 
 export interface IDnaRenderContext {
@@ -75,8 +86,8 @@ export interface IGeneRectangleState {
 }
 
 export interface IMutatorState {
-  oldGene: Gene
-  newGene: Gene
+  oldGene: Triangle
+  newGene: Triangle
   index: number
 }
 

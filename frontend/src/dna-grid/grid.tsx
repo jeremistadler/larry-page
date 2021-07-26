@@ -44,12 +44,14 @@ const DnaGrid = ({onChangeDna}: {onChangeDna: (dna: Dna) => void}) => {
               className={
                 'grid-image' + (isVisible ? ' grid-image-visible' : '')
               }
-              key={dna.id}
+              key={dna.imageId}
               onClick={() => onChangeDna(dna)}>
               <DnaImage dna={dna} width={width} height={height} index={index} />
               <div className="grid-image-info">
-                <span>{dna.genes.length} genes</span>
-                <span style={floatRightStyle}>{dna.mutation} mutations</span>
+                <span>{dna.triangles.length} genes</span>
+                <span style={floatRightStyle}>
+                  {dna.changedTriangles} mutations
+                </span>
               </div>
             </div>
           )

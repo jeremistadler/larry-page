@@ -1,6 +1,6 @@
 import {
   ISettings,
-  Gene,
+  Triangle,
   IRectangle,
   IGeneRectangleState,
   IDnaRenderContext,
@@ -10,7 +10,7 @@ import {
 import {GetFitness} from './fitness-calculator'
 import {Utils} from './utils'
 
-function RectFromGene(f: Gene): IRectangle {
+export function RectFromGene(f: Triangle): IRectangle {
   var minX = f.pos[0]
   var maxX = f.pos[0]
   var minY = f.pos[1]
@@ -36,7 +36,7 @@ function RectFromGene(f: Gene): IRectangle {
   }
 }
 
-export function trianglesIntersect(gene1: Gene, gene2: Gene) {
+export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
   gene1.pos
   return (
     linesIntersect(
@@ -153,7 +153,10 @@ function linesIntersect(
   }
 }
 
-function CalculateState(f: Gene, rect: IRectangle): IGeneRectangleState {
+export function CalculateState(
+  f: Triangle,
+  rect: IRectangle,
+): IGeneRectangleState {
   var minX = f.pos[0]
   var maxX = f.pos[0]
   var minY = f.pos[1]
@@ -193,10 +196,10 @@ export function MutateDna(ctx: IDnaRenderContext) {
   if (fitness < ctx.fitness) {
     ctx.fitness = fitness
     ctx.mutations.push(mutatorState)
-    ctx.dna.mutation++
+    ctx.dna.changedTriangles++
   } else ctx.mutator.undo(ctx, mutatorState)
 
-  ctx.dna.generation++
+  ctx.dna.triedChanges++
 }
 
 export function getFromName(name: string) {
@@ -209,16 +212,16 @@ export function getFromName(name: string) {
 export function DefaultMutateGene(
   ctx: IDnaRenderContext,
 ): IMutatorState | null {
-  if (ctx.dna.genes.length === 0) return null
+  if (ctx.dna.triangles.length === 0) return null
 
-  const index = Utils.randomIndex(ctx.dna.genes)
-  const oldGene = ctx.dna.genes[index]
+  const index = Utils.randomIndex(ctx.dna.triangles)
+  const oldGene = ctx.dna.triangles[index]
 
   const newGene = ({
     pos: null,
     color: null,
-  } as any) as Gene
-  ctx.dna.genes[index] = newGene
+  } as any) as Triangle
+  ctx.dna.triangles[index] = newGene
 
   return {index, oldGene, newGene}
 }
@@ -240,7 +243,7 @@ export const GeneMutators: IGeneMutator[] = [
       )
       return state
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: (ctx, state) => (ctx.dna.triangles[state.index] = state.oldGene),
   },
   {
     name: 'Opacity',
@@ -257,7 +260,7 @@ export const GeneMutators: IGeneMutator[] = [
       )
       return state
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: (ctx, state) => (ctx.dna.triangles[state.index] = state.oldGene),
   },
   {
     name: 'MoveGene',
@@ -274,7 +277,7 @@ export const GeneMutators: IGeneMutator[] = [
         state.newGene.pos[i] = Math.random()
       return state
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: (ctx, state) => (ctx.dna.triangles[state.index] = state.oldGene),
   },
   {
     name: 'MoveGenePoint',
@@ -295,7 +298,7 @@ export const GeneMutators: IGeneMutator[] = [
           state.newGene.pos[indexToMove] + (Math.random() - 0.5) * 0.1
       return state
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: (ctx, state) => (ctx.dna.triangles[state.index] = state.oldGene),
   },
   {
     name: 'All Random',
@@ -308,7 +311,7 @@ export const GeneMutators: IGeneMutator[] = [
         Math.random(),
         Math.random(),
         Math.random(),
-        1 / (1 + ctx.dna.generation * 0.0002),
+        1 / (1 + ctx.dna.triedChanges * 0.0002),
       ]
       state.newGene.pos = new Array(6)
 
@@ -320,25 +323,25 @@ export const GeneMutators: IGeneMutator[] = [
 
       return state
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: (ctx, state) => (ctx.dna.triangles[state.index] = state.oldGene),
   },
   {
     name: 'Add Small Triangle',
     effectiveness: 1000,
     func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      if (ctx.dna.genes.length >= ctx.dna.maxGenes) return null
+      if (ctx.dna.triangles.length >= ctx.dna.maxTriangles) return null
       if (
-        ctx.dna.genes.length >
-        ctx.dna.generation * ctx.dna.genesPerGeneration + 1
+        ctx.dna.triangles.length >
+        ctx.dna.triedChanges * ctx.dna.genesPerGeneration + 1
       )
         return null
 
-      var gene: Gene = {
+      var gene: Triangle = {
         color: [
           Math.random(),
           Math.random(),
           Math.random(),
-          1 / (1 + ctx.dna.generation * 0.0002),
+          1 / (1 + ctx.dna.triedChanges * 0.0002),
         ],
         pos: [Math.random(), Math.random(), 0, 0, 0, 0],
       }
@@ -347,27 +350,27 @@ export const GeneMutators: IGeneMutator[] = [
       gene.pos[4] = gene.pos[0] + Math.random() * 0.2 - 0.1
       gene.pos[5] = gene.pos[1] + Math.random() * 0.2 - 0.1
 
-      ctx.dna.genes.push(gene)
+      ctx.dna.triangles.push(gene)
       return {
-        index: ctx.dna.genes.length - 1,
+        index: ctx.dna.triangles.length - 1,
         oldGene: null as any,
         newGene: gene,
       }
     },
-    undo: (ctx, state) => ctx.dna.genes.splice(state.index, 1),
+    undo: (ctx, state) => ctx.dna.triangles.splice(state.index, 1),
   },
   {
     name: 'Add Big Triangle',
     effectiveness: 1000,
     func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      if (ctx.dna.genes.length >= ctx.dna.maxGenes) return null
+      if (ctx.dna.triangles.length >= ctx.dna.maxTriangles) return null
       if (
-        ctx.dna.genes.length >
-        ctx.dna.generation * ctx.dna.genesPerGeneration + 1
+        ctx.dna.triangles.length >
+        ctx.dna.triedChanges * ctx.dna.genesPerGeneration + 1
       )
         return null
 
-      var gene: Gene = {
+      var gene: Triangle = {
         color: [
           Math.random(),
           Math.random(),
@@ -382,14 +385,14 @@ export const GeneMutators: IGeneMutator[] = [
 
       for (var i = 0; i < gene.pos.length; i++) gene.pos[i] = Math.random()
 
-      ctx.dna.genes.push(gene)
+      ctx.dna.triangles.push(gene)
       return {
-        index: ctx.dna.genes.length - 1,
+        index: ctx.dna.triangles.length - 1,
         oldGene: null as any,
         newGene: gene,
       }
     },
-    undo: (ctx, state) => ctx.dna.genes.splice(state.index, 1),
+    undo: (ctx, state) => ctx.dna.triangles.splice(state.index, 1),
   },
 ]
 

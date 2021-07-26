@@ -2,6 +2,7 @@ import * as React from 'react'
 import './uploader.css'
 import {DnaApi} from '../scripts/api'
 import {Dna} from 'shared/src/dna'
+import {Utils} from 'shared/src/utils'
 
 export default function Uploader(props: {onUploaded: (dna: Dna) => void}) {
   const uploadForm = React.useRef<HTMLInputElement>(null)
@@ -10,9 +11,9 @@ export default function Uploader(props: {onUploaded: (dna: Dna) => void}) {
     const file = (uploadForm.current?.files ?? [])[0]
     if (!file) return
     console.log('Uploading...')
-    const dna = await DnaApi.uploadNewImage(file)
-    console.log(dna)
-    props.onUploaded(dna)
+    const imageId = await DnaApi.uploadNewImage(file)
+    console.log({imageId})
+    props.onUploaded(Utils.createDna(20, imageId))
   }
 
   return (

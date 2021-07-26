@@ -2,7 +2,7 @@ import {RenderConfig} from 'shared/src/shared'
 import {Dna} from 'shared/src/dna'
 
 export class DnaApi {
-  static async uploadNewImage(file: File): Promise<Dna> {
+  static async uploadNewImage(file: File): Promise<string> {
     const base64 = await new Promise<string | ArrayBuffer | null>(
       (resolve, reject) => {
         const reader = new FileReader()
@@ -10,7 +10,6 @@ export class DnaApi {
           'load',
           () => {
             let r = reader.result
-
             resolve(r)
             // convert image file to base64 string
           },
@@ -28,8 +27,8 @@ export class DnaApi {
       method: 'POST',
       body: base64,
     })
-    const data = (await response.json()) as {dna: Dna}
-    return data.dna
+    const data = (await response.json()) as {id: string}
+    return data.id
   }
 
   static async fetchRandomDna(): Promise<Dna> {
@@ -75,7 +74,7 @@ export class DnaApi {
     width: number,
     height: number,
   ): Promise<ImageData> {
-    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.id
+    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.imageId
     return new Promise((resolve, reject) => {
       var image = new Image()
       image.crossOrigin = ''

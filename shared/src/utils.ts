@@ -1,4 +1,5 @@
-import {Dna, Gene} from './dna'
+import {Dna, Triangle} from './dna'
+import {generateChronologicalId} from './generateChronologicalId'
 
 export class Utils {
   static randomIndex(arr: any[]) {
@@ -39,31 +40,46 @@ export class Utils {
     return Math.min(Math.max(num, min), max)
   }
 
-  static createDna(numberOfGenes: number, organismId: string): Dna {
+  static createDna(numberOfGenes: number, imageId: string): Dna {
     var dna: Dna = {
-      fitness: Infinity,
-      genes: new Array(numberOfGenes),
+      imageId: imageId,
+      settingsId: generateChronologicalId(),
+      stats: {
+        fitness: Infinity,
+        changes: 0,
+      },
+      triangles: new Array(numberOfGenes),
       generation: 0,
-      mutation: 0,
-      id: organismId,
       sourceImageWidth: 200,
       sourceImageHeight: 200,
-      maxGenes: 100,
-      genesPerGeneration: 0.0001,
-      lastRenderSize: 128,
+      renderSize: 128,
+      parent: null,
+      colorSetup: {
+        maxOpacity: 1,
+        minOpacity: 0,
+        solidColors: [
+          [Math.random(), Math.random(), Math.random()],
+          [Math.random(), Math.random(), Math.random()],
+          [Math.random(), Math.random(), Math.random()],
+        ],
+      },
     }
 
     for (var i = 0; i < numberOfGenes; i++) {
-      var gene: Gene = (dna.genes[i] = {
+      dna.triangles[i] = {
         color: [
-          Math.random(),
-          Math.random(),
-          Math.random(),
+          ...dna.colorSetup.solidColors[i % dna.colorSetup.solidColors.length],
           Math.random() * 0.8 + 0.2,
         ],
-        pos: new Array(6),
-      })
-      for (var q = 0; q < gene.pos.length; q++) gene.pos[q] = Math.random()
+        pos: [
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random(),
+        ],
+      }
     }
 
     return dna
