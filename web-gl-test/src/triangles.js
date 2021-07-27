@@ -1,6 +1,6 @@
 import {regl} from './regl'
 
-export const TEXTURE_SIZE = 256
+export const TEXTURE_SIZE = 64
 
 export const RISO_COLORS = [
   [0, 0, 0],
@@ -13,11 +13,7 @@ export const RISO_COLORS = [
 
 export const triangles = [
   {
-    pos: [
-      [0, 0],
-      [1, 0],
-      [0, 1],
-    ],
+    pos: [0, 0, 1, 0, 0, 1],
     color: [
       [0.5, 0.3, 0.4, 0.8],
       [0.2, 0.6, 0.4, 0.8],
@@ -26,18 +22,15 @@ export const triangles = [
   },
 ]
 
+const TOTAL_TRIANGLES = 10
 triangles.length = 0
-for (let i = 0; i < 200; i++) {
+for (let i = 0; i < TOTAL_TRIANGLES; i++) {
   const color = [
-    ...RISO_COLORS[Math.floor(Math.random() * RISO_COLORS.length)],
-    0,
+    ...RISO_COLORS[Math.floor((i / TOTAL_TRIANGLES) * RISO_COLORS.length)],
+    1,
   ]
   triangles.push({
-    pos: [
-      [2 - Math.random() * 4, 2 - Math.random() * 4],
-      [2 - Math.random() * 4, 2 - Math.random() * 4],
-      [2 - Math.random() * 4, 2 - Math.random() * 4],
-    ],
+    pos: [0, 0, 0, 0, 0, 0],
     color: [color, color, color],
   })
 }

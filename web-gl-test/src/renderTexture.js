@@ -25,7 +25,7 @@ export const renderTexture = regl({
     vec2 full = centered * 2.0;
   
     // Flip y
-    return full * vec2(1, -1);
+    return full;// * vec2(1, -1);
   }
   
   void main () {
@@ -42,6 +42,16 @@ export const renderTexture = regl({
   },
   depth: {enable: false},
   framebuffer: null,
+
+  blend: {
+    enable: true,
+    func: {
+      srcRGB: 'src alpha',
+      srcAlpha: 'src alpha',
+      dstRGB: 'one minus src alpha',
+      dstAlpha: 'one minus src alpha',
+    },
+  },
 
   count: 3,
 })

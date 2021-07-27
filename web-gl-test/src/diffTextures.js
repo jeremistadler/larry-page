@@ -2,7 +2,7 @@ import {regl} from './regl'
 
 export const diffTextures = regl({
   frag: `
-  precision mediump float;
+  precision highp float;
   uniform sampler2D texture1;
   uniform sampler2D texture2;
   varying vec2 uv;
@@ -10,11 +10,13 @@ export const diffTextures = regl({
   void main () {
     vec4 v = texture2D(texture1, uv) - texture2D(texture2, uv);
     float luminance = 0.299 * v.r + 0.587 * v.g + 0.114 * v.b;
-    gl_FragColor = vec4(1.0 - abs(luminance), 0, 0, 1);
+    // float inverted = luminance * luminance;
+    float inverted = abs(luminance);
+    gl_FragColor = vec4(inverted, inverted, inverted, 1);
   }`,
 
   vert: `
-  precision mediump float;
+  precision highp float;
   attribute vec2 position;
   varying vec2 uv;
   void main () {
