@@ -14,11 +14,7 @@ export const RISO_COLORS = [
 export const triangles = [
   {
     pos: [0, 0, 1, 0, 0, 1],
-    color: [
-      [0.5, 0.3, 0.4, 0.8],
-      [0.2, 0.6, 0.4, 0.8],
-      [0.4, 0.1, 0.1, 0.8],
-    ],
+    color: [0.5, 0.3, 0.4, 0.8, 0.2, 0.6, 0.4, 0.8, 0.4, 0.1, 0.1, 0.8],
   },
 ]
 
@@ -27,11 +23,11 @@ triangles.length = 0
 for (let i = 0; i < TOTAL_TRIANGLES; i++) {
   const color = [
     ...RISO_COLORS[Math.floor((i / TOTAL_TRIANGLES) * RISO_COLORS.length)],
-    1,
+    0.3,
   ]
   triangles.push({
     pos: [0, 0, 0, 0, 0, 0],
-    color: [color, color, color],
+    color: [...color, ...color, ...color],
   })
 }
 

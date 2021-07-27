@@ -2,8 +2,6 @@ import {diffTextures} from './diffTextures'
 import {drawTriangles} from './drawTriangles'
 import {regl} from './regl'
 import {renderTexture} from './renderTexture'
-import incrSGDRegression from '@stdlib/ml-incr-sgd-regression'
-import {conjugateGradient} from 'fmin'
 
 import {
   posBuffer,
@@ -35,13 +33,6 @@ const diffResultFbo = regl.framebuffer({
   depthStencil: false,
 })
 
-const GRADIENT_SIZE = 16
-const gradientTex = regl.texture({
-  width: GRADIENT_SIZE,
-  height: GRADIENT_SIZE,
-  colorFormat: 'rgba',
-})
-
 let mode = 0
 
 document.body.addEventListener(
@@ -60,7 +51,7 @@ const pixelReadBuffer = new Float32Array(TEXTURE_SIZE * TEXTURE_SIZE * 4)
 // var gpuReduce = gpuReduceCreate()
 
 var image = new Image()
-image.src = '1pxBlack.png'
+image.src = 'test.jpg'
 image.onload = function () {
   const imageTexture = regl.texture(image)
   let lastFitness = 100000000
@@ -99,59 +90,28 @@ image.onload = function () {
     return result
   }
 
-  // console.log(calculateFitness())
-
-  // calculateFitness()
-  // renderTexture({texture: triangleResultFbo})
-
-  // var accumulator = incrSGDRegression({intercept: false})
-
   regl.frame(() => {
-    // for (let sampleIndex = 0; sampleIndex < 100; sampleIndex++) {
-    //   const pos = [
-    //     Math.random(),
-    //     Math.random(),
-    //     Math.random(),
-    //     Math.random(),
-    //     Math.random(),
-    //     Math.random(),
-    //   ]
+    for (let sampleIndex = 0; sampleIndex < 5000; sampleIndex++) {
+      const triangleIndex = Math.floor(Math.random() * triangles.length)
+      const pos = [
+        Math.random(),
+        Math.random(),
+        Math.random(),
+        Math.random(),
+        Math.random(),
+        Math.random(),
+      ]
 
-    //   triangles[0].pos = pos
-    //   const fitness = (calculateFitness() - 28000) / 4000
-    //   accumulator(pos, fitness)
-    // }
+      const prePos = triangles[triangleIndex].pos
+      triangles[triangleIndex].pos = pos
+      const fitness = calculateFitness()
 
-    // console.log(accumulator.coefs)
-
-    const start = performance.now()
-    const fitnessPre = calculateFitness()
-
-    const triangleIndex = Math.floor(Math.random() * triangles.length)
-    const posPre = triangles[triangleIndex].pos
-    let cycles = 0
-    const nelderResult = conjugateGradient(
-      pos => {
-        triangles[triangleIndex].pos = [...pos]
-        cycles++
-        return calculateFitness()
-      },
-      [Math.random(), Math.random(), Math.random(), Math.random()],
-    )
-
-    triangles[triangleIndex].pos = [...nelderResult.x]
-    const fitnessPost = calculateFitness()
-
-    console.log({
-      triangleIndex,
-      from: posPre,
-      to: [...nelderResult.x],
-      ms: performance.now() - start,
-      fitnessImprovement: fitnessPost - fitnessPre,
-      fitnessPost,
-      fitnessPre,
-      cycles,
-    })
+      if (lastFitness / fitness > 0.9998) {
+        lastFitness = fitness
+      } else {
+        triangles[triangleIndex].pos = prePos
+      }
+    }
 
     regl.clear({
       color: [0, 0, 1, 1],
@@ -173,87 +133,5 @@ image.onload = function () {
       calculateFitness()
       renderTexture({texture: diffResultFbo})
     }
-    if (mode === 4) {
-      const arr = []
-      let min = 10000000
-      let max = 0
-      for (let y = 0; y < GRADIENT_SIZE; y++) {
-        for (let x = 0; x < GRADIENT_SIZE; x++) {
-          const pos = [x / GRADIENT_SIZE, y / GRADIENT_SIZE, 0.5, 0.5, 0.3, 0.6]
-
-          triangles[0].pos = pos
-
-          colorBuffer.subdata([
-            ...RISO_COLORS[0],
-            1,
-            ...RISO_COLORS[0],
-            1,
-            ...RISO_COLORS[0],
-            1,
-          ])
-          const fitness = calculateFitness() // accumulator.predict(pos)
-          arr.push(fitness)
-
-          if (fitness > max) max = fitness
-          if (fitness < min) min = fitness
-
-          colorBuffer.subdata([
-            ...RISO_COLORS[1],
-            1,
-            ...RISO_COLORS[1],
-            1,
-            ...RISO_COLORS[1],
-            1,
-          ])
-          arr.push(calculateFitness())
-
-          colorBuffer.subdata([
-            ...RISO_COLORS[3],
-            1,
-            ...RISO_COLORS[3],
-            1,
-            ...RISO_COLORS[3],
-            1,
-          ])
-          arr.push(calculateFitness())
-          arr.push(-100000)
-        }
-      }
-
-      const delta = max - min
-      const arr2 = []
-      for (let i = 0; i < arr.length; i++) {
-        if (arr[i] === -100000) arr2.push(255)
-        else {
-          arr2.push(((arr[i] - min) / delta) * 255)
-        }
-      }
-
-      gradientTex.subimage({
-        data: arr2,
-      })
-      renderTexture({texture: gradientTex})
-    }
   })
 }
-
-// for (let renderSample = 0; renderSample < RENDER_SAMPLES; renderSample++) {
-//   const indexToChange = Math.floor(Math.random() * triangles.length)
-//   const oldTriangle = triangles[indexToChange]
-
-//   //const newColor = RISO_COLORS[Math.floor(Math.random() * RISO_COLORS.length)]
-//   triangles[indexToChange] = {
-//     pos: [
-//       [2 - Math.random() * 4, 2 - Math.random() * 4],
-//       [2 - Math.random() * 4, 2 - Math.random() * 4],
-//       [2 - Math.random() * 4, 2 - Math.random() * 4],
-//     ],
-//     color: oldTriangle.color,
-//   }
-// if (lastFitness / result > 0.9995) {
-//   // console.log('New best fitness', result)
-//   lastFitness = result
-// } else {
-//   triangles[indexToChange] = oldTriangle
-// }
-// }
