@@ -2,6 +2,7 @@ import {diffTextures} from './diffTextures'
 import {drawTriangles} from './drawTriangles'
 import {regl} from './regl'
 import {renderTexture} from './renderTexture'
+import incrSGDRegression from '@stdlib/ml-incr-sgd-regression'
 
 import {
   posBuffer,
@@ -54,9 +55,10 @@ var image = new Image()
 image.src = 'test.jpg'
 image.onload = function () {
   const imageTexture = regl.texture(image)
-  let lastFitness = 100000000
+  let fitnessTestCounter = 0
 
   function calculateFitness() {
+    fitnessTestCounter++
     colorBuffer.subdata(triangles.map(f => f.color))
     posBuffer.subdata(triangles.map(f => f.pos))
 
@@ -90,8 +92,24 @@ image.onload = function () {
     return result
   }
 
+  let currentFitness = calculateFitness()
+  let lastLoggedFitness = currentFitness
+
+  setInterval(() => {
+    console.log({
+      fitnessTestCounter,
+      currentFitness,
+      fitnessDiff: lastLoggedFitness - currentFitness,
+      fitnessDiffPerTest:
+        ((lastLoggedFitness - currentFitness) / fitnessTestCounter) * 1000,
+    })
+
+    fitnessTestCounter = 0
+    lastLoggedFitness = currentFitness
+  }, 1000)
+
   regl.frame(() => {
-    for (let sampleIndex = 0; sampleIndex < 5000; sampleIndex++) {
+    for (let sampleIndex = 0; sampleIndex < 10; sampleIndex++) {
       const triangleIndex = Math.floor(Math.random() * triangles.length)
       const pos = [
         Math.random(),
@@ -106,21 +124,24 @@ image.onload = function () {
       triangles[triangleIndex].pos = pos
       const fitness = calculateFitness()
 
-      if (lastFitness / fitness > 0.9998) {
-        lastFitness = fitness
+      if (currentFitness / fitness > 0.9999) {
+        currentFitness = fitness
       } else {
         triangles[triangleIndex].pos = prePos
       }
     }
 
     regl.clear({
-      color: [0, 0, 1, 1],
+      color: [1, 1, 1, 1],
       framebuffer: null,
     })
 
     if (mode === 0) {
       calculateFitness()
-      renderTexture({texture: triangleResultFbo})
+      drawTriangles({
+        outFbo: null,
+      })
+      // renderTexture({texture: triangleResultFbo})
     }
     if (mode === 1) {
       renderTexture({texture: imageTexture})
