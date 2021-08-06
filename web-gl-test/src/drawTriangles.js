@@ -1,5 +1,5 @@
 import {regl} from './regl'
-import {posBuffer, colorBuffer, triangles} from './triangles'
+import {posBuffer, colorBuffer, posData} from './triangles'
 
 export const drawTriangles = regl({
   frag: `
@@ -51,14 +51,14 @@ export const drawTriangles = regl({
     enable: true,
     func: {
       srcRGB: 'src alpha',
-      srcAlpha: 'src alpha',
+      srcAlpha: 1,
       dstRGB: 'one minus src alpha',
-      dstAlpha: 'one minus src alpha',
+      dstAlpha: 1,
     },
   },
 
   framebuffer: regl.prop('outFbo'),
 
   // This tells regl the number of vertices to draw in this command
-  count: triangles.length * 3,
+  count: posData.length / 2,
 })
