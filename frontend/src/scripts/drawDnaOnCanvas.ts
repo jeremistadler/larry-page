@@ -8,7 +8,7 @@ export function drawDnaOnCanvas(ctx: CanvasRenderingContext2D, image: Dna) {
   ctx.fillStyle = 'white'
   ctx.fillRect(0, 0, width, height)
 
-  for (const triangle of image.triangles) {
+  for (const triangle of image.genes) {
     ctx.fillStyle =
       'rgba(' +
       Math.floor(triangle.color[0] * 255) +

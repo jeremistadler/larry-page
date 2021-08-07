@@ -19,7 +19,7 @@ const App = () => {
 
   const setDnaAndUrl = (dna: Dna) => {
     const urlParams = new URLSearchParams(window.location.search)
-    urlParams.set('dna', dna.imageId)
+    urlParams.set('dna', dna.id)
 
     const newurl =
       window.location.protocol +
@@ -36,7 +36,15 @@ const App = () => {
 
   return (
     <>
-      <DnaRenderer key={dna?.imageId} dna={dna} />
+      {dna != null ? (
+        <DnaRenderer
+          key={dna?.id}
+          dna={dna}
+          onDnaChanged={newDna =>
+            setDna(old => (old == null || old.id === newDna.id ? newDna : old))
+          }
+        />
+      ) : null}
       <Uploader onUploaded={setDnaAndUrl} />
       <DnaGrid onChangeDna={setDnaAndUrl} />
     </>

@@ -134,10 +134,9 @@ async function handleApiRequest(
   } else if (query.route === 'save') {
     const dna = (await request.json()) as Dna
     const json = JSON.stringify(dna)
-    const id = dna.imageId
+    const id = dna.id
 
-    const key =
-      'fitness4:' + id + ':' + formatFitnessChronological(dna.stats.fitness)
+    const key = 'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness)
     await KV.put(key, json)
     await updateDnaCurrentList()
 

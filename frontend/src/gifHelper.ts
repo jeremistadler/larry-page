@@ -76,9 +76,9 @@ export function createGif(dna: Dna) {
   // ctx.putImageData(this.source, 0, 0)
   // return
 
-  for (var frame = 0; frame < dna.triangles.length; frame++) {
+  for (var frame = 0; frame < dna.genes.length; frame++) {
     for (var g = 0; g < frame; g++) {
-      var gene = dna.triangles[g]
+      var gene = dna.genes[g]
       ctx.fillStyle =
         'rgba(' +
         Math.floor(gene.color[0] * 255) +

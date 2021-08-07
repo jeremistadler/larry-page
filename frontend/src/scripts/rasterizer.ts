@@ -1,31 +1,35 @@
 import {Dna, ISettings, IWorkerResult} from 'shared/src/dna'
 import {GetFitness} from 'shared/src/fitness-calculator'
-import {stackBlurCanvasRGB} from 'shared/src/blur'
 import {DnaApi} from './api'
 
 export class JsRasterizer {
   workers: Worker[] = []
-  allMutations: any[] = []
   onFrameCompleted: {(dna: Dna): void}[] = []
   currentIteration = 0
   epoc = 0
+  disposed: boolean = false
+  source: ImageData | null = null
 
-  constructor(
-    public source: ImageData,
-    public image: Dna,
-    public settings: ISettings,
-  ) {
-    image.fitness = GetFitness(image, this.source)
+  constructor(public dna: Dna, public settings: ISettings) {
+    if (dna.testedPlacements == null) dna.testedPlacements = 0
 
-    const blured = new ImageData(
-      source.data.slice(),
-      source.width,
-      source.height,
+    DnaApi.loadAndScaleImageData(dna, settings.size, settings.size).then(
+      imageData => {
+        if (this.disposed) return
+        this.source = imageData
+        dna.fitness = GetFitness(dna, imageData)
+
+        for (var i = 0; i < settings.workerThreads; i++) this.createThread()
+      },
     )
 
-    stackBlurCanvasRGB(blured, source.width / 10)
+    // const blured = new ImageData(
+    //   source.data.slice(),
+    //   source.width,
+    //   source.height,
+    // )
 
-    for (var i = 0; i < settings.workerThreads; i++) this.createThread()
+    //stackBlurCanvasRGB(blured, source.width / 10)
   }
 
   onMessage(e: MessageEvent) {
@@ -33,22 +37,22 @@ export class JsRasterizer {
 
     if (data.epoc !== this.epoc) return
 
-    this.image = data.dna
+    this.dna = data.dna
     this.currentIteration++
 
-    for (let g = 0; g < this.onFrameCompleted.length; g++)
-      this.onFrameCompleted[g](this.image)
-
-    var fitnessAfter = GetFitness(this.image, this.source)
-    if (fitnessAfter > this.image.fitness)
+    var fitnessAfter = GetFitness(this.dna, this.source!)
+    if (fitnessAfter > this.dna.fitness)
       console.warn(
-        'Fitness diff: ' + (this.image.fitness - fitnessAfter),
+        'Fitness diff: ' + (this.dna.fitness - fitnessAfter),
         ' worker calculates diff differently',
       )
-    this.image.fitness = fitnessAfter
+    this.dna.fitness = fitnessAfter
+
+    for (let g = 0; g < this.onFrameCompleted.length; g++)
+      this.onFrameCompleted[g](this.dna)
 
     if (this.currentIteration % this.settings.saveInterval === 0) {
-      DnaApi.saveDna(this.image)
+      DnaApi.saveDna(this.dna)
     }
   }
 
@@ -60,7 +64,7 @@ export class JsRasterizer {
 
     worker.postMessage({
       image: this.source,
-      dna: this.image,
+      dna: this.dna,
       settings: this.settings,
       epoc: this.epoc,
     })
@@ -73,7 +77,7 @@ export class JsRasterizer {
       this.workers[i].terminate()
     }
     this.workers.length = 0
-    this.image.triangles.forEach(gene => {
+    this.dna.genes.forEach(gene => {
       for (let i = 0; i < gene.pos.length; i++) {
         gene.pos[i] = gene.pos[i] + (Math.random() - 0.5) * 0.1
         gene.color[i] = Math.min(

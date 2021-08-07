@@ -106,8 +106,7 @@ async function startRasterizing(
 
     MutateDna(ctx, wasmExports, memory)
 
-    const fitnessImprovement =
-      (originalFitness - ctx.fitness) / settings.iterations
+    const fitnessImprovement = originalFitness - ctx.fitness
 
     UpdateEffectiveness(fitnessImprovement, mutator)
 

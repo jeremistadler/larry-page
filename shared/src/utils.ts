@@ -1,4 +1,4 @@
-import {Dna, Triangle} from './dna'
+import {Dna} from './dna'
 import {generateChronologicalId} from './generateChronologicalId'
 
 export class Utils {
@@ -42,18 +42,16 @@ export class Utils {
 
   static createDna(numberOfGenes: number, imageId: string): Dna {
     var dna: Dna = {
-      imageId: imageId,
+      id: imageId,
       settingsId: generateChronologicalId(),
-      stats: {
-        fitness: Infinity,
-        changes: 0,
-      },
-      triangles: new Array(numberOfGenes),
-      generation: 0,
+
+      genes: new Array(numberOfGenes),
+      testedPlacements: 0,
       sourceImageWidth: 200,
       sourceImageHeight: 200,
       renderSize: 128,
       parent: null,
+      fitness: Number.MAX_SAFE_INTEGER,
       colorSetup: {
         maxOpacity: 1,
         minOpacity: 0,
@@ -66,7 +64,7 @@ export class Utils {
     }
 
     for (var i = 0; i < numberOfGenes; i++) {
-      dna.triangles[i] = {
+      dna.genes[i] = {
         color: [
           ...dna.colorSetup.solidColors[i % dna.colorSetup.solidColors.length],
           Math.random() * 0.8 + 0.2,

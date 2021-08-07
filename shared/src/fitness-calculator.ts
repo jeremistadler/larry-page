@@ -18,8 +18,8 @@ export function drawOnBuffer(dna: Dna, image: ImageData) {
   var buffer = GetBuffer(image.width, image.height)
   for (var i = 0; i < buffer.length; i++) buffer[i] = 255
 
-  for (var i = 0; i < dna.triangles.length; i++) {
-    var gene = dna.triangles[i]
+  for (var i = 0; i < dna.genes.length; i++) {
+    var gene = dna.genes[i]
 
     colorBuffer[0] = Math.floor(gene.color[0] * 255)
     colorBuffer[1] = Math.floor(gene.color[1] * 255)
@@ -49,8 +49,8 @@ export function GetFitness(dna: Dna, image: ImageData) {
   var buffer = GetBuffer(image.width, image.height)
   for (var i = 0; i < buffer.length; i++) buffer[i] = 255
 
-  for (var i = 0; i < dna.triangles.length; i++) {
-    var gene = dna.triangles[i]
+  for (var i = 0; i < dna.genes.length; i++) {
+    var gene = dna.genes[i]
 
     colorBuffer[0] = Math.floor(gene.color[0] * 255)
     colorBuffer[1] = Math.floor(gene.color[1] * 255)

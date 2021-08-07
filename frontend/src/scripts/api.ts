@@ -27,8 +27,8 @@ export class DnaApi {
       method: 'POST',
       body: base64,
     })
-    const data = (await response.json()) as {id: string}
-    return data.id
+    const data = (await response.json()) as {dna: {id: string}}
+    return data.dna.id
   }
 
   static async fetchRandomDna(): Promise<Dna> {
@@ -74,7 +74,7 @@ export class DnaApi {
     width: number,
     height: number,
   ): Promise<ImageData> {
-    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.imageId
+    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.id
     return new Promise((resolve, reject) => {
       var image = new Image()
       image.crossOrigin = ''

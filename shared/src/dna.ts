@@ -9,7 +9,6 @@ export interface ISettings {
   newMinOpacity: number
   newMaxOpacity: number
 
-  iterations: number
   updateScreenInterval: number
   saveInterval: number
 
@@ -48,21 +47,20 @@ export type Pos = [PosX, PosY, PosX, PosY, PosX, PosY]
 export type ImageId = string
 export type SettingsId = string
 
-export interface Dna {
-  imageId: ImageId
+export type Dna = {
+  id: ImageId
   settingsId: SettingsId
-  generation: number
+  testedPlacements: number
   fitness: number
 
   parent: {imageId: ImageId; settingsId: SettingsId; generation: number} | null
 
-  triangles: Triangle[]
+  genes: Triangle[]
   renderSize: number
+  colorSetup: ColorSetup
 
   sourceImageWidth: number
   sourceImageHeight: number
-
-  colorSetup: ColorSetup
 }
 
 export type ColorSetup = {
@@ -71,7 +69,7 @@ export type ColorSetup = {
   maxOpacity: number
 }
 
-export interface IDnaRenderContext {
+export type IDnaRenderContext = {
   mutator: IGeneMutator
   dna: Dna
   mutations: IMutatorState[]
@@ -80,18 +78,18 @@ export interface IDnaRenderContext {
   settings: ISettings
 }
 
-export interface IGeneRectangleState {
+export type IGeneRectangleState = {
   IsContained: boolean
   IsIntersecting: boolean
 }
 
-export interface IMutatorState {
+export type IMutatorState = {
   oldGene: Triangle
   newGene: Triangle
   index: number
 }
 
-export interface IGeneMutator {
+export type IGeneMutator = {
   name: string
   effectiveness: number
   func: (ctx: IDnaRenderContext) => IMutatorState | null
