@@ -224,6 +224,10 @@ class Renderer: NSObject, MTKViewDelegate {
             
             if let renderPassDescriptor = renderPassDescriptor {
                 
+                renderPassDescriptor.colorAttachments[0].loadAction = .clear
+                renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.0, green: 104.0/255.0, blue: 55.0/255.0, alpha: 1.0)
+                
+                
                 /// Final pass rendering code here
                 if let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
                     renderEncoder.label = "Primary Render Encoder"
@@ -241,6 +245,9 @@ class Renderer: NSObject, MTKViewDelegate {
                     
                     renderEncoder.setVertexBuffer(triangleVertexBuffer, offset: 0, index: 0)
                     
+                    
+                    renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3, instanceCount: 1)
+
 //                    renderEncoder.setFragmentTexture(colorMap, index: TextureIndex.color.rawValue)
                     
 //                    for submesh in mesh.submeshes {
