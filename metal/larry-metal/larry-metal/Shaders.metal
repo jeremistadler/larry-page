@@ -17,7 +17,7 @@ using namespace metal;
 
 typedef struct
 {
-    float3 position;
+    float2 position;
   //  float4 color [[attribute(VertexAttributeColor)]];
 } Vertex;
 
@@ -34,7 +34,7 @@ vertex ColorInOut vertexShader(device const Vertex *in [[buffer(0)]],
 {
     ColorInOut out;
 
-    float4 position = float4(in[vid].position, 1.0);
+    float4 position = float4(in[vid].position, 0, 1.0);
     out.position = position;
    // out.color = in.color;
 

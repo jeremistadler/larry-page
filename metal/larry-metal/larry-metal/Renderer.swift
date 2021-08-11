@@ -29,7 +29,8 @@ class Renderer: NSObject, MTKViewDelegate {
 
     var projectionMatrix: matrix_float4x4 = matrix_float4x4()
 
-    var triangleVertexBuffer: MTLBuffer!
+    var posVertexBuffer: MTLBuffer!
+    var colorVertexBuffer: MTLBuffer!
 
     init?(metalKitView: MTKView) {
         self.device = metalKitView.device!
@@ -38,12 +39,22 @@ class Renderer: NSObject, MTKViewDelegate {
         let uniformBufferSize = alignedUniformsSize * maxBuffersInFlight
         
         let vertexData: [Float] = [
-           0.0,  1.0, 0.0,
-          -1.0, -1.0, 0.0,
-           1.0, -1.0, 0.0
+            0.0,  0.9, // Top centered triangle
+            -0.9, -0.9, // Left bottom
+            0.9, -0.9, // Right bottom
         ]
-        let dataSize = vertexData.count * MemoryLayout.size(ofValue: vertexData[0])
-        triangleVertexBuffer = device.makeBuffer(bytes: vertexData, length: dataSize, options: [])
+        
+        let colorData: [Float] = [
+            0.5, 0.0, 0.0, 0.9, // red
+            0.5, 0.0, 0.0, 0.7, // red
+            0.5, 0.0, 0.0, 0.4, // red
+        ]
+        let posBufferSize = vertexData.count * MemoryLayout.size(ofValue: vertexData[0])
+        posVertexBuffer = device.makeBuffer(bytes: vertexData, length: posBufferSize, options: [])
+
+        let colorBufferSize = colorData.count * MemoryLayout.size(ofValue: colorData[0])
+        colorVertexBuffer = device.makeBuffer(bytes: colorData, length: colorBufferSize, options: [])
+
 
 
         self.dynamicUniformBuffer = self.device.makeBuffer(length:uniformBufferSize,
@@ -136,9 +147,10 @@ class Renderer: NSObject, MTKViewDelegate {
                     // renderEncoder.setDepthStencilState(depthState)
                     
                     renderEncoder.setVertexBuffer(dynamicUniformBuffer, offset:uniformBufferOffset, index: BufferIndex.uniforms.rawValue)
+                    
                     renderEncoder.setFragmentBuffer(dynamicUniformBuffer, offset:uniformBufferOffset, index: BufferIndex.uniforms.rawValue)
                     
-                    renderEncoder.setVertexBuffer(triangleVertexBuffer, offset: 0, index: 0)
+                    renderEncoder.setVertexBuffer(posVertexBuffer, offset: 0, index: 0)
                     
                     
                     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3, instanceCount: 1)
