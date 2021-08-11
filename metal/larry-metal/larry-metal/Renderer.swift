@@ -39,15 +39,24 @@ class Renderer: NSObject, MTKViewDelegate {
         let uniformBufferSize = alignedUniformsSize * maxBuffersInFlight
         
         let vertexData: [Float] = [
-            0.0,  0.9, // Top centered triangle
+            0.1,  0.9, // centered Top
             -0.9, -0.9, // Left bottom
             0.9, -0.9, // Right bottom
+            
+            -0.9, 0.9, // left Top
+            0.1, -0.9, // center bottom
+            0.9, 0.9, // right top
+            
         ]
         
         let colorData: [Float] = [
             0.5, 0.0, 0.0, 0.9, // red
             0.5, 0.0, 0.0, 0.7, // red
             0.5, 0.0, 0.0, 0.4, // red
+            
+            0.5, 0.0, 0.5, 0.9, // blue
+            0.0, 0.0, 0.5, 0.7, // blue
+            0.0, 0.0, 0.0, 0.4, // blue
         ]
         let posBufferSize = vertexData.count * MemoryLayout.size(ofValue: vertexData[0])
         posVertexBuffer = device.makeBuffer(bytes: vertexData, length: posBufferSize, options: [])
@@ -96,6 +105,14 @@ class Renderer: NSObject, MTKViewDelegate {
         pipelineStateDescriptor.fragmentFunction = fragmentFunction
         pipelineStateDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm_srgb
         
+        pipelineStateDescriptor.colorAttachments[0].isBlendingEnabled = true
+        
+        pipelineStateDescriptor.colorAttachments[0].rgbBlendOperation = .add
+        pipelineStateDescriptor.colorAttachments[0].alphaBlendOperation = .add
+        
+        pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = .oneMinusSourceAlpha
+        pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = .oneMinusSourceAlpha
+        
         // 3
         return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
     }
@@ -133,7 +150,6 @@ class Renderer: NSObject, MTKViewDelegate {
                 renderPassDescriptor.colorAttachments[0].loadAction = .clear
                 renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.0, green: 104.0/255.0, blue: 55.0/255.0, alpha: 1.0)
                 
-                
                 /// Final pass rendering code here
                 if let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
                     renderEncoder.label = "Primary Render Encoder"
@@ -151,9 +167,9 @@ class Renderer: NSObject, MTKViewDelegate {
                     renderEncoder.setFragmentBuffer(dynamicUniformBuffer, offset:uniformBufferOffset, index: BufferIndex.uniforms.rawValue)
                     
                     renderEncoder.setVertexBuffer(posVertexBuffer, offset: 0, index: 0)
+                    renderEncoder.setVertexBuffer(colorVertexBuffer, offset: 0, index: 1)
                     
-                    
-                    renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3, instanceCount: 1)
+                    renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: posVertexBuffer.length, instanceCount: 1)
 
                     renderEncoder.popDebugGroup()
                     

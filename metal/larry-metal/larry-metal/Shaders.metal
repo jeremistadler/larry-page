@@ -24,19 +24,19 @@ typedef struct
 typedef struct
 {
     float4 position [[position]];
-   // float4 color;
+    float4 color;
 } ColorInOut;
 
 
 
-vertex ColorInOut vertexShader(device const Vertex *in [[buffer(0)]],
+vertex ColorInOut vertexShader(device const float2 *pos [[buffer(0)]],
+                               device const float4 *color [[buffer(1)]],
                                uint vid [[vertex_id]])
 {
     ColorInOut out;
 
-    float4 position = float4(in[vid].position, 0, 1.0);
-    out.position = position;
-   // out.color = in.color;
+    out.position = float4(pos[vid], 0, 1.0);
+    out.color = color[vid];
 
     return out;
 }
@@ -45,7 +45,5 @@ fragment float4 fragmentShader(ColorInOut in [[stage_in]],
                                constant Uniforms & uniforms [[ buffer(BufferIndexUniforms) ]]
                                )
 {
-   // float4 colorSample = in.color;
-   // return float4(colorSample);
-    return float4(1,0.5,1,1);
+    return in.color;
 }
