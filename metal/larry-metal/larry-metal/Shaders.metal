@@ -42,8 +42,9 @@ vertex ColorInOut vertexShader(device const float2 *pos [[buffer(0)]],
 }
 
 fragment float4 fragmentShader(ColorInOut in [[stage_in]],
+                               float4 framebuffer [[color(0)]],
                                constant Uniforms & uniforms [[ buffer(BufferIndexUniforms) ]]
                                )
 {
-    return in.color;
+    return clamp(float4(((in.color) * (framebuffer)).rgb, 1), 0, 1);
 }

@@ -50,13 +50,21 @@ class Renderer: NSObject, MTKViewDelegate {
         ]
         
         let colorData: [Float] = [
-            0.5, 0.0, 0.0, 0.9, // red
-            0.5, 0.0, 0.0, 0.7, // red
-            0.5, 0.0, 0.0, 0.4, // red
+//            255.0 / 255, 72.0 / 255, 176.0 / 255, 0.99, // Fluorescent Pink
+//            255.0 / 255, 72.0 / 255, 176.0 / 255, 0.99, // Fluorescent Pink
+//            255.0 / 255, 72.0 / 255, 176.0 / 255, 0.99, // Fluorescent Pink
+   
+//            0.0 / 255, 120.0 / 255, 191.0 / 255, 0.5, // Blue
+//            0.0 / 255, 120.0 / 255, 191.0 / 255, 0.9, // Blue
+//            0.0 / 255, 120.0 / 255, 191.0 / 255, 0.5, // Blue
             
-            0.5, 0.0, 0.5, 0.9, // blue
-            0.0, 0.0, 0.5, 0.7, // blue
-            0.0, 0.0, 0.0, 0.4, // blue
+            255.0 / 255, 102.0 / 255, 94.0 / 255, 0.5, // Red
+            255.0 / 255, 102.0 / 255, 94.0 / 255, 0.9, // Red
+            255.0 / 255, 102.0 / 255, 94.0 / 255, 0.5, // Red
+
+            0.0 / 255, 169.0 / 255, 92.0 / 255, 0.5, // Green
+            0.0 / 255, 169.0 / 255, 92.0 / 255, 0.9, // Green
+            0.0 / 255, 169.0 / 255, 92.0 / 255, 0.5, // Green
         ]
         let posBufferSize = vertexData.count * MemoryLayout.size(ofValue: vertexData[0])
         posVertexBuffer = device.makeBuffer(bytes: vertexData, length: posBufferSize, options: [])
@@ -73,7 +81,7 @@ class Renderer: NSObject, MTKViewDelegate {
 
         uniforms = UnsafeMutableRawPointer(dynamicUniformBuffer.contents()).bindMemory(to:Uniforms.self, capacity:1)
 
-        metalKitView.colorPixelFormat = MTLPixelFormat.bgra8Unorm_srgb
+        metalKitView.colorPixelFormat = MTLPixelFormat.bgra8Unorm
         metalKitView.sampleCount = 1
 
 
@@ -103,16 +111,16 @@ class Renderer: NSObject, MTKViewDelegate {
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
         pipelineStateDescriptor.vertexFunction = vertexFunction
         pipelineStateDescriptor.fragmentFunction = fragmentFunction
-        pipelineStateDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm_srgb
+        pipelineStateDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
         
-        pipelineStateDescriptor.colorAttachments[0].isBlendingEnabled = true
-        
-        pipelineStateDescriptor.colorAttachments[0].rgbBlendOperation = .add
-        pipelineStateDescriptor.colorAttachments[0].alphaBlendOperation = .add
-        
-        pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = .oneMinusSourceAlpha
-        pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = .oneMinusSourceAlpha
-        
+//        pipelineStateDescriptor.colorAttachments[0].isBlendingEnabled = true
+//
+//        pipelineStateDescriptor.colorAttachments[0].rgbBlendOperation = .add
+//        pipelineStateDescriptor.colorAttachments[0].alphaBlendOperation = .add
+//
+//        pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = .oneMinusSourceAlpha
+//        pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = .oneMinusSourceAlpha
+//
         // 3
         return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
     }
@@ -148,7 +156,7 @@ class Renderer: NSObject, MTKViewDelegate {
             if let renderPassDescriptor = renderPassDescriptor {
                 
                 renderPassDescriptor.colorAttachments[0].loadAction = .clear
-                renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.0, green: 104.0/255.0, blue: 55.0/255.0, alpha: 1.0)
+                renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
                 
                 /// Final pass rendering code here
                 if let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
