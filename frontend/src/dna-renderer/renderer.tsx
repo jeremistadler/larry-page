@@ -15,6 +15,7 @@ function DnaRenderer({
   dna: Dna
   onDnaChanged: (dn: Dna) => void
 }) {
+  const dnaId = dna.id
   const [settings, setSettings] = React.useState<ISettings>({
     newMinOpacity: 0.1,
     newMaxOpacity: 1,
@@ -44,25 +45,31 @@ function DnaRenderer({
   React.useEffect(() => {
     const rasterizer = (rasterizerRef.current = new JsRasterizer(dna, settings))
 
+    rasterizer.onFrameCompleted.push(onDnaChanged)
+
+    return () => {
+      rasterizer.Stop()
+    }
+  }, [dnaId, settings])
+
+  React.useEffect(() => {
+    const rasterizer = rasterizerRef.current
+
+    if (rasterizer == null) return
+
     let ctx = canvasRef.current?.getContext('2d')
     if (ctx) {
       drawDnaOnCanvas(ctx, dna)
     }
 
     ctx = fitnessCanvasRef.current?.getContext('2d')
-    if (ctx && rasterizer && rasterizer.source != null) {
+    if (ctx && rasterizer.source != null) {
       drawFitnessDiffOnCanvas(ctx, dna, rasterizer.source)
     }
 
     ctx = originalCanvasRef.current?.getContext('2d')
-    if (ctx && rasterizer && rasterizer.source != null) {
+    if (ctx && rasterizer.source != null) {
       ctx.putImageData(rasterizer.source, 0, 0)
-    }
-
-    rasterizer.onFrameCompleted.push(onDnaChanged)
-
-    return () => {
-      rasterizer.Stop()
     }
   }, [dna, settings])
 
@@ -90,7 +97,7 @@ function DnaRenderer({
 
         <div className="renderer-text-container">
           <p>
-            Genes / triangles:{' '}
+            Triangles:{' '}
             <span className="renderer-value-text">{dna.genes.length}</span>
           </p>
           <p>
