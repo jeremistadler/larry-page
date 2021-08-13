@@ -52,7 +52,7 @@ export class JsRasterizer {
       this.onFrameCompleted[g](this.dna)
 
     if (this.currentIteration % this.settings.saveInterval === 0) {
-      DnaApi.saveDna(this.dna)
+      // DnaApi.saveDna(this.dna)
     }
   }
 
