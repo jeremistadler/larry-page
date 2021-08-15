@@ -1,27 +1,53 @@
 import imageUrl from 'url:../images/The-Chosen.jpg'
 import {
+  ColorMapItemNormalized,
+  ColorMapNormalized,
   RGB_Norm_Buffer,
   Settings,
   Triangle_Buffer,
   TRIANGLE_SIZE,
 } from './types'
-import {runPSO_decent} from './swarm_decent'
+import {runPSO} from './swarm_decent'
 import {calculateFitness, drawTrianglesToTexture} from './fitness-calculator'
+
+const FluorescentPink = [
+  255 / 255,
+  72 / 255,
+  176 / 255,
+] as ColorMapItemNormalized
+const Blue = [0, 120 / 255, 191 / 255] as ColorMapItemNormalized
+const Green = [0, 169 / 255, 92 / 255] as ColorMapItemNormalized
+const Orange = [255 / 255, 108 / 255, 47 / 255] as ColorMapItemNormalized
 
 async function initialize() {
   const settings: Settings = {
-    size: 128,
-    viewportSize: 128 * 2,
-    triangleCount: 20,
+    size: 64,
+    viewportSize: 64 * 2,
+    triangleCount: 30,
+    historySize: 512,
   }
   const viewportScale = settings.viewportSize / settings.size
 
   console.log('Loading image...')
-  const originalImage = await fetchImage(imageUrl, 128)
+  const originalImage = await fetchImage(imageUrl, settings.size)
 
   const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
 
   drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
+
+  const palette = [
+    // FluorescentPink, //
+    // Blue,
+    Orange,
+    Green,
+  ]
+  const colorMap: ColorMapNormalized = []
+
+  for (let i = 0; i < settings.triangleCount; i++) {
+    colorMap.push(
+      palette[Math.floor((i / settings.triangleCount) * palette.length)],
+    )
+  }
 
   // const ctxTest = createCanvas('Test', settings.viewportSize).ctx
   // // prettier-ignore
@@ -37,22 +63,28 @@ async function initialize() {
   const imageTex = imageToImageTex(originalImage, settings.size)
 
   const lossFn = (pos: Triangle_Buffer) => {
-    return calculateFitness(settings, pos, imageTex)
+    return calculateFitness(settings, pos, imageTex, colorMap)
   }
 
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
 
-  const particleCtxList = Array.from({length: 3}).map(
+  const particleCount = 1
+
+  const particleCtxList = Array.from({length: 1}).map(
     (_, i) => createCanvas('Particle ' + (i + 1), settings.viewportSize).ctx,
   )
+  const historyCtx = createCanvas('History', settings.historySize).ctx
 
-  runPSO_decent(
+  const history: number[][] = Array.from({length: particleCount}).map(() => [])
+
+  runPSO(
     lossFn,
     settings.triangleCount * TRIANGLE_SIZE,
-    particleCtxList.length,
+    particleCount,
     async (best, particles) => {
       particles.map((p, i) => {
-        const triangleTex = drawTrianglesToTexture(settings, p.pos)
+        if (i >= particleCtxList.length) return
+        const triangleTex = drawTrianglesToTexture(settings, p.pos, colorMap)
         drawTextureToCanvas(
           particleCtxList[i],
           triangleTex,
@@ -61,9 +93,12 @@ async function initialize() {
         )
       })
 
-      const triangleTex = drawTrianglesToTexture(settings, best)
+      const triangleTex = drawTrianglesToTexture(settings, best, colorMap)
       drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
 
+      particles.forEach((p, i) => history[i].push(p.fitness))
+
+      drawHistoryToCanvas(historyCtx, history, settings.historySize)
       await delay(20)
     },
   )
@@ -121,6 +156,40 @@ function fetchImage(url: string, size: number): Promise<ImageData> {
     }
     image.src = url
   })
+}
+
+function drawHistoryToCanvas(
+  ctx: CanvasRenderingContext2D,
+  history: number[][],
+  size: number,
+) {
+  if (history.length === 0) return
+
+  ctx.fillStyle = 'rgb(245, 245, 255)'
+  ctx.fillRect(0, 0, size, size)
+
+  let max = 0
+  for (let a = 0; a < history.length; a++)
+    for (let b = 0; b < history[a].length; b++)
+      max = Math.max(history[a][b], max)
+
+  const toY = (val: number) => (val / max) * size
+  const len = history[0].length
+
+  for (let a = 0; a < history.length; a++) {
+    ctx.beginPath()
+    ctx.moveTo(0, toY(history[a][0]))
+
+    for (let i = 1; i < len; i++) {
+      ctx.lineTo((i / len) * size, toY(history[a][i]))
+    }
+
+    ctx.lineCap = 'round'
+    ctx.lineWidth = 2
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = `hsl(${(a / history.length) * 360}, 40%, 50%)`
+    ctx.stroke()
+  }
 }
 
 function drawTextureToCanvas(

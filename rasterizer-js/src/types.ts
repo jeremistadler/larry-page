@@ -2,16 +2,19 @@ export type Settings = {
   size: number
   viewportSize: number
   triangleCount: number
+  historySize: number
 }
 
-export const TRIANGLE_SIZE = 2 * 3 + 1 * 3 + 3 // (pos) + (alpha) + rgb = 12
+export type ColorMapItemNormalized = [R: number, G: number, B: number]
+export type ColorMapNormalized = ColorMapItemNormalized[]
+
+export const TRIANGLE_SIZE = 2 * 3 + 1 * 3 // (pos) + (alpha) = 9
 
 /**
  * x0,y0 0,1
  * x1,y2 2,3
  * x2,y2 4,5
- * r,g,b 6,7,8
- * a0,a1,a2 9,10,11
+ * a0,a1,a2 6,7,8
  *
  * All values are from 0.0 to 1.0
  */

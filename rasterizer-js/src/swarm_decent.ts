@@ -1,12 +1,12 @@
 import {Triangle_Buffer} from './types'
 
-export async function runPSO_decent(
+export async function runPSO(
   cost_func: (data: Triangle_Buffer) => number,
   featureCount: number,
   particleCount: number,
   onGeneration: (
     best: Triangle_Buffer,
-    particles: {pos: Triangle_Buffer}[],
+    particles: {pos: Triangle_Buffer; fitness: number}[],
   ) => Promise<void>,
 ) {
   let bestGlobalPos = new Float32Array(featureCount) as Triangle_Buffer
@@ -43,10 +43,13 @@ export async function runPSO_decent(
   while (true) {
     for (const particle of particles) {
       for (let i = 0; i < particle.pos.length; i++) {
-        if (Math.random() > 0.3) continue
-
         const pos = particle.pos[i]
         let velOld = particle.velocity[i]
+
+        // if (Math.random() > 0.3) {
+        //   particle.pos[i] = pos + velOld
+        //   continue
+        // }
 
         const velA = (Math.random() - 0.5) * learningRate
         const velB = (Math.random() - 0.5) * learningRate
@@ -63,8 +66,12 @@ export async function runPSO_decent(
           velOld = velB
         }
 
+        if (Math.abs(fitnessA - fitnessB) <= 0.000001 && (pos < 0 || pos > 1)) {
+          velOld = 0
+        }
+
         particle.velocity[i] = velOld
-        particle.pos[i] = Math.min(1, Math.max(0, pos + velOld))
+        particle.pos[i] = pos + velOld
       }
 
       particle.fitness = cost_func(particle.pos)

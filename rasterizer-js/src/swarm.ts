@@ -6,7 +6,7 @@ export async function runPSO(
   particleCount: number,
   onGeneration: (
     best: Triangle_Buffer,
-    particles: {pos: Triangle_Buffer}[],
+    particles: {pos: Triangle_Buffer; fitness: number}[],
   ) => Promise<void>,
 ) {
   let bestGlobalPos = new Float32Array(featureCount) as Triangle_Buffer
@@ -14,9 +14,9 @@ export async function runPSO(
   let lastGenerationBestFitness = 100000000
   let rollingFitnessImprovement = 100
 
-  const omega = 0.9
+  const omega = 0.98
   const phiParticle = 0.1
-  const phiGlobal = 0.05
+  const phiGlobal = 0.01
   const learningRate = 1
 
   const particles = Array.from({length: particleCount}).map(() => {
@@ -63,9 +63,9 @@ export async function runPSO(
         particle.pos[i] += particle.velocity[i] * learningRate
       }
 
-      if (totalVelocity < 0.1) {
+      if (totalVelocity < 0.5) {
         for (let i = 0; i < particle.pos.length; i++) {
-          particle.velocity[i] = (Math.random() - 0.5) * 0.4
+          particle.velocity[i] += (Math.random() - 0.5) * 0.2
         }
       }
 

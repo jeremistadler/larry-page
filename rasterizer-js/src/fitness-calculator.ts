@@ -1,4 +1,6 @@
 import {
+  ColorMapItemNormalized,
+  ColorMapNormalized,
   RGB_Norm_Buffer,
   Settings,
   Triangle_Buffer,
@@ -35,6 +37,7 @@ export function calculateFitness(
   settings: Settings,
   triangles: Triangle_Buffer,
   imageTex: RGB_Norm_Buffer,
+  colorMap: ColorMapNormalized,
 ) {
   const tex = new Float32Array(
     settings.size * settings.size * 3,
@@ -42,7 +45,7 @@ export function calculateFitness(
   tex.fill(1)
 
   for (let i = 0; i < triangles.length; i += TRIANGLE_SIZE) {
-    fillTriangle(triangles, tex, i, settings.size)
+    fillTriangle(triangles, tex, i, settings.size, colorMap[i / TRIANGLE_SIZE])
   }
 
   return diffAndCalculateFitness(imageTex, tex)
@@ -51,6 +54,7 @@ export function calculateFitness(
 export function drawTrianglesToTexture(
   settings: Settings,
   triangles: Triangle_Buffer,
+  colorMap: ColorMapNormalized,
 ) {
   const tex = new Float32Array(
     settings.size * settings.size * 3,
@@ -58,7 +62,7 @@ export function drawTrianglesToTexture(
   tex.fill(1)
 
   for (let i = 0; i < triangles.length; i += TRIANGLE_SIZE) {
-    fillTriangle(triangles, tex, i, settings.size)
+    fillTriangle(triangles, tex, i, settings.size, colorMap[i / TRIANGLE_SIZE])
   }
 
   return tex
@@ -69,6 +73,7 @@ function fillTriangle(
   tex: RGB_Norm_Buffer,
   startIndex: number,
   resultCanvasSize: number,
+  color: ColorMapItemNormalized,
 ) {
   const v0x = triangles[startIndex + 0] * resultCanvasSize
   const v0y = triangles[startIndex + 1] * resultCanvasSize
@@ -77,16 +82,13 @@ function fillTriangle(
   const v2x = triangles[startIndex + 4] * resultCanvasSize
   const v2y = triangles[startIndex + 5] * resultCanvasSize
 
-  const r = triangles[startIndex + 6]
-  const g = triangles[startIndex + 7]
-  const b = triangles[startIndex + 8]
+  const a0 = Math.min(1, Math.max(triangles[startIndex + 6]))
+  const a1 = Math.min(1, Math.max(triangles[startIndex + 7]))
+  const a2 = Math.min(1, Math.max(triangles[startIndex + 8]))
 
-  const a0 = triangles[startIndex + 9]
-  const a1 = triangles[startIndex + 10]
-  const a2 = triangles[startIndex + 11]
-
-  if (a0 < 0 || a0 > 1 || a1 < 0 || a1 > 1 || a1 < 0 || a1 > 1) return
-  if (r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1) return
+  const r = color[0]
+  const g = color[1]
+  const b = color[2]
 
   let minX = Math.floor(Math.min(v0x, v1x, v2x))
   let maxX = Math.ceil(Math.max(v0x, v1x, v2x))
@@ -177,8 +179,8 @@ function fillTriangle(
       const alpha = (w0 * a0 + w1 * a1 + w2 * a2) / area
       const index = (y * resultCanvasSize + x) * 3
 
-      if (index < 0 || index > tex.length)
-        throw new Error('Tex index out of range')
+      // if (index < 0 || index > tex.length)
+      //   throw new Error('Tex index out of range')
 
       tex[index + 0] = (1 - alpha) * tex[index + 0] + alpha * r
       tex[index + 1] = (1 - alpha) * tex[index + 1] + alpha * g
@@ -194,7 +196,7 @@ function diffAndCalculateFitness(
   let diff = 0
   for (var i = 0; i < triangleTex.length; i++) {
     var q = Math.abs(triangleTex[i] - img[i])
-    diff += q * q
+    diff += q
   }
 
   return diff / img.length
