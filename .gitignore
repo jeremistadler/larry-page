@@ -7,3 +7,4 @@ frontend/src/scripts/rasterizer.worker.js
 frontend/src/scripts/rasterizer.worker.js.map
 .DS_Store
 frontend/.parcel-cache
+.parcel-cache/
