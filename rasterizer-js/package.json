@@ -1,0 +1,18 @@
+{
+  "name": "rasterizer-js",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "parcel index.html"
+  },
+  "dependencies": {
+    "parcel": "^2.0.0-rc.0",
+    "prettier": "^2.3.2",
+    "typescript": "^4.3.5"
+  },
+  "devDependencies": {
+    "@parcel/transformer-image": "2.0.0-rc.0"
+  }
+}
