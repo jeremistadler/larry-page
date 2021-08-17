@@ -6,7 +6,7 @@ export async function runPSO(
   particleCount: number,
   onGeneration: (
     best: Triangle_Buffer,
-    particles: {pos: Triangle_Buffer; fitness: number}[],
+    particles: {pos: Triangle_Buffer; fitness: number; variable: number}[],
   ) => Promise<void>,
 ) {
   let bestGlobalPos = new Float32Array(featureCount) as Triangle_Buffer
@@ -14,9 +14,7 @@ export async function runPSO(
   let lastGenerationBestFitness = 100000000
   let rollingFitnessImprovement = 100
 
-  const learningRate = 0.05
-
-  const particles = Array.from({length: particleCount}).map(() => {
+  const particles = Array.from({length: particleCount}).map((_, i) => {
     const pos = new Float32Array(
       Array.from({length: featureCount}).map(() => Math.random()),
     ) as Triangle_Buffer
@@ -37,6 +35,7 @@ export async function runPSO(
       pos: new Float32Array(pos) as Triangle_Buffer,
       fitness,
       velocity: velocity,
+      variable: (i + 1) / (particleCount * 4),
     }
   })
 
@@ -51,8 +50,8 @@ export async function runPSO(
         //   continue
         // }
 
-        const velA = (Math.random() - 0.5) * learningRate
-        const velB = (Math.random() - 0.5) * learningRate
+        const velA = (Math.random() - 0.5) * particle.variable
+        const velB = (Math.random() - 0.5) * particle.variable
 
         particle.pos[i] = pos + velA
         const fitnessA = cost_func(particle.pos)
@@ -101,8 +100,6 @@ export async function runPSO(
 
     await onGeneration(bestGlobalPos, particles)
   }
-
-  return bestGlobalPos
 }
 
 function lerp(start: number, end: number, amt: number) {

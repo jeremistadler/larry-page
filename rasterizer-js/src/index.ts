@@ -7,7 +7,7 @@ import {
   Triangle_Buffer,
   TRIANGLE_SIZE,
 } from './types'
-import {runPSO} from './swarm_decent'
+import {runPSO} from './swarm'
 import {calculateFitness, drawTrianglesToTexture} from './fitness-calculator'
 
 const FluorescentPink = [
@@ -18,12 +18,13 @@ const FluorescentPink = [
 const Blue = [0, 120 / 255, 191 / 255] as ColorMapItemNormalized
 const Green = [0, 169 / 255, 92 / 255] as ColorMapItemNormalized
 const Orange = [255 / 255, 108 / 255, 47 / 255] as ColorMapItemNormalized
+const Red = [255 / 255, 10 / 255, 10 / 255] as ColorMapItemNormalized
 
 async function initialize() {
   const settings: Settings = {
-    size: 64,
-    viewportSize: 64 * 2,
-    triangleCount: 30,
+    size: 128,
+    viewportSize: 256,
+    triangleCount: 100,
     historySize: 512,
   }
   const viewportScale = settings.viewportSize / settings.size
@@ -36,9 +37,10 @@ async function initialize() {
   drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
 
   const palette = [
-    // FluorescentPink, //
+    FluorescentPink, //
     // Blue,
-    Orange,
+    // Orange,
+    // Red,
     Green,
   ]
   const colorMap: ColorMapNormalized = []
@@ -68,14 +70,22 @@ async function initialize() {
 
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
 
-  const particleCount = 1
+  const particleCount = 100
 
-  const particleCtxList = Array.from({length: 1}).map(
-    (_, i) => createCanvas('Particle ' + (i + 1), settings.viewportSize).ctx,
+  const particleCtxList = Array.from({length: particleCount}).map((_, i) =>
+    createCanvas('Particle ' + (i + 1), settings.viewportSize),
   )
   const historyCtx = createCanvas('History', settings.historySize).ctx
 
   const history: number[][] = Array.from({length: particleCount}).map(() => [])
+
+  let selectedIndex = -1
+
+  particleCtxList.forEach((item, index) => {
+    item.canvas.addEventListener('click', () => {
+      selectedIndex = index
+    })
+  })
 
   runPSO(
     lossFn,
@@ -84,9 +94,14 @@ async function initialize() {
     async (best, particles) => {
       particles.map((p, i) => {
         if (i >= particleCtxList.length) return
+        particleCtxList[i].setName(
+          (p.fitness * 1000).toFixed(0) +
+            ': ' +
+            p.variables.map(f => f.toFixed(2)).join(', '),
+        )
         const triangleTex = drawTrianglesToTexture(settings, p.pos, colorMap)
         drawTextureToCanvas(
-          particleCtxList[i],
+          particleCtxList[i].ctx,
           triangleTex,
           settings.size,
           viewportScale,
@@ -96,9 +111,14 @@ async function initialize() {
       const triangleTex = drawTrianglesToTexture(settings, best, colorMap)
       drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
 
-      particles.forEach((p, i) => history[i].push(p.fitness))
+      particles.forEach((p, i) => history[i].push(Math.log10(p.fitness)))
 
-      drawHistoryToCanvas(historyCtx, history, settings.historySize)
+      drawHistoryToCanvas(
+        historyCtx,
+        history,
+        settings.historySize,
+        selectedIndex,
+      )
       await delay(20)
     },
   )
@@ -122,13 +142,16 @@ function createCanvas(name: string, size: number) {
   canvas.width = size
   canvas.height = size
 
+  canvas.style.width = size / devicePixelRatio + 'px'
+  canvas.style.height = size / devicePixelRatio + 'px'
+
   document.body.appendChild(wrapper)
   wrapper.appendChild(text)
   wrapper.appendChild(canvas)
 
   const ctx = canvas.getContext('2d', {alpha: false})!
 
-  return {canvas, ctx}
+  return {canvas, ctx, setName: (name: string) => (text.innerHTML = name)}
 }
 
 function fetchImage(url: string, size: number): Promise<ImageData> {
@@ -162,18 +185,25 @@ function drawHistoryToCanvas(
   ctx: CanvasRenderingContext2D,
   history: number[][],
   size: number,
+  selectedIndex: number,
 ) {
   if (history.length === 0) return
 
   ctx.fillStyle = 'rgb(245, 245, 255)'
   ctx.fillRect(0, 0, size, size)
 
-  let max = 0
+  let max = -111000
   for (let a = 0; a < history.length; a++)
     for (let b = 0; b < history[a].length; b++)
       max = Math.max(history[a][b], max)
 
-  const toY = (val: number) => (val / max) * size
+  let min = 1000000
+  for (let a = 0; a < history.length; a++)
+    for (let b = 0; b < history[a].length; b++)
+      min = Math.min(history[a][b], min)
+
+  const toY = (val: number) =>
+    ((val - min) / (max - min)) * size * 0.9 + size * 0.05
   const len = history[0].length
 
   for (let a = 0; a < history.length; a++) {
@@ -181,13 +211,15 @@ function drawHistoryToCanvas(
     ctx.moveTo(0, toY(history[a][0]))
 
     for (let i = 1; i < len; i++) {
-      ctx.lineTo((i / len) * size, toY(history[a][i]))
+      ctx.lineTo((i / (len - 1)) * size, toY(history[a][i]))
     }
 
     ctx.lineCap = 'round'
-    ctx.lineWidth = 2
+    ctx.lineWidth = selectedIndex === -1 ? 2 : selectedIndex === a ? 4 : 1
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = `hsl(${(a / history.length) * 360}, 40%, 50%)`
+    ctx.strokeStyle = `hsla(${(a / history.length) * 360}, 40%, 50%, ${
+      selectedIndex === -1 ? 1 : selectedIndex === a ? 1 : 0.3
+    })`
     ctx.stroke()
   }
 }

@@ -82,9 +82,9 @@ function fillTriangle(
   const v2x = triangles[startIndex + 4] * resultCanvasSize
   const v2y = triangles[startIndex + 5] * resultCanvasSize
 
-  const a0 = Math.min(1, Math.max(triangles[startIndex + 6]))
-  const a1 = Math.min(1, Math.max(triangles[startIndex + 7]))
-  const a2 = Math.min(1, Math.max(triangles[startIndex + 8]))
+  const a0 = Math.min(1, Math.max(0, triangles[startIndex + 6]))
+  const a1 = Math.min(1, Math.max(0, triangles[startIndex + 7]))
+  const a2 = Math.min(1, Math.max(0, triangles[startIndex + 8]))
 
   const r = color[0]
   const g = color[1]
@@ -121,15 +121,15 @@ function fillTriangle(
   // var props = Object.getOwnPropertyNames(v0)
 
   // // calculate edges
-  // const edge0 = {x: v2x - v1x, y: v2y - v1y} as const
-  // const edge1 = {x: v0x - v2x, y: v0y - v2y} as const
-  // const edge2 = {x: v1x - v0x, y: v1y - v0y} as const
+  const edge0 = {x: v2x - v1x, y: v2y - v1y} as const
+  const edge1 = {x: v0x - v2x, y: v0y - v2y} as const
+  const edge2 = {x: v1x - v0x, y: v1y - v0y} as const
 
   // calculate which edges are right edges so we can easily skip them
   // right edges go up, or (bottom edges) are horizontal edges that go right
-  // const edgeRight0 = edge0.y < 0 || (edge0.y == 0 && edge0.x > 0)
-  // const edgeRight1 = edge1.y < 0 || (edge1.y == 0 && edge0.x > 0)
-  // const edgeRight2 = edge2.y < 0 || (edge2.y == 0 && edge0.x > 0)
+  const edgeRight0 = edge0.y < 0 || (edge0.y == 0 && edge0.x > 0)
+  const edgeRight1 = edge1.y < 0 || (edge1.y == 0 && edge0.x > 0)
+  const edgeRight2 = edge2.y < 0 || (edge2.y == 0 && edge0.x > 0)
 
   // p is our 2D pixel location point
   let px = 0
@@ -143,13 +143,6 @@ function fillTriangle(
       // sample from the center of the pixel, not the top-left corner
       px = x + 0.5
       py = y + 0.5
-
-      // calculate vertex weights
-      // should divide these by area, but we do that later
-      // so we divide once, not three times
-      // const w0 = cross(v1x, v1y, v2x, v2y, px, py)
-      // const w1 = cross(v2x, v2y, v0x, v0y, px, py)
-      // const w2 = cross(v0x, v0y, v1x, v1y, px, py)
 
       if (ccw) {
         w0 = orient2d(v1x, v1y, v2x, v2y, px, py)
@@ -167,13 +160,13 @@ function fillTriangle(
       }
 
       // if this is a right or bottom edge, skip fragment (top-left rule):
-      // if (
-      //   (w0 == 0 && edgeRight0) ||
-      //   (w1 == 0 && edgeRight1) ||
-      //   (w2 == 0 && edgeRight2)
-      // ) {
-      //   continue
-      // }
+      if (
+        (w0 == 0 && edgeRight0) ||
+        (w1 == 0 && edgeRight1) ||
+        (w2 == 0 && edgeRight2)
+      ) {
+        continue
+      }
 
       // interpolate our vertices to get alpha
       const alpha = (w0 * a0 + w1 * a1 + w2 * a2) / area
@@ -181,6 +174,9 @@ function fillTriangle(
 
       // if (index < 0 || index > tex.length)
       //   throw new Error('Tex index out of range')
+
+      // if (isNaN(alpha)) debugger
+      // if (isNaN(r)) debugger
 
       tex[index + 0] = (1 - alpha) * tex[index + 0] + alpha * r
       tex[index + 1] = (1 - alpha) * tex[index + 1] + alpha * g

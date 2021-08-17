@@ -1,87 +1,64 @@
 import {Triangle_Buffer} from './types'
 
+function randomNormalDist(): number {
+  let u = 0,
+    v = 0
+  while (u === 0) u = Math.random() //Converting [0,1) to (0,1)
+  while (v === 0) v = Math.random()
+  let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)
+  num = num / 10.0 + 0.5 // Translate to 0 -> 1
+  if (num > 1 || num < 0) return randomNormalDist() // resample between 0 and 1
+  return num
+}
+
 export async function runPSO(
   cost_func: (data: Triangle_Buffer) => number,
   featureCount: number,
   particleCount: number,
   onGeneration: (
     best: Triangle_Buffer,
-    particles: {pos: Triangle_Buffer; fitness: number}[],
+    particles: {pos: Triangle_Buffer; fitness: number; variables: number[]}[],
   ) => Promise<void>,
 ) {
-  const particles = Array.from({length: particleCount}).map(() => {
+  const particles = Array.from({length: particleCount}).map((_, i) => {
     const pos = new Float32Array(
       Array.from({length: featureCount}).map(() => Math.random()),
     ) as Triangle_Buffer
     const fitness = cost_func(pos)
 
     return {
-      pos: new Float32Array(pos) as Triangle_Buffer,
+      pos,
       fitness,
+      variables: [(i + 1) / (particleCount * 2)],
     }
   })
 
+  const sampleSize = 100
+  const testBuffer = new Float32Array(featureCount) as Triangle_Buffer
+
   while (true) {
-    particles.sort((a, b) => b.fitness - a.fitness)
+    let globalBestFitness = particles[0].fitness
+    let globalBestPos = particles[0].pos
 
     for (const particle of particles) {
-      let totalVelocity = 0
-      for (let i = 0; i < particle.pos.length; i++) {
-        const bestPos = particle.bestPos[i]
-        const pos = particle.pos[i]
-        const vel = particle.velocity[i]
-
-        particle.velocity[i] =
-          vel * omega +
-          phiGlobal * Math.random() * (bestGlobalPos[i] - pos) +
-          phiParticle * Math.random() * (bestPos - pos)
-
-        totalVelocity += Math.abs(particle.velocity[i])
-
-        particle.pos[i] += particle.velocity[i] * learningRate
-      }
-
-      if (totalVelocity < 0.5) {
+      for (let sample = 0; sample < sampleSize; sample++) {
         for (let i = 0; i < particle.pos.length; i++) {
-          particle.velocity[i] += (Math.random() - 0.5) * 0.2
+          testBuffer[i] =
+            particle.pos[i] + (Math.random() - 0.5) * particle.variables[0]
         }
-      }
+        const fitness = cost_func(testBuffer)
+        if (fitness < particle.fitness) {
+          particle.fitness = fitness
+          particle.pos = new Float32Array(testBuffer) as Triangle_Buffer
 
-      particle.fitness = cost_func(particle.pos)
-      if (particle.fitness < particle.bestFitness) {
-        particle.bestFitness = particle.fitness
-        particle.bestPos = new Float32Array(particle.pos) as Triangle_Buffer
-
-        if (particle.fitness < bestGlobalFitness) {
-          bestGlobalFitness = particle.fitness
-          bestGlobalPos = new Float32Array(particle.pos) as Triangle_Buffer
+          if (fitness < globalBestFitness) {
+            globalBestFitness = fitness
+            globalBestPos = particle.pos
+          }
         }
       }
     }
 
-    const fitnessImprovement = lastGenerationBestFitness - bestGlobalFitness
-    lastGenerationBestFitness = bestGlobalFitness
-    rollingFitnessImprovement = lerp(
-      rollingFitnessImprovement,
-      fitnessImprovement,
-      0.1,
-    )
-
-    console.log({
-      fitnessImprovement,
-      rollingFitnessImprovement,
-    })
-
-    // if (rollingFitnessImprovement < 1) {
-    //   break
-    // }
-
-    await onGeneration(bestGlobalPos, particles)
+    await onGeneration(globalBestPos, particles)
   }
-
-  return bestGlobalPos
-}
-
-function lerp(start: number, end: number, amt: number) {
-  return (1 - amt) * start + amt * end
 }
