@@ -1,13 +1,15 @@
-import imageUrl from 'url:../images/The-Chosen.jpg'
+import imageUrl from 'url:../images/threeRgbTriangles.png'
+// import imageUrl from 'url:../images/test.jpg'
 import {
   ColorMapItemNormalized,
   ColorMapNormalized,
+  indexToName,
   RGB_Norm_Buffer,
   Settings,
   Triangle_Buffer,
   TRIANGLE_SIZE,
 } from './types'
-import {runPSO} from './swarm'
+import {KnownPoints, runPSO} from './fmin'
 import {calculateFitness, drawTrianglesToTexture} from './fitness-calculator'
 
 const FluorescentPink = [
@@ -23,8 +25,8 @@ const Red = [255 / 255, 10 / 255, 10 / 255] as ColorMapItemNormalized
 async function initialize() {
   const settings: Settings = {
     size: 128,
-    viewportSize: 256,
-    triangleCount: 100,
+    viewportSize: 512,
+    triangleCount: 4,
     historySize: 512,
   }
   const viewportScale = settings.viewportSize / settings.size
@@ -38,9 +40,9 @@ async function initialize() {
 
   const palette = [
     FluorescentPink, //
-    // Blue,
+    Blue,
     // Orange,
-    // Red,
+    Red,
     Green,
   ]
   const colorMap: ColorMapNormalized = []
@@ -51,17 +53,6 @@ async function initialize() {
     )
   }
 
-  // const ctxTest = createCanvas('Test', settings.viewportSize).ctx
-  // // prettier-ignore
-  // const triangleTex = drawTrianglesToTexture(settings, new Float32Array([
-  //   0.8, 0.8,
-  //   0.5, 0.2,
-  //   0.2, 0.8,
-  //   1,0,0, // rgb
-  //   0.1,1.0,0.0 // alpha,
-  // ]) as Triangle_Buffer)
-  // drawTextureToCanvas(ctxTest, triangleTex, settings.size, viewportScale)
-
   const imageTex = imageToImageTex(originalImage, settings.size)
 
   const lossFn = (pos: Triangle_Buffer) => {
@@ -70,56 +61,29 @@ async function initialize() {
 
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
 
-  const particleCount = 100
-
-  const particleCtxList = Array.from({length: particleCount}).map((_, i) =>
-    createCanvas('Particle ' + (i + 1), settings.viewportSize),
-  )
-  const historyCtx = createCanvas('History', settings.historySize).ctx
-
-  const history: number[][] = Array.from({length: particleCount}).map(() => [])
-
-  let selectedIndex = -1
-
-  particleCtxList.forEach((item, index) => {
-    item.canvas.addEventListener('click', () => {
-      selectedIndex = index
-    })
-  })
+  const dimensionsCtxList = Array.from({
+    length: TRIANGLE_SIZE * 1, // settings.triangleCount ,
+  }).map((_, i) => createCanvas(indexToName(i), settings.viewportSize))
 
   runPSO(
     lossFn,
     settings.triangleCount * TRIANGLE_SIZE,
-    particleCount,
-    async (best, particles) => {
-      particles.map((p, i) => {
-        if (i >= particleCtxList.length) return
-        particleCtxList[i].setName(
-          (p.fitness * 1000).toFixed(0) +
-            ': ' +
-            p.variables.map(f => f.toFixed(2)).join(', '),
+    async (best, knownValues) => {
+      for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
+        drawDimentionToCanvas(
+          dimensionsCtxList[dim].ctx,
+          best,
+          lossFn,
+          settings.viewportSize,
+          dim,
+          knownValues,
         )
-        const triangleTex = drawTrianglesToTexture(settings, p.pos, colorMap)
-        drawTextureToCanvas(
-          particleCtxList[i].ctx,
-          triangleTex,
-          settings.size,
-          viewportScale,
-        )
-      })
+      }
 
       const triangleTex = drawTrianglesToTexture(settings, best, colorMap)
       drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
 
-      particles.forEach((p, i) => history[i].push(Math.log10(p.fitness)))
-
-      drawHistoryToCanvas(
-        historyCtx,
-        history,
-        settings.historySize,
-        selectedIndex,
-      )
-      await delay(20)
+      await delay(2000)
     },
   )
 }
@@ -179,6 +143,49 @@ function fetchImage(url: string, size: number): Promise<ImageData> {
     }
     image.src = url
   })
+}
+
+function drawDimentionToCanvas(
+  ctx: CanvasRenderingContext2D,
+  pos: Triangle_Buffer,
+  cost_fn: (pos: Triangle_Buffer) => number,
+  size: number,
+  index: number,
+  knownPoints: KnownPoints[],
+) {
+  const orgValue = pos[index]
+  const EVALUATION_COUNT = 100
+  const pointSize = size / EVALUATION_COUNT
+  ctx.fillStyle = 'rgb(255, 255, 255)'
+  ctx.fillRect(0, 0, size, size)
+
+  for (let i = 0; i < EVALUATION_COUNT; i++) {
+    const perc = i / EVALUATION_COUNT
+    pos[index] = perc
+    const fitness = cost_fn(pos)
+
+    ctx.fillStyle = `rgb(0, 50, 150)`
+    ctx.beginPath()
+    ctx.fillRect(perc * size, fitness * size, pointSize, 4)
+    ctx.fill()
+  }
+
+  pos[index] = orgValue
+
+  ctx.fillStyle = `rgb(0, 0, 0)`
+
+  for (let i = 0; i < knownPoints.length; i++) {
+    ctx.beginPath()
+    ctx.arc(
+      knownPoints[i].pos[index] * size,
+      knownPoints[i].fitness * size,
+      2,
+      0,
+      Math.PI * 2,
+      false,
+    )
+    ctx.fill()
+  }
 }
 
 function drawHistoryToCanvas(

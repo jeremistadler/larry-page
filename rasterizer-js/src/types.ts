@@ -10,6 +10,31 @@ export type ColorMapNormalized = ColorMapItemNormalized[]
 
 export const TRIANGLE_SIZE = 2 * 3 + 1 * 3 // (pos) + (alpha) = 9
 
+export function indexToName(index: number) {
+  switch (index % TRIANGLE_SIZE) {
+    case 0:
+      return 'x0'
+    case 1:
+      return 'y0'
+    case 2:
+      return 'x1'
+    case 3:
+      return 'y1'
+    case 4:
+      return 'x2'
+    case 5:
+      return 'y2'
+    case 6:
+      return 'a0'
+    case 7:
+      return 'a1'
+    case 8:
+      return 'a2'
+  }
+
+  return 'unknown ' + (index % TRIANGLE_SIZE)
+}
+
 /**
  * x0,y0 0,1
  * x1,y2 2,3
