@@ -62,28 +62,28 @@ async function initialize() {
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
 
   const dimensionsCtxList = Array.from({
-    length: TRIANGLE_SIZE * 1, // settings.triangleCount ,
+    length: TRIANGLE_SIZE * 4, // settings.triangleCount ,
   }).map((_, i) => createCanvas(indexToName(i), settings.viewportSize))
 
   runPSO(
     lossFn,
     settings.triangleCount * TRIANGLE_SIZE,
     async (best, knownValues) => {
-      for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
-        drawDimentionToCanvas(
-          dimensionsCtxList[dim].ctx,
-          best,
-          lossFn,
-          settings.viewportSize,
-          dim,
-          knownValues,
-        )
-      }
+      // for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
+      //   drawDimensionToCanvas(
+      //     dimensionsCtxList[dim].ctx,
+      //     best,
+      //     lossFn,
+      //     settings.viewportSize,
+      //     dim,
+      //     knownValues,
+      //   )
+      // }
 
       const triangleTex = drawTrianglesToTexture(settings, best, colorMap)
       drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
 
-      await delay(2000)
+      await delay(20)
     },
   )
 }
@@ -145,7 +145,7 @@ function fetchImage(url: string, size: number): Promise<ImageData> {
   })
 }
 
-function drawDimentionToCanvas(
+function drawDimensionToCanvas(
   ctx: CanvasRenderingContext2D,
   pos: Triangle_Buffer,
   cost_fn: (pos: Triangle_Buffer) => number,
@@ -154,7 +154,7 @@ function drawDimentionToCanvas(
   knownPoints: KnownPoints[],
 ) {
   const orgValue = pos[index]
-  const EVALUATION_COUNT = 100
+  const EVALUATION_COUNT = 10
   const pointSize = size / EVALUATION_COUNT
   ctx.fillStyle = 'rgb(255, 255, 255)'
   ctx.fillRect(0, 0, size, size)
@@ -164,7 +164,7 @@ function drawDimentionToCanvas(
     pos[index] = perc
     const fitness = cost_fn(pos)
 
-    ctx.fillStyle = `rgb(0, 50, 150)`
+    ctx.fillStyle = `rgba(0, 50, 150, 0.4)`
     ctx.beginPath()
     ctx.fillRect(perc * size, fitness * size, pointSize, 4)
     ctx.fill()
@@ -172,7 +172,7 @@ function drawDimentionToCanvas(
 
   pos[index] = orgValue
 
-  ctx.fillStyle = `rgb(0, 0, 0)`
+  ctx.fillStyle = `rgba(0, 0, 0, 0.1)`
 
   for (let i = 0; i < knownPoints.length; i++) {
     ctx.beginPath()
