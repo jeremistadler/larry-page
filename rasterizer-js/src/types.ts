@@ -8,7 +8,7 @@ export type Settings = {
 export type ColorMapItemNormalized = [R: number, G: number, B: number]
 export type ColorMapNormalized = ColorMapItemNormalized[]
 
-export const TRIANGLE_SIZE = 2 * 3 + 1 * 3 // (pos) + (alpha) = 9
+export const TRIANGLE_SIZE = 2 * 3 + 1 * 1 // (pos) + (alpha) = 9
 
 export function indexToName(index: number) {
   switch (index % TRIANGLE_SIZE) {
@@ -74,3 +74,5 @@ export type RGB_Byte_Buffer = Uint8Array & {
 export type R_Bit_Buffer = Uint8Array & {
   readonly R_Bit_Buffer: unique symbol
 }
+
+export type DomainBounds = [start: number, end: number]
