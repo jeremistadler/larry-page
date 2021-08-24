@@ -76,3 +76,12 @@ export type R_Bit_Buffer = Uint8Array & {
 }
 
 export type DomainBounds = [start: number, end: number]
+
+export type Optimizer = {
+  runNext: () => {
+    bestPos: Triangle_Buffer
+    bestFitness: number
+  }
+}
+
+export type OptimizerType = 'particle_swarm_optimization' | 'top_k'

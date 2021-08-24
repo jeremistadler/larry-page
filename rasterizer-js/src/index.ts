@@ -11,8 +11,8 @@ import {
   Triangle_Buffer,
   TRIANGLE_SIZE,
 } from './types'
-import {Particle, runPSO} from './swarm'
 import {calculateFitness, drawTrianglesToTexture} from './fitness-calculator'
+import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
 
 const FluorescentPink = [
   255 / 255,
@@ -54,6 +54,12 @@ async function initialize() {
       palette[Math.floor((i / settings.triangleCount) * palette.length)],
     )
   }
+  const domain: DomainBounds[] = Array.from({
+    length: settings.triangleCount * TRIANGLE_SIZE,
+  }).map((_, i): DomainBounds => {
+    const a = i % TRIANGLE_SIZE
+    return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
+  })
 
   const imageTex = imageToImageTex(originalImage, settings.size)
 
@@ -62,6 +68,9 @@ async function initialize() {
   }
 
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
+
+  const infoDiv = document.createElement('div')
+  document.body.append(infoDiv)
 
   const dimensionsCtxList = Array.from({
     length: Math.floor((TRIANGLE_SIZE * settings.triangleCount) / 2),
@@ -73,16 +82,6 @@ async function initialize() {
       settings.viewportSize / 2,
     ),
   )
-
-  const infoDiv = document.createElement('div')
-  document.body.append(infoDiv)
-
-  const domain: DomainBounds[] = Array.from({
-    length: settings.triangleCount * TRIANGLE_SIZE,
-  }).map((_, i): DomainBounds => {
-    const a = i % TRIANGLE_SIZE
-    return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
-  })
 
   runPSO(
     lossFn,
