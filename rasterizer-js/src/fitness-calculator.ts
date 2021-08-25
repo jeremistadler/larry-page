@@ -83,8 +83,7 @@ function fillTriangle(
   const v2y = triangles[startIndex + 5] * resultCanvasSize
 
   const a0 = Math.min(1, Math.max(0, triangles[startIndex + 6]))
-  const a1 = Math.min(1, Math.max(0, triangles[startIndex + 7]))
-  const a2 = Math.min(1, Math.max(0, triangles[startIndex + 8]))
+  const a0I = 1 - a0
 
   const r = color[0]
   const g = color[1]
@@ -117,19 +116,17 @@ function fillTriangle(
     area = Math.abs(area)
   }
 
-  // get all properties on our first vertex, for interpolating later
-  // var props = Object.getOwnPropertyNames(v0)
-
   // // calculate edges
-  const edge0 = {x: v2x - v1x, y: v2y - v1y} as const
-  const edge1 = {x: v0x - v2x, y: v0y - v2y} as const
-  const edge2 = {x: v1x - v0x, y: v1y - v0y} as const
+  const edge0x = v2x - v1x
+  const edge0y = v2y - v1y
+  const edge1y = v0y - v2y
+  const edge2y = v1y - v0y
 
   // calculate which edges are right edges so we can easily skip them
   // right edges go up, or (bottom edges) are horizontal edges that go right
-  const edgeRight0 = edge0.y < 0 || (edge0.y == 0 && edge0.x > 0)
-  const edgeRight1 = edge1.y < 0 || (edge1.y == 0 && edge0.x > 0)
-  const edgeRight2 = edge2.y < 0 || (edge2.y == 0 && edge0.x > 0)
+  const edgeRight0 = edge0y < 0 || (edge0y == 0 && edge0x > 0)
+  const edgeRight1 = edge1y < 0 || (edge1y == 0 && edge0x > 0)
+  const edgeRight2 = edge2y < 0 || (edge2y == 0 && edge0x > 0)
 
   // p is our 2D pixel location point
   let px = 0
@@ -155,12 +152,11 @@ function fillTriangle(
       }
 
       // if the point is not inside our polygon, skip fragment
-      if (w0 < 0 || w1 < 0 || w2 < 0) {
-        continue
-      }
-
       // if this is a right or bottom edge, skip fragment (top-left rule):
       if (
+        w0 < 0 ||
+        w1 < 0 ||
+        w2 < 0 ||
         (w0 == 0 && edgeRight0) ||
         (w1 == 0 && edgeRight1) ||
         (w2 == 0 && edgeRight2)
@@ -168,19 +164,10 @@ function fillTriangle(
         continue
       }
 
-      // interpolate our vertices to get alpha
-      const alpha = (w0 * a0 + w1 * a1 + w2 * a2) / area
       const index = (y * resultCanvasSize + x) * 3
-
-      // if (index < 0 || index > tex.length)
-      //   throw new Error('Tex index out of range')
-
-      // if (isNaN(alpha)) debugger
-      // if (isNaN(r)) debugger
-
-      tex[index + 0] = (1 - alpha) * tex[index + 0] + alpha * r
-      tex[index + 1] = (1 - alpha) * tex[index + 1] + alpha * g
-      tex[index + 2] = (1 - alpha) * tex[index + 2] + alpha * b
+      tex[index + 0] = a0I * tex[index + 0] + a0 * r
+      tex[index + 1] = a0I * tex[index + 1] + a0 * g
+      tex[index + 2] = a0I * tex[index + 2] + a0 * b
     }
   }
 }

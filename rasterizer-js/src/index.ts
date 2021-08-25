@@ -1,16 +1,18 @@
-import imageUrl from 'url:../images/threeRgbTriangles.png'
-// import imageUrl from 'url:../images/test.jpg'
+// import imageUrl from 'url:../images/twoTriangles.png'
+// import imageUrl from 'url:../images/threeRgbTriangles.png'
+import imageUrl from 'url:../images/test.jpg'
 import {
   ColorMapItemNormalized,
   ColorMapNormalized,
+  DomainBounds,
   indexToName,
   RGB_Norm_Buffer,
   Settings,
   Triangle_Buffer,
   TRIANGLE_SIZE,
 } from './types'
-import {KnownPoints, runPSO} from './fmin'
 import {calculateFitness, drawTrianglesToTexture} from './fitness-calculator'
+import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
 
 const FluorescentPink = [
   255 / 255,
@@ -24,9 +26,9 @@ const Red = [255 / 255, 10 / 255, 10 / 255] as ColorMapItemNormalized
 
 async function initialize() {
   const settings: Settings = {
-    size: 128,
+    size: 64,
     viewportSize: 512,
-    triangleCount: 4,
+    triangleCount: 10,
     historySize: 512,
   }
   const viewportScale = settings.viewportSize / settings.size
@@ -34,16 +36,16 @@ async function initialize() {
   console.log('Loading image...')
   const originalImage = await fetchImage(imageUrl, settings.size)
 
-  const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
-
-  drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
+  // console.log('Drawing original image...')
+  // const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
+  // drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
 
   const palette = [
     FluorescentPink, //
     Blue,
     // Orange,
-    Red,
-    Green,
+    // Red,
+    // Green,
   ]
   const colorMap: ColorMapNormalized = []
 
@@ -52,6 +54,12 @@ async function initialize() {
       palette[Math.floor((i / settings.triangleCount) * palette.length)],
     )
   }
+  const domain: DomainBounds[] = Array.from({
+    length: settings.triangleCount * TRIANGLE_SIZE,
+  }).map((_, i): DomainBounds => {
+    const a = i % TRIANGLE_SIZE
+    return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
+  })
 
   const imageTex = imageToImageTex(originalImage, settings.size)
 
@@ -61,29 +69,42 @@ async function initialize() {
 
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
 
+  const infoDiv = document.createElement('div')
+  document.body.append(infoDiv)
+
   const dimensionsCtxList = Array.from({
-    length: TRIANGLE_SIZE * 4, // settings.triangleCount ,
-  }).map((_, i) => createCanvas(indexToName(i), settings.viewportSize))
+    length: Math.floor((TRIANGLE_SIZE * settings.triangleCount) / 2),
+  }).map((_, i) =>
+    createCanvas(
+      indexToName(Math.floor(i * 2)) +
+        '  ' +
+        indexToName(Math.floor(i * 2 + 1)),
+      settings.viewportSize / 2,
+    ),
+  )
 
   runPSO(
     lossFn,
     settings.triangleCount * TRIANGLE_SIZE,
-    async (best, knownValues) => {
-      // for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
-      //   drawDimensionToCanvas(
-      //     dimensionsCtxList[dim].ctx,
-      //     best,
-      //     lossFn,
-      //     settings.viewportSize,
-      //     dim,
-      //     knownValues,
-      //   )
-      // }
+    20,
+    domain,
+    async (best, particles, rollingAverageImprovement) => {
+      infoDiv.innerHTML = particles.map(p => p.rollingFitnessDelta).join('<br>')
+
+      for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
+        drawDimensionToCanvas(
+          dimensionsCtxList[dim],
+          best,
+          lossFn,
+          dim * 2,
+          particles,
+        )
+      }
 
       const triangleTex = drawTrianglesToTexture(settings, best, colorMap)
       drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
 
-      await delay(20)
+      await delay(0)
     },
   )
 }
@@ -96,7 +117,14 @@ function delay(ms: number) {
   return new Promise(r => setTimeout(r, ms))
 }
 
-function createCanvas(name: string, size: number) {
+type Canvas = {
+  canvas: HTMLCanvasElement
+  setName: (text: string) => void
+  ctx: CanvasRenderingContext2D
+  size: number
+}
+
+function createCanvas(name: string, size: number): Canvas {
   const wrapper = document.createElement('div')
   const text = document.createElement('div')
   text.innerHTML = name
@@ -115,7 +143,7 @@ function createCanvas(name: string, size: number) {
 
   const ctx = canvas.getContext('2d', {alpha: false})!
 
-  return {canvas, ctx, setName: (name: string) => (text.innerHTML = name)}
+  return {canvas, size, ctx, setName: (name: string) => (text.innerHTML = name)}
 }
 
 function fetchImage(url: string, size: number): Promise<ImageData> {
@@ -146,40 +174,45 @@ function fetchImage(url: string, size: number): Promise<ImageData> {
 }
 
 function drawDimensionToCanvas(
-  ctx: CanvasRenderingContext2D,
+  {ctx, size}: Canvas,
   pos: Triangle_Buffer,
   cost_fn: (pos: Triangle_Buffer) => number,
-  size: number,
   index: number,
-  knownPoints: KnownPoints[],
+  particles: Particle[],
 ) {
-  const orgValue = pos[index]
-  const EVALUATION_COUNT = 10
+  const temp = new Float32Array(pos) as Triangle_Buffer
+  // const orgValue = pos[index]
+  const EVALUATION_COUNT = 7
   const pointSize = size / EVALUATION_COUNT
-  ctx.fillStyle = 'rgb(255, 255, 255)'
-  ctx.fillRect(0, 0, size, size)
+  // ctx.fillStyle = 'rgb(255, 255, 255)'
+  // ctx.fillRect(0, 0, size, size)
 
-  for (let i = 0; i < EVALUATION_COUNT; i++) {
-    const perc = i / EVALUATION_COUNT
-    pos[index] = perc
-    const fitness = cost_fn(pos)
+  for (let x = 0; x < EVALUATION_COUNT; x++) {
+    for (let y = 0; y < EVALUATION_COUNT; y++) {
+      const percX = x / EVALUATION_COUNT
+      const percY = y / EVALUATION_COUNT
 
-    ctx.fillStyle = `rgba(0, 50, 150, 0.4)`
-    ctx.beginPath()
-    ctx.fillRect(perc * size, fitness * size, pointSize, 4)
-    ctx.fill()
+      temp[index + 0] = percX
+      temp[index + 1] = percY
+
+      const fitness = cost_fn(temp)
+
+      ctx.fillStyle = `hsl(${(fitness * 360 * 6) % 360}, 70%, 50%)`
+      ctx.beginPath()
+      ctx.fillRect(percX * size, percY * size, pointSize + 1, pointSize + 1)
+      ctx.fill()
+    }
   }
 
-  pos[index] = orgValue
-
-  ctx.fillStyle = `rgba(0, 0, 0, 0.1)`
-
-  for (let i = 0; i < knownPoints.length; i++) {
+  for (let i = 0; i < particles.length; i++) {
+    ctx.fillStyle = `hsla(${
+      (i / (particles.length + 1)) * 360
+    }, 100%, 50%, 0.8)`
     ctx.beginPath()
     ctx.arc(
-      knownPoints[i].pos[index] * size,
-      knownPoints[i].fitness * size,
-      2,
+      particles[i].pos[index] * size,
+      particles[i].pos[index + 1] * size,
+      size / 50,
       0,
       Math.PI * 2,
       false,
@@ -189,9 +222,8 @@ function drawDimensionToCanvas(
 }
 
 function drawHistoryToCanvas(
-  ctx: CanvasRenderingContext2D,
+  {ctx, size}: Canvas,
   history: number[][],
-  size: number,
   selectedIndex: number,
 ) {
   if (history.length === 0) return

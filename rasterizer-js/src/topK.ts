@@ -1,53 +1,35 @@
-import {Triangle_Buffer} from './types'
+import {DomainBounds, Optimizer, Triangle_Buffer} from './types'
 
-export async function runPSO(
+export function createTopK(
   cost_func: (data: Triangle_Buffer) => number,
-  featureCount: number,
-  particleCount: number,
-  onGeneration: (
-    best: Triangle_Buffer,
-    particles: {pos: Triangle_Buffer; fitness: number; variables: number[]}[],
-  ) => Promise<void>,
-) {
-  const particles = Array.from({length: particleCount}).map((_, i) => {
-    const pos = new Float32Array(
-      Array.from({length: featureCount}).map(() => Math.random()),
-    ) as Triangle_Buffer
-    const fitness = cost_func(pos)
+  previousBest: Triangle_Buffer,
+  domain: DomainBounds[],
+): Optimizer {
+  const MAX_CHANGE = 0.4
 
-    return {
-      pos,
-      fitness,
-      variables: [(i + 1) / (particleCount * 2)],
-    }
-  })
+  const testBuffer = new Float32Array(previousBest) as Triangle_Buffer
+  const globalBestPos = new Float32Array(previousBest) as Triangle_Buffer
 
-  const sampleSize = 100
-  const testBuffer = new Float32Array(featureCount) as Triangle_Buffer
+  const result = {
+    bestPos: globalBestPos,
+    bestFitness: cost_func(testBuffer),
+  }
 
-  while (true) {
-    let globalBestFitness = particles[0].fitness
-    let globalBestPos = particles[0].pos
-
-    for (const particle of particles) {
-      for (let sample = 0; sample < sampleSize; sample++) {
-        for (let i = 0; i < particle.pos.length; i++) {
-          testBuffer[i] =
-            particle.pos[i] + (Math.random() - 0.5) * particle.variables[0]
-        }
-        const fitness = cost_func(testBuffer)
-        if (fitness < particle.fitness) {
-          particle.fitness = fitness
-          particle.pos = new Float32Array(testBuffer) as Triangle_Buffer
-
-          if (fitness < globalBestFitness) {
-            globalBestFitness = fitness
-            globalBestPos = particle.pos
-          }
-        }
+  return {
+    runNext: () => {
+      for (let i = 0; i < testBuffer.length; i++) {
+        let value = globalBestPos[i] + (Math.random() - 0.5) * MAX_CHANGE
+        if (value < domain[i][0]) value = domain[i][0]
+        if (value > domain[i][1]) value = domain[i][1]
+        testBuffer[i] = value
       }
-    }
+      const fitness = cost_func(testBuffer)
+      if (fitness < result.bestFitness) {
+        result.bestFitness = fitness
+        result.bestPos = new Float32Array(testBuffer) as Triangle_Buffer
+      }
 
-    await onGeneration(globalBestPos, particles)
+      return result
+    },
   }
 }
