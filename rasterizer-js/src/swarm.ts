@@ -1,25 +1,17 @@
+import {randomNumberBetween, randomNumberBounds} from './randomNumberBetween'
 import {DomainBounds, Optimizer, Triangle_Buffer} from './types'
-
-export type Particle = {
-  pos: Triangle_Buffer
-  fitness: number
-  rollingFitnessDelta: number
-  variables: number[]
-}
-
-function randomNumber(min: number, max: number) {
-  return Math.random() * (max - min) + min
-}
 
 export function createParticleSwarmOptimization(
   cost_func: (data: Triangle_Buffer) => number,
   previousBest: Triangle_Buffer,
   domain: DomainBounds[],
 ): Optimizer {
-  let bestGlobalPos = new Float32Array(previousBest) as Triangle_Buffer
-  let bestGlobalFitness = 100000000
-  let iteration = 0
   const particleCount = 20
+
+  const state = {
+    pos: previousBest,
+    fitness: cost_func(previousBest),
+  }
 
   const particles = Array.from({length: particleCount}).map(
     (_, particleIndex) => {
@@ -30,19 +22,19 @@ export function createParticleSwarmOptimization(
 
       if (particleIndex > 0)
         for (let i = 0; i < pos.length; i++)
-          pos[i] = randomNumber(domain[i][0], domain[i][1])
+          pos[i] = randomNumberBounds(domain[i])
 
       const fitness = cost_func(pos)
 
-      if (fitness < bestGlobalFitness) {
-        bestGlobalFitness = fitness
-        bestGlobalPos = pos
+      if (fitness < state.fitness) {
+        state.fitness = fitness
+        state.pos = pos
       }
 
       const velocity = new Float32Array(previousBest.length)
 
       for (let i = 0; i < velocity.length; i++)
-        velocity[i] = randomNumber(-0.1, 0.1)
+        velocity[i] = randomNumberBetween(-0.1, 0.1)
 
       return {
         pos: new Float32Array(pos) as Triangle_Buffer,
@@ -69,13 +61,10 @@ export function createParticleSwarmOptimization(
       a.variables.reduce((s, f) => s + f) - b.variables.reduce((s, f) => s + f),
   )
 
-  const result = {
-    bestPos: bestGlobalPos,
-    bestFitness: bestGlobalFitness,
-  }
-
   return {
-    runNext: () => {
+    best: state,
+    particles,
+    runNext: (iteration: number) => {
       for (const particle of particles) {
         const [omega, phiParticle, phiGlobal, megaDelta, learningRate] =
           particle.variables
@@ -87,7 +76,7 @@ export function createParticleSwarmOptimization(
 
           particle.velocity[i] =
             vel * omega +
-            phiGlobal * Math.random() * (bestGlobalPos[i] - pos) +
+            phiGlobal * Math.random() * (state.pos[i] - pos) +
             phiParticle * Math.random() * (bestPos - pos) +
             (Math.random() - 0.5) * megaDelta
 
@@ -119,9 +108,9 @@ export function createParticleSwarmOptimization(
           particle.bestFitness = particle.fitness
           particle.bestPos = new Float32Array(particle.pos) as Triangle_Buffer
 
-          if (particle.fitness < bestGlobalFitness) {
-            bestGlobalFitness = particle.fitness
-            bestGlobalPos = new Float32Array(particle.pos) as Triangle_Buffer
+          if (particle.fitness < state.fitness) {
+            state.fitness = particle.fitness
+            state.pos = new Float32Array(particle.pos) as Triangle_Buffer
           }
         }
       }
@@ -131,19 +120,15 @@ export function createParticleSwarmOptimization(
           const particle = particles[p]
 
           for (let i = 0; i < particle.pos.length; i++) {
-            particle.pos[i] = randomNumber(domain[i][0], domain[i][1])
-            particle.bestPos[i] = randomNumber(domain[i][0], domain[i][1])
-            particle.velocity[i] = randomNumber(-0.2, 0.2)
+            particle.pos[i] = randomNumberBetween(domain[i][0], domain[i][1])
+            particle.bestPos[i] = randomNumberBetween(
+              domain[i][0],
+              domain[i][1],
+            )
+            particle.velocity[i] = randomNumberBetween(-0.2, 0.2)
           }
         }
       }
-
-      iteration++
-
-      result.bestFitness = bestGlobalFitness
-      result.bestPos = bestGlobalPos
-
-      return result
     },
   }
 }

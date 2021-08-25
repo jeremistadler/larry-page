@@ -1,78 +1,115 @@
-import {Triangle_Buffer} from './types'
+import {randomNumberBounds} from './randomNumberBetween'
+import {DomainBounds, Optimizer, Triangle_Buffer} from './types'
 
-export async function runPSO(
+export function createDifferentialEvolution(
   cost_func: (data: Triangle_Buffer) => number,
-  featureCount: number,
-  particleCount: number,
-  onGeneration: (
-    best: Triangle_Buffer,
-    particles: {pos: Triangle_Buffer; fitness: number}[],
-  ) => Promise<void>,
-) {
-  let bestGlobalPos = new Float32Array(featureCount) as Triangle_Buffer
-  let bestGlobalFitness = 100000000
+  previousBest: Triangle_Buffer,
+  domain: DomainBounds[],
+): Optimizer {
+  const state = {
+    pos: previousBest,
+    fitness: cost_func(previousBest),
+  }
 
   const CR = 0.9
   const F = 0.8
+  const particleCount = 30
 
-  const particles = Array.from({length: particleCount}).map(() => {
-    const pos = new Float32Array(
-      Array.from({length: featureCount}).map(() => Math.random()),
-    ) as Triangle_Buffer
-    const fitness = cost_func(pos)
+  const particles = Array.from({length: particleCount}).map(
+    (_, particleIndex) => {
+      const pos =
+        particleIndex === 0
+          ? previousBest
+          : (new Float32Array(previousBest.length) as Triangle_Buffer)
 
-    if (fitness < bestGlobalFitness) {
-      bestGlobalFitness = fitness
-      bestGlobalPos = pos
-    }
+      if (particleIndex > 0)
+        for (let i = 0; i < pos.length; i++)
+          pos[i] = randomNumberBounds(domain[i])
 
-    return {
-      pos: new Float32Array(pos) as Triangle_Buffer,
-      fitness,
-    }
-  })
+      const fitness = cost_func(pos)
 
-  for (let iteration = 0; ; iteration++) {
-    for (const particle of particles) {
-      let a = randomIn(particles)
-      while (a === particle) {
-        a = randomIn(particles)
+      if (fitness < state.fitness) {
+        state.fitness = fitness
+        state.pos = new Float32Array(pos) as Triangle_Buffer
       }
 
-      let b = randomIn(particles)
-      while (b === particle || a === b) {
-        b = randomIn(particles)
+      return {
+        pos,
+        fitness,
+      }
+    },
+  )
+
+  const temp = new Float32Array(previousBest.length) as Triangle_Buffer
+
+  return {
+    best: state,
+    particles,
+    runNext: (iteration: number) => {
+      if (iteration % 100 === 1) {
+        const pos = new Float32Array(previousBest.length) as Triangle_Buffer
+
+        for (let i = 0; i < pos.length; i++)
+          pos[i] = randomNumberBounds(domain[i])
+
+        const fitness = cost_func(pos)
+
+        if (fitness < state.fitness) {
+          state.fitness = fitness
+          state.pos = new Float32Array(pos) as Triangle_Buffer
+        }
+
+        console.log('Adding one', particles.length)
+
+        particles.push({
+          pos,
+          fitness,
+        })
       }
 
-      let c = randomIn(particles)
-      while (c === particle || c === b || c === a) {
-        c = randomIn(particles)
-      }
+      for (const particle of particles) {
+        let a = randomIn(particles)
+        while (a === particle) {
+          a = randomIn(particles)
+        }
 
-      const dim = Math.floor(Math.random() * featureCount)
-      const temp = new Float32Array(particle.pos.length) as Triangle_Buffer
+        let b = randomIn(particles)
+        while (b === particle || a === b) {
+          b = randomIn(particles)
+        }
 
-      for (let i = 0; i < temp.length; i++) {
-        temp[i] =
-          i === dim || Math.random() > CR
-            ? a.pos[i] + F * (b.pos[i] - c.pos[i])
-            : particle.pos[i]
-      }
+        let c = randomIn(particles)
+        while (c === particle || c === b || c === a) {
+          c = randomIn(particles)
+        }
 
-      const testFitness = cost_func(temp)
+        const dim = Math.floor(Math.random() * previousBest.length)
 
-      if (testFitness < particle.fitness) {
-        particle.fitness = testFitness
-        particle.pos = temp
+        for (let i = 0; i < temp.length; i++) {
+          let val =
+            i === dim || Math.random() < CR
+              ? a.pos[i] + F * (b.pos[i] - c.pos[i])
+              : particle.pos[i]
 
-        if (testFitness < bestGlobalFitness) {
-          bestGlobalFitness = testFitness
-          bestGlobalPos = temp
+          if (val < domain[i][0]) val = domain[i][0]
+          if (val > domain[i][1]) val = domain[i][1]
+
+          temp[i] = val
+        }
+
+        const testFitness = cost_func(temp)
+
+        if (testFitness < particle.fitness) {
+          particle.fitness = testFitness
+          particle.pos = new Float32Array(temp) as Triangle_Buffer
+
+          if (testFitness < state.fitness) {
+            state.fitness = testFitness
+            state.pos = particle.pos
+          }
         }
       }
-    }
-
-    if (iteration % 100 === 0) await onGeneration(bestGlobalPos, particles)
+    },
   }
 }
 

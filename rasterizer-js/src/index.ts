@@ -1,11 +1,13 @@
 // import imageUrl from 'url:../images/twoTriangles.png'
 // import imageUrl from 'url:../images/threeRgbTriangles.png'
-import imageUrl from 'url:../images/test.jpg'
+import imageUrl from 'url:../images/sasha-matic-vgcVUM1IsZU-unsplash.jpg'
 import {
   ColorMapItemNormalized,
   ColorMapNormalized,
   DomainBounds,
   indexToName,
+  OptimizerType,
+  Particle,
   RGB_Norm_Buffer,
   Settings,
   Triangle_Buffer,
@@ -13,6 +15,7 @@ import {
 } from './types'
 import {calculateFitness, drawTrianglesToTexture} from './fitness-calculator'
 import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
+import {randomNumberBounds} from './randomNumberBetween'
 
 const FluorescentPink = [
   255 / 255,
@@ -28,7 +31,7 @@ async function initialize() {
   const settings: Settings = {
     size: 64,
     viewportSize: 512,
-    triangleCount: 10,
+    triangleCount: 100,
     historySize: 512,
   }
   const viewportScale = settings.viewportSize / settings.size
@@ -41,11 +44,11 @@ async function initialize() {
   // drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
 
   const palette = [
-    FluorescentPink, //
-    Blue,
+    // FluorescentPink, //
+    // Blue,
     // Orange,
-    // Red,
-    // Green,
+    Red,
+    Green,
   ]
   const colorMap: ColorMapNormalized = []
 
@@ -73,7 +76,10 @@ async function initialize() {
   document.body.append(infoDiv)
 
   const dimensionsCtxList = Array.from({
-    length: Math.floor((TRIANGLE_SIZE * settings.triangleCount) / 2),
+    length: Math.min(
+      10,
+      Math.floor((TRIANGLE_SIZE * settings.triangleCount) / 2),
+    ),
   }).map((_, i) =>
     createCanvas(
       indexToName(Math.floor(i * 2)) +
@@ -83,30 +89,56 @@ async function initialize() {
     ),
   )
 
-  runPSO(
-    lossFn,
-    settings.triangleCount * TRIANGLE_SIZE,
-    20,
-    domain,
-    async (best, particles, rollingAverageImprovement) => {
-      infoDiv.innerHTML = particles.map(p => p.rollingFitnessDelta).join('<br>')
+  let best = new Float32Array(
+    TRIANGLE_SIZE * settings.triangleCount,
+  ) as Triangle_Buffer
+  for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(domain[i])
 
-      for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
-        drawDimensionToCanvas(
-          dimensionsCtxList[dim],
-          best,
-          lossFn,
-          dim * 2,
-          particles,
-        )
-      }
+  let optimizerType: OptimizerType = 'differential_evolution'
+  let optimizer = createOptimizer(optimizerType, lossFn, domain, best)
 
-      const triangleTex = drawTrianglesToTexture(settings, best, colorMap)
-      drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
+  let nextIterationCount = 1
+  let nextIterationOptimizer = 0
 
-      await delay(0)
-    },
-  )
+  infoDiv.innerHTML = optimizerType
+  infoDiv.onclick = () => {
+    optimizerType =
+      OPTIMIZER_LIST[
+        (OPTIMIZER_LIST.indexOf(optimizerType) + 1) % OPTIMIZER_LIST.length
+      ]
+    optimizer = createOptimizer(optimizerType, lossFn, domain, best)
+    infoDiv.innerHTML = optimizerType
+    nextIterationCount = 1
+    nextIterationOptimizer = 0
+  }
+
+  while (true) {
+    const start = performance.now()
+    for (let iteration = 0; iteration < nextIterationCount; iteration++) {
+      optimizer.runNext(nextIterationOptimizer++)
+    }
+    const time = performance.now() - start
+    nextIterationCount = Math.max(
+      1,
+      Math.floor((nextIterationCount / time) * 200),
+    )
+    best = optimizer.best.pos
+
+    for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
+      drawDimensionToCanvas(
+        dimensionsCtxList[dim],
+        best,
+        lossFn,
+        dim * 2,
+        optimizer.particles,
+      )
+    }
+
+    const triangleTex = drawTrianglesToTexture(settings, best, colorMap)
+    drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
+
+    await delay(0)
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -182,10 +214,10 @@ function drawDimensionToCanvas(
 ) {
   const temp = new Float32Array(pos) as Triangle_Buffer
   // const orgValue = pos[index]
-  const EVALUATION_COUNT = 7
+  const EVALUATION_COUNT = 6
   const pointSize = size / EVALUATION_COUNT
-  // ctx.fillStyle = 'rgb(255, 255, 255)'
-  // ctx.fillRect(0, 0, size, size)
+  ctx.fillStyle = 'rgb(255, 255, 255)'
+  ctx.fillRect(0, 0, size, size)
 
   for (let x = 0; x < EVALUATION_COUNT; x++) {
     for (let y = 0; y < EVALUATION_COUNT; y++) {
