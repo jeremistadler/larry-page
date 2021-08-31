@@ -1,5 +1,5 @@
 import {randomNumberBetween, randomNumberBounds} from './randomNumberBetween'
-import {DomainBounds, Optimizer, Triangle_Buffer} from './types'
+import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
 
 export function createParticleSwarmOptimization(
   cost_func: (data: Triangle_Buffer) => number,
@@ -8,7 +8,7 @@ export function createParticleSwarmOptimization(
 ): Optimizer {
   const particleCount = 20
 
-  const state = {
+  const best = {
     pos: previousBest,
     fitness: cost_func(previousBest),
   }
@@ -26,9 +26,9 @@ export function createParticleSwarmOptimization(
 
       const fitness = cost_func(pos)
 
-      if (fitness < state.fitness) {
-        state.fitness = fitness
-        state.pos = pos
+      if (fitness < best.fitness) {
+        best.fitness = fitness
+        best.pos = pos
       }
 
       const velocity = new Float32Array(previousBest.length)
@@ -50,19 +50,19 @@ export function createParticleSwarmOptimization(
           // Math.random() * 0.1,
           // Math.random() * 1.0,
 
-          0.8, 0.1, 0.1, 0.05, 0.3,
+          0.8, 0.1, 0.1, 0.01, 0.3,
         ],
       }
     },
   )
 
-  particles.sort(
-    (a, b) =>
-      a.variables.reduce((s, f) => s + f) - b.variables.reduce((s, f) => s + f),
-  )
+  // particles.sort(
+  //   (a, b) =>
+  //     a.variables.reduce((s, f) => s + f) - b.variables.reduce((s, f) => s + f),
+  // )
 
   return {
-    best: state,
+    best: best,
     particles,
     runNext: (iteration: number) => {
       for (const particle of particles) {
@@ -76,7 +76,7 @@ export function createParticleSwarmOptimization(
 
           particle.velocity[i] =
             vel * omega +
-            phiGlobal * Math.random() * (state.pos[i] - pos) +
+            phiGlobal * Math.random() * (best.pos[i] - pos) +
             phiParticle * Math.random() * (bestPos - pos) +
             (Math.random() - 0.5) * megaDelta
 
@@ -108,23 +108,23 @@ export function createParticleSwarmOptimization(
           particle.bestFitness = particle.fitness
           particle.bestPos = new Float32Array(particle.pos) as Triangle_Buffer
 
-          if (particle.fitness < state.fitness) {
-            state.fitness = particle.fitness
-            state.pos = new Float32Array(particle.pos) as Triangle_Buffer
+          if (particle.fitness < best.fitness) {
+            best.fitness = particle.fitness
+            best.pos = new Float32Array(particle.pos) as Triangle_Buffer
           }
         }
       }
 
-      if (iteration !== 0 && iteration % 400 === 0) {
-        for (let p = particles.length - 1; p >= 0; p--) {
+      if (iteration !== 0 && iteration % 1000 === 0) {
+        for (let p = 0; p < particles.length; p++) {
           const particle = particles[p]
 
           for (let i = 0; i < particle.pos.length; i++) {
             particle.pos[i] = randomNumberBetween(domain[i][0], domain[i][1])
-            particle.bestPos[i] = randomNumberBetween(
-              domain[i][0],
-              domain[i][1],
-            )
+            // particle.bestPos[i] = randomNumberBetween(
+            //   domain[i][0],
+            //   domain[i][1],
+            // )
             particle.velocity[i] = randomNumberBetween(-0.2, 0.2)
           }
         }

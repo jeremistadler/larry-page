@@ -1,8 +1,7 @@
-// import imageUrl from 'url:../images/twoTriangles.png'
+import imageUrl from 'url:../images/twoTriangles.png'
 // import imageUrl from 'url:../images/threeRgbTriangles.png'
-import imageUrl from 'url:../images/sasha-matic-vgcVUM1IsZU-unsplash.jpg'
+// import imageUrl from 'url:../images/sasha-matic-vgcVUM1IsZU-unsplash.jpg'
 import {
-  ColorMapItemNormalized,
   ColorMapNormalized,
   DomainBounds,
   indexToName,
@@ -12,26 +11,17 @@ import {
   Settings,
   Triangle_Buffer,
   TRIANGLE_SIZE,
-} from './types'
+} from './micro'
 import {calculateFitness, drawTrianglesToTexture} from './fitness-calculator'
 import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
 import {randomNumberBounds} from './randomNumberBetween'
-
-const FluorescentPink = [
-  255 / 255,
-  72 / 255,
-  176 / 255,
-] as ColorMapItemNormalized
-const Blue = [0, 120 / 255, 191 / 255] as ColorMapItemNormalized
-const Green = [0, 169 / 255, 92 / 255] as ColorMapItemNormalized
-const Orange = [255 / 255, 108 / 255, 47 / 255] as ColorMapItemNormalized
-const Red = [255 / 255, 10 / 255, 10 / 255] as ColorMapItemNormalized
+import {RisoColors} from './FluorescentPink'
 
 async function initialize() {
   const settings: Settings = {
-    size: 64,
+    size: 16,
     viewportSize: 512,
-    triangleCount: 100,
+    triangleCount: 20,
     historySize: 512,
   }
   const viewportScale = settings.viewportSize / settings.size
@@ -47,8 +37,8 @@ async function initialize() {
     // FluorescentPink, //
     // Blue,
     // Orange,
-    Red,
-    Green,
+    RisoColors.Red,
+    RisoColors.Green,
   ]
   const colorMap: ColorMapNormalized = []
 
@@ -60,13 +50,17 @@ async function initialize() {
   const domain: DomainBounds[] = Array.from({
     length: settings.triangleCount * TRIANGLE_SIZE,
   }).map((_, i): DomainBounds => {
-    const a = i % TRIANGLE_SIZE
-    return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
+    return [0, 1]
+    // const a = i % TRIANGLE_SIZE
+    // return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
   })
 
   const imageTex = imageToImageTex(originalImage, settings.size)
 
+  let globalFitnessTests = 0
+
   const lossFn = (pos: Triangle_Buffer) => {
+    globalFitnessTests++
     return calculateFitness(settings, pos, imageTex, colorMap)
   }
 
@@ -75,9 +69,12 @@ async function initialize() {
   const infoDiv = document.createElement('div')
   document.body.append(infoDiv)
 
+  const infoDiv2 = document.createElement('div')
+  document.body.append(infoDiv2)
+
   const dimensionsCtxList = Array.from({
     length: Math.min(
-      10,
+      30,
       Math.floor((TRIANGLE_SIZE * settings.triangleCount) / 2),
     ),
   }).map((_, i) =>
@@ -94,11 +91,12 @@ async function initialize() {
   ) as Triangle_Buffer
   for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(domain[i])
 
-  let optimizerType: OptimizerType = 'differential_evolution'
+  let optimizerType: OptimizerType = 'particle_swarm_optimization'
   let optimizer = createOptimizer(optimizerType, lossFn, domain, best)
 
   let nextIterationCount = 1
   let nextIterationOptimizer = 0
+  let lastGlobalFitnessTests = globalFitnessTests
 
   infoDiv.innerHTML = optimizerType
   infoDiv.onclick = () => {
@@ -112,15 +110,20 @@ async function initialize() {
     nextIterationOptimizer = 0
   }
 
-  while (true) {
+  function runIterations() {
     const start = performance.now()
     for (let iteration = 0; iteration < nextIterationCount; iteration++) {
       optimizer.runNext(nextIterationOptimizer++)
     }
     const time = performance.now() - start
+    infoDiv2.innerHTML =
+      (time / (globalFitnessTests - lastGlobalFitnessTests)).toFixed(4) +
+      ' ms per iteration'
+    lastGlobalFitnessTests = globalFitnessTests
+
     nextIterationCount = Math.max(
       1,
-      Math.floor((nextIterationCount / time) * 200),
+      Math.floor((nextIterationCount / time) * 100),
     )
     best = optimizer.best.pos
 
@@ -134,11 +137,18 @@ async function initialize() {
       )
     }
 
-    const triangleTex = drawTrianglesToTexture(settings, best, colorMap)
+    const triangleTex = drawTrianglesToTexture(
+      settings.size,
+      settings.size,
+      best,
+      colorMap,
+    )
     drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
 
-    await delay(0)
+    requestAnimationFrame(runIterations)
   }
+
+  runIterations()
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -219,22 +229,22 @@ function drawDimensionToCanvas(
   ctx.fillStyle = 'rgb(255, 255, 255)'
   ctx.fillRect(0, 0, size, size)
 
-  for (let x = 0; x < EVALUATION_COUNT; x++) {
-    for (let y = 0; y < EVALUATION_COUNT; y++) {
-      const percX = x / EVALUATION_COUNT
-      const percY = y / EVALUATION_COUNT
+  // for (let x = 0; x < EVALUATION_COUNT; x++) {
+  //   for (let y = 0; y < EVALUATION_COUNT; y++) {
+  //     const percX = x / EVALUATION_COUNT
+  //     const percY = y / EVALUATION_COUNT
 
-      temp[index + 0] = percX
-      temp[index + 1] = percY
+  //     temp[index + 0] = percX
+  //     temp[index + 1] = percY
 
-      const fitness = cost_fn(temp)
+  //     const fitness = cost_fn(temp)
 
-      ctx.fillStyle = `hsl(${(fitness * 360 * 6) % 360}, 70%, 50%)`
-      ctx.beginPath()
-      ctx.fillRect(percX * size, percY * size, pointSize + 1, pointSize + 1)
-      ctx.fill()
-    }
-  }
+  //     ctx.fillStyle = `hsl(${(fitness * 360 * 6) % 360}, 70%, 50%)`
+  //     ctx.beginPath()
+  //     ctx.fillRect(percX * size, percY * size, pointSize + 1, pointSize + 1)
+  //     ctx.fill()
+  //   }
+  // }
 
   for (let i = 0; i < particles.length; i++) {
     ctx.fillStyle = `hsla(${

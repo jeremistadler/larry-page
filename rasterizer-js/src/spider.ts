@@ -1,4 +1,4 @@
-import {Triangle_Buffer} from './types'
+import {Triangle_Buffer} from './micro'
 
 export async function runPSO(
   cost_func: (data: Triangle_Buffer) => number,

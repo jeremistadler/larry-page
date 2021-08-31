@@ -1,4 +1,4 @@
-import {DomainBounds, Optimizer, Triangle_Buffer} from './types'
+import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
 
 export function createMutateOne(
   cost_func: (data: Triangle_Buffer) => number,

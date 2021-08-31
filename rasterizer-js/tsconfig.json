@@ -2,25 +2,25 @@
   "compileOnSave": false,
   "compilerOptions": {
     "module": "esnext",
-    "target": "ESNext",
+    "target": "ES2020",
     "sourceMap": true,
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
     ],
-    "allowJs": true,
+    "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
+    "noImplicitAny": false,
     "resolveJsonModule": false,
     "isolatedModules": true,
     "noEmit": true
   },
   "include": [
-    "./src/**/*.ts"
-  ]
+    "./src/**/*.ts" ]
 }

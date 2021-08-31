@@ -1,4 +1,4 @@
-import {DomainBounds, Optimizer, Triangle_Buffer} from './types'
+import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
 import incrSGDRegression from '@stdlib/ml-incr-sgd-regression'
 import {randomNumberBounds} from './randomNumberBetween'
 
@@ -26,7 +26,7 @@ export function createStochasticGradientDescent(
 
       const fitness = cost_func(testBuffer)
 
-      accumulator([...testBuffer], fitness)
+      // accumulator([...testBuffer], fitness)
 
       if (iteration % 100 === 0) {
         console.log(fitness, accumulator.coefs)

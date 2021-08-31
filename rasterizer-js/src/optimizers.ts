@@ -1,15 +1,17 @@
 import {createParticleSwarmOptimization} from './swarm'
 import {createMutateAll} from './mutate_all'
 import {createMutateOne} from './mutate_one'
-import {DomainBounds, Optimizer, OptimizerType, Triangle_Buffer} from './types'
+import {DomainBounds, Optimizer, OptimizerType, Triangle_Buffer} from './micro'
 import {createDifferentialEvolution} from './differential_evolution'
 import {createStochasticGradientDescent} from './stochastic_gradient_descent'
+import {createGridSearch} from './grid_search'
 
 export const OPTIMIZER_LIST: OptimizerType[] = [
   'particle_swarm_optimization',
   'differential_evolution',
   'mutate_all',
   'mutate_one',
+  'grid_search',
   // 'stochastic_gradient_descent',
 ]
 
@@ -31,6 +33,9 @@ export function createOptimizer(
 
     case 'mutate_one':
       return createMutateOne(cost_func, previousBest, domain)
+
+    case 'grid_search':
+      return createGridSearch(cost_func, previousBest, domain)
 
     case 'stochastic_gradient_descent':
       return createStochasticGradientDescent(cost_func, previousBest, domain)

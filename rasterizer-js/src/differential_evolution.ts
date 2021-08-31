@@ -1,5 +1,5 @@
 import {randomNumberBounds} from './randomNumberBetween'
-import {DomainBounds, Optimizer, Triangle_Buffer} from './types'
+import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
 
 export function createDifferentialEvolution(
   cost_func: (data: Triangle_Buffer) => number,
@@ -59,7 +59,7 @@ export function createDifferentialEvolution(
           state.pos = new Float32Array(pos) as Triangle_Buffer
         }
 
-        console.log('Adding one', particles.length)
+        // console.log('Adding one', particles.length)
 
         particles.push({
           pos,

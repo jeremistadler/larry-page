@@ -6,3 +6,30 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+model generations {
+  id                  Int           @id @default(autoincrement())
+  parent_id           Int?
+  generation          Int
+  source_image_name   String        @db.VarChar(255)
+  source_image_width  Int           @db.SmallInt
+  source_image_height Int           @db.SmallInt
+  item_count          Int           @db.SmallInt
+  item_type           String        @db.VarChar(20)
+  training_resolution Int           @db.SmallInt
+  positions           String        @db.LongText
+  color_map           String        @db.LongText
+  bounds              String        @db.LongText
+  stencils            String        @db.LongText
+  created_at          DateTime      @default(now()) @db.Timestamp(0)
+  updated_at          DateTime      @default(now()) @db.Timestamp(0)
+  optimizer_algorithm String        @db.VarChar(30)
+  fitness             Float
+  ms_per_generation   Float         @default(0) @db.Float
+  parent              generations?  @relation("generationsTogenerations_parent_id", fields: [parent_id], references: [id])
+  children            generations[] @relation("generationsTogenerations_parent_id")
+
+  @@index([fitness], name: "idx_fitness")
+  @@index([source_image_name, fitness], name: "idx_name_fitness")
+  @@index([parent_id], name: "parent_id")
+}

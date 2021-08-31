@@ -1,4 +1,4 @@
-import {Triangle_Buffer} from './types'
+import {Triangle_Buffer} from './micro'
 import {norm} from 'mathjs'
 
 export type KnownPoints = {

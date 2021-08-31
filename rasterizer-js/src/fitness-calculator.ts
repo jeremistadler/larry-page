@@ -5,7 +5,7 @@ import {
   Settings,
   Triangle_Buffer,
   TRIANGLE_SIZE,
-} from './types'
+} from './micro'
 
 function cross(
   ax: number,
@@ -33,36 +33,48 @@ function orient2d(
 
 // (A.x−B.x)∗(P.y−A.y)−(A.y−B.y)∗(P.x−A.x).
 
+const cache = new Map<number, RGB_Norm_Buffer>()
+
 export function calculateFitness(
   settings: Settings,
   triangles: Triangle_Buffer,
   imageTex: RGB_Norm_Buffer,
   colorMap: ColorMapNormalized,
 ) {
-  const tex = new Float32Array(
-    settings.size * settings.size * 3,
-  ) as RGB_Norm_Buffer
+  let tex = cache.get(settings.size)
+
+  if (tex === undefined) {
+    tex = new Float32Array(settings.size * settings.size * 3) as RGB_Norm_Buffer
+    cache.set(settings.size, tex)
+  }
+
   tex.fill(1)
 
   for (let i = 0; i < triangles.length; i += TRIANGLE_SIZE) {
-    fillTriangle(triangles, tex, i, settings.size, colorMap[i / TRIANGLE_SIZE])
+    fillTriangle(
+      triangles,
+      tex,
+      i,
+      settings.size,
+      settings.size,
+      colorMap[i / TRIANGLE_SIZE],
+    )
   }
 
   return diffAndCalculateFitness(imageTex, tex)
 }
 
 export function drawTrianglesToTexture(
-  settings: Settings,
+  width: number,
+  height: number,
   triangles: Triangle_Buffer,
   colorMap: ColorMapNormalized,
 ) {
-  const tex = new Float32Array(
-    settings.size * settings.size * 3,
-  ) as RGB_Norm_Buffer
+  const tex = new Float32Array(width * height * 3) as RGB_Norm_Buffer
   tex.fill(1)
 
   for (let i = 0; i < triangles.length; i += TRIANGLE_SIZE) {
-    fillTriangle(triangles, tex, i, settings.size, colorMap[i / TRIANGLE_SIZE])
+    fillTriangle(triangles, tex, i, width, height, colorMap[i / TRIANGLE_SIZE])
   }
 
   return tex
@@ -72,15 +84,16 @@ function fillTriangle(
   triangles: Triangle_Buffer,
   tex: RGB_Norm_Buffer,
   startIndex: number,
-  resultCanvasSize: number,
+  resultCanvasWidth: number,
+  resultCanvasHeight: number,
   color: ColorMapItemNormalized,
 ) {
-  const v0x = triangles[startIndex + 0] * resultCanvasSize
-  const v0y = triangles[startIndex + 1] * resultCanvasSize
-  const v1x = triangles[startIndex + 2] * resultCanvasSize
-  const v1y = triangles[startIndex + 3] * resultCanvasSize
-  const v2x = triangles[startIndex + 4] * resultCanvasSize
-  const v2y = triangles[startIndex + 5] * resultCanvasSize
+  const v0x = triangles[startIndex + 0] * resultCanvasWidth
+  const v0y = triangles[startIndex + 1] * resultCanvasHeight
+  const v1x = triangles[startIndex + 2] * resultCanvasWidth
+  const v1y = triangles[startIndex + 3] * resultCanvasHeight
+  const v2x = triangles[startIndex + 4] * resultCanvasWidth
+  const v2y = triangles[startIndex + 5] * resultCanvasHeight
 
   const a0 = Math.min(1, Math.max(0, triangles[startIndex + 6]))
   const a0I = 1 - a0
@@ -95,17 +108,17 @@ function fillTriangle(
   let maxY = Math.ceil(Math.max(v0y, v1y, v2y))
 
   if (
-    minX > resultCanvasSize - 1 ||
+    minX > resultCanvasWidth - 1 ||
     maxX < 0 ||
-    minY > resultCanvasSize - 1 ||
+    minY > resultCanvasHeight - 1 ||
     maxY < 0
   )
     return
 
   if (minX < 0) minX = 0
   if (minY < 0) minY = 0
-  if (maxX > resultCanvasSize - 1) maxX = resultCanvasSize - 1
-  if (maxY > resultCanvasSize - 1) maxY = resultCanvasSize - 1
+  if (maxX > resultCanvasWidth - 1) maxX = resultCanvasWidth - 1
+  if (maxY > resultCanvasHeight - 1) maxY = resultCanvasHeight - 1
 
   // precalculate the area of the parallelogram defined by our triangle
   let area = cross(v0x, v0y, v1x, v1y, v2x, v2y)
@@ -164,7 +177,7 @@ function fillTriangle(
         continue
       }
 
-      const index = (y * resultCanvasSize + x) * 3
+      const index = (y * resultCanvasWidth + x) * 3
       tex[index + 0] = a0I * tex[index + 0] + a0 * r
       tex[index + 1] = a0I * tex[index + 1] + a0 * g
       tex[index + 2] = a0I * tex[index + 2] + a0 * b

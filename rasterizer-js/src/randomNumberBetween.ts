@@ -1,4 +1,4 @@
-import {DomainBounds} from './types'
+import {DomainBounds} from './micro'
 
 export function randomNumberBetween(min: number, max: number) {
   return Math.random() * (max - min) + min
