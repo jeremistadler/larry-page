@@ -1,21 +1,18 @@
-import {Triangle_Buffer} from './micro'
+import {Pos_Buffer} from './micro'
 import fmin from 'optimization-js'
 
 export type KnownPoints = {
-  pos: Triangle_Buffer
+  pos: Pos_Buffer
   fitness: number
 }
 
 export async function runPSO(
-  cost_func: (data: Triangle_Buffer) => number,
+  cost_func: (data: Pos_Buffer) => number,
   featureCount: number,
-  onGeneration: (
-    best: Triangle_Buffer,
-    knownPoints: KnownPoints[],
-  ) => Promise<void>,
+  onGeneration: (best: Pos_Buffer, knownPoints: KnownPoints[]) => Promise<void>,
 ) {
   let best = {
-    pos: new Float32Array(featureCount) as Triangle_Buffer,
+    pos: new Float32Array(featureCount) as Pos_Buffer,
     fitness: 1,
   }
   for (let i = 0; i < featureCount; i++) {
@@ -25,8 +22,8 @@ export async function runPSO(
 
   const seen: KnownPoints[] = []
 
-  const costFn = (pos: Triangle_Buffer) => {
-    const c = new Float32Array(pos) as Triangle_Buffer
+  const costFn = (pos: Pos_Buffer) => {
+    const c = new Float32Array(pos) as Pos_Buffer
     const f = cost_func(c)
     seen.push({fitness: f, pos: c})
     return f
@@ -42,7 +39,7 @@ export async function runPSO(
       fncvalue: number
     }
 
-    best = {fitness: result.fncvalue, pos: result.argument as Triangle_Buffer}
+    best = {fitness: result.fncvalue, pos: result.argument as Pos_Buffer}
 
     await onGeneration(best.pos, seen)
   }

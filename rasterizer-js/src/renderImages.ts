@@ -2,7 +2,7 @@ import Prisma from '@prisma/client'
 import imageEncode from 'image-encode'
 
 import * as fs from 'fs/promises'
-import {ColorMapNormalized, RGB_Norm_Buffer, Triangle_Buffer} from './micro'
+import {ColorMapNormalized, RGB_Norm_Buffer, Pos_Buffer} from './micro'
 import {drawTrianglesToTexture} from './fitness-calculator'
 
 const prisma = new Prisma.PrismaClient()
@@ -41,7 +41,7 @@ for (const imageName of images) {
   const tex = drawTrianglesToTexture(
     TARGET_WIDTH,
     TARGET_HEIGHT,
-    new Float32Array(JSON.parse(gen.positions)) as Triangle_Buffer,
+    new Float32Array(JSON.parse(gen.positions)) as Pos_Buffer,
     JSON.parse(gen.color_map) as ColorMapNormalized,
   )
 

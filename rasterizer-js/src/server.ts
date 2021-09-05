@@ -10,11 +10,11 @@ import {
   OptimizerType,
   RGB_Norm_Buffer,
   Settings,
-  Triangle_Buffer,
+  Pos_Buffer,
   TRIANGLE_SIZE,
 } from './micro'
 import {RisoColors} from './FluorescentPink'
-import {calculateFitness} from './fitness-calculator'
+import {calculateTriangleFitness} from './fitness-calculator'
 import {randomNumberBounds} from './randomNumberBetween'
 import {createOptimizer, OPTIMIZER_LIST} from './optimizers'
 
@@ -30,7 +30,7 @@ console.log('Image name', imageName)
 const settings: Settings = {
   size: 64,
   viewportSize: 512,
-  triangleCount: 20,
+  itemCount: 20,
   historySize: 512,
 }
 
@@ -59,13 +59,11 @@ const originalTex = imageToImageTex(
 const palette = [RisoColors.Red, RisoColors.Green]
 const colorMap: ColorMapNormalized = []
 
-for (let i = 0; i < settings.triangleCount; i++) {
-  colorMap.push(
-    palette[Math.floor((i / settings.triangleCount) * palette.length)],
-  )
+for (let i = 0; i < settings.itemCount; i++) {
+  colorMap.push(palette[Math.floor((i / settings.itemCount) * palette.length)])
 }
 const bounds: DomainBounds[] = Array.from({
-  length: settings.triangleCount * TRIANGLE_SIZE,
+  length: settings.itemCount * TRIANGLE_SIZE,
 }).map((_, i): DomainBounds => {
   const a = i % TRIANGLE_SIZE
   return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
@@ -73,9 +71,9 @@ const bounds: DomainBounds[] = Array.from({
 
 let globalGeneration = 0
 
-const lossFn = (pos: Triangle_Buffer) => {
+const lossFn = (pos: Pos_Buffer) => {
   globalGeneration++
-  const f = calculateFitness(settings, pos, originalTex, colorMap)
+  const f = calculateTriangleFitness(settings, pos, originalTex, colorMap)
 
   // if (f === 0 || f < 0 || f > 1 || isNaN(f)) {
   //   throw new Error('calculateFitness returned invalid result ' + f)
@@ -84,9 +82,7 @@ const lossFn = (pos: Triangle_Buffer) => {
   return f
 }
 
-let best = new Float32Array(
-  TRIANGLE_SIZE * settings.triangleCount,
-) as Triangle_Buffer
+let best = new Float32Array(TRIANGLE_SIZE * settings.itemCount) as Pos_Buffer
 for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(bounds[i])
 
 console.log('Fetching predecessor...')
@@ -94,7 +90,7 @@ console.log('Fetching predecessor...')
 const dbItem = await prisma.generations.findFirst({
   where: {
     source_image_name: imageName,
-    item_count: settings.triangleCount,
+    item_count: settings.itemCount,
     item_type: 'triangle',
   },
   orderBy: [
@@ -109,7 +105,7 @@ let parentId: null | number = null
 if (dbItem != null) {
   console.log('Got predecessor')
 
-  best = new Float32Array(dbItem.positions as any) as Triangle_Buffer
+  best = new Float32Array(dbItem.positions as any) as Pos_Buffer
   globalGeneration = dbItem.generation
   parentId = dbItem.id
 } else {
@@ -164,7 +160,7 @@ function runIterations() {
       data: {
         training_resolution: settings.size,
         generation: globalGeneration,
-        item_count: settings.triangleCount,
+        item_count: settings.itemCount,
         optimizer_algorithm: optimizerType,
         item_type: 'triangle',
         positions: JSON.stringify([...best]),

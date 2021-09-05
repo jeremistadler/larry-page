@@ -1,21 +1,21 @@
-import {Triangle_Buffer} from './micro'
+import {Pos_Buffer} from './micro'
 
 export async function runPSO(
-  cost_func: (data: Triangle_Buffer) => number,
+  cost_func: (data: Pos_Buffer) => number,
   featureCount: number,
   particleCount: number,
   onGeneration: (
-    best: Triangle_Buffer,
-    particles: {pos: Triangle_Buffer; fitness: number; variables: number[]}[],
+    best: Pos_Buffer,
+    particles: {pos: Pos_Buffer; fitness: number; variables: number[]}[],
   ) => Promise<void>,
 ) {
-  let bestGlobalPos = new Float32Array(featureCount) as Triangle_Buffer
+  let bestGlobalPos = new Float32Array(featureCount) as Pos_Buffer
   let bestGlobalFitness = 100000000
 
   const particles = Array.from({length: particleCount}).map((_, i) => {
     const pos = new Float32Array(
       Array.from({length: featureCount}).map(() => Math.random()),
-    ) as Triangle_Buffer
+    ) as Pos_Buffer
     const fitness = cost_func(pos)
 
     if (fitness < bestGlobalFitness) {
@@ -24,17 +24,17 @@ export async function runPSO(
     }
 
     return {
-      pos: new Float32Array(pos) as Triangle_Buffer,
+      pos: new Float32Array(pos) as Pos_Buffer,
       fitness,
       variables: [lerp(0.12, 0.3, i / particleCount)],
     }
   })
 
-  const testBuffer = new Float32Array(featureCount) as Triangle_Buffer
+  const testBuffer = new Float32Array(featureCount) as Pos_Buffer
 
   while (true) {
     for (const particle of particles) {
-      let best = new Float32Array(particle.pos) as Triangle_Buffer
+      let best = new Float32Array(particle.pos) as Pos_Buffer
       let bestFitness = 1000000
 
       for (let sample = 0; sample < 5000; sample++) {
@@ -51,11 +51,11 @@ export async function runPSO(
         const fitness = cost_func(testBuffer)
         if (fitness < bestFitness) {
           bestFitness = fitness
-          best = new Float32Array(testBuffer) as Triangle_Buffer
+          best = new Float32Array(testBuffer) as Pos_Buffer
 
           if (fitness < bestGlobalFitness) {
             bestGlobalFitness = fitness
-            bestGlobalPos = new Float32Array(testBuffer) as Triangle_Buffer
+            bestGlobalPos = new Float32Array(testBuffer) as Pos_Buffer
           }
         }
       }

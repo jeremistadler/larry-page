@@ -1,12 +1,12 @@
 import {randomNumberBetween, randomNumberBounds} from './randomNumberBetween'
-import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
 
 export function createParticleSwarmOptimization(
-  cost_func: (data: Triangle_Buffer) => number,
-  previousBest: Triangle_Buffer,
+  cost_func: (data: Pos_Buffer) => number,
+  previousBest: Pos_Buffer,
   domain: DomainBounds[],
 ): Optimizer {
-  const particleCount = 20
+  const particleCount = 30
 
   const best = {
     pos: previousBest,
@@ -18,7 +18,7 @@ export function createParticleSwarmOptimization(
       const pos =
         particleIndex === 0
           ? previousBest
-          : (new Float32Array(previousBest.length) as Triangle_Buffer)
+          : (new Float32Array(previousBest.length) as Pos_Buffer)
 
       if (particleIndex > 0)
         for (let i = 0; i < pos.length; i++)
@@ -37,8 +37,8 @@ export function createParticleSwarmOptimization(
         velocity[i] = randomNumberBetween(-0.1, 0.1)
 
       return {
-        pos: new Float32Array(pos) as Triangle_Buffer,
-        bestPos: new Float32Array(pos) as Triangle_Buffer,
+        pos: new Float32Array(pos) as Pos_Buffer,
+        bestPos: new Float32Array(pos) as Pos_Buffer,
         fitness,
         rollingFitnessDelta: 1,
         bestFitness: fitness,
@@ -50,7 +50,7 @@ export function createParticleSwarmOptimization(
           // Math.random() * 0.1,
           // Math.random() * 1.0,
 
-          0.8, 0.1, 0.1, 0.01, 0.3,
+          0.8, 0.1, 0.1, 0.01, 0.1,
         ],
       }
     },
@@ -106,11 +106,11 @@ export function createParticleSwarmOptimization(
 
         if (particle.fitness < particle.bestFitness) {
           particle.bestFitness = particle.fitness
-          particle.bestPos = new Float32Array(particle.pos) as Triangle_Buffer
+          particle.bestPos = new Float32Array(particle.pos) as Pos_Buffer
 
           if (particle.fitness < best.fitness) {
             best.fitness = particle.fitness
-            best.pos = new Float32Array(particle.pos) as Triangle_Buffer
+            best.pos = new Float32Array(particle.pos) as Pos_Buffer
           }
         }
       }

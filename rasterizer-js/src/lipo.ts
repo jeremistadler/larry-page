@@ -1,23 +1,20 @@
-import {Triangle_Buffer} from './micro'
+import {Pos_Buffer} from './micro'
 import {norm} from 'mathjs'
 
 export type KnownPoints = {
-  pos: Triangle_Buffer
+  pos: Pos_Buffer
   fitness: number
 }
 
 export async function runPSO(
-  cost_func: (data: Triangle_Buffer) => number,
+  cost_func: (data: Pos_Buffer) => number,
   featureCount: number,
-  onGeneration: (
-    best: Triangle_Buffer,
-    knownPoints: KnownPoints[],
-  ) => Promise<void>,
+  onGeneration: (best: Pos_Buffer, knownPoints: KnownPoints[]) => Promise<void>,
 ) {
   const knownValues: KnownPoints[] = []
 
   {
-    const initial = new Float32Array(featureCount) as Triangle_Buffer
+    const initial = new Float32Array(featureCount) as Pos_Buffer
     initial.fill(0.5)
 
     knownValues.push({pos: initial, fitness: cost_func(initial)})
@@ -35,7 +32,7 @@ export async function runPSO(
     // t = 1
 
     for (let retryIndex = 0; retryIndex < 10; retryIndex++) {
-      const next = new Float32Array(featureCount) as Triangle_Buffer
+      const next = new Float32Array(featureCount) as Pos_Buffer
       for (let i = 0; i < next.length; i++) {
         next[i] = Math.random()
       }
