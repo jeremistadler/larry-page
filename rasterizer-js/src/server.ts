@@ -34,6 +34,7 @@ const settings: Settings = {
   viewportSize: 512,
   itemCount: 80,
   historySize: 512,
+  itemSize: TRIANGLE_SIZE,
 }
 
 const prisma = new Prisma.PrismaClient()
