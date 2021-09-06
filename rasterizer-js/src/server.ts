@@ -13,10 +13,10 @@ import {
   RGB_Norm_Buffer,
   Settings,
   Pos_Buffer,
-  TRIANGLE_SIZE,
+  CIRCLE_SIZE,
 } from './micro'
 import {RisoColors} from './FluorescentPink'
-import {calculateTriangleFitness} from './fitness-calculator'
+import {calculateFitnessCircle} from './fitness-calculator'
 import {randomNumberBounds} from './randomNumberBetween'
 import {createOptimizer, OPTIMIZER_LIST} from './optimizers'
 
@@ -34,7 +34,7 @@ const settings: Settings = {
   viewportSize: 512,
   itemCount: 80,
   historySize: 512,
-  itemSize: TRIANGLE_SIZE,
+  itemSize: CIRCLE_SIZE,
 }
 
 const prisma = new Prisma.PrismaClient()
@@ -68,17 +68,26 @@ for (let i = 0; i < settings.itemCount; i++) {
   colorMap.push(palette[Math.floor((i / settings.itemCount) * palette.length)])
 }
 const bounds: DomainBounds[] = Array.from({
-  length: settings.itemCount * TRIANGLE_SIZE,
-}).map((_, i): DomainBounds => {
-  const a = i % TRIANGLE_SIZE
-  return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
+  length: settings.itemCount * settings.itemSize,
 })
+  .map((_, i): DomainBounds[] => {
+    return [
+      [0, 1], // x
+      [0, 1], // y
+      [0.05, 0.2], // radius
+      [0.1, 0.4], // alpha
+    ]
+
+    // const a = i % TRIANGLE_SIZE
+    // return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
+  })
+  .flat(1)
 
 let globalGeneration = 0
 
 const lossFn = (pos: Pos_Buffer) => {
   globalGeneration++
-  const f = calculateTriangleFitness(settings, pos, originalTex, colorMap)
+  const f = calculateFitnessCircle(settings, pos, originalTex, colorMap)
 
   // if (f === 0 || f < 0 || f > 1 || isNaN(f)) {
   //   throw new Error('calculateFitness returned invalid result ' + f)
@@ -87,7 +96,9 @@ const lossFn = (pos: Pos_Buffer) => {
   return f
 }
 
-let best = new Float32Array(TRIANGLE_SIZE * settings.itemCount) as Pos_Buffer
+let best = new Float32Array(
+  settings.itemSize * settings.itemCount,
+) as Pos_Buffer
 for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(bounds[i])
 
 console.log('Fetching predecessor...')
@@ -96,7 +107,7 @@ const dbItem = await prisma.generations.findFirst({
   where: {
     source_image_name: imageName,
     item_count: settings.itemCount,
-    item_type: 'triangle',
+    item_type: 'circle',
     fitness: {gt: 0},
     compressed_data: {not: null},
   },
@@ -121,7 +132,7 @@ if (dbItem != null && dbItem.compressed_data != null) {
 
   if (decompressed.positions.length !== best.length) {
     throw new Error(
-      'DB positions did not equal triangles ' +
+      'DB positions did not equal settings ' +
         decompressed.positions.length +
         ' ' +
         best.length,
@@ -184,7 +195,7 @@ function runIterations() {
         training_resolution: settings.size,
         generation: globalGeneration,
         optimizer_algorithm: optimizerType,
-        item_type: 'triangle',
+        item_type: 'circle',
         item_count: settings.itemCount,
         source_image_height: originalImage.height,
         source_image_width: originalImage.width,

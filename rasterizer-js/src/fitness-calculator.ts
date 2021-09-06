@@ -48,14 +48,11 @@ export function calculateFitnessCircle(
   imageTex: RGB_Norm_Buffer,
   colorMap: ColorMapNormalized,
 ) {
-  // let tex = cache.get(settings.size)
-
-  // if (tex === undefined) {
-  const tex = new Float32Array(
-    settings.size * settings.size * 3,
-  ) as RGB_Norm_Buffer
-  //   cache.set(settings.size, tex)
-  // }
+  let tex = cache.get(settings.size)
+  if (tex === undefined) {
+    tex = new Float32Array(settings.size * settings.size * 3) as RGB_Norm_Buffer
+    cache.set(settings.size, tex)
+  }
 
   tex.fill(1)
 

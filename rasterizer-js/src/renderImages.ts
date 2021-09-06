@@ -5,7 +5,7 @@ const {uncompressSync} = pkg
 
 import * as fs from 'fs/promises'
 import {ColorMapNormalized, RGB_Norm_Buffer, Pos_Buffer} from './micro'
-import {drawTrianglesToTexture} from './fitness-calculator'
+import {drawCirclesToNewTex, drawTrianglesToTexture} from './fitness-calculator'
 
 const prisma = new Prisma.PrismaClient()
 
@@ -19,7 +19,7 @@ for (const imageName of images) {
   const gen = await prisma.generations.findFirst({
     where: {
       source_image_name: imageName,
-      item_type: 'triangle',
+      item_type: 'circle',
       fitness: {gt: 0},
       compressed_data: {not: null},
     },
@@ -59,12 +59,20 @@ for (const imageName of images) {
     (gen.source_image_width / gen.source_image_height) * TARGET_HEIGHT,
   )
 
-  const tex = drawTrianglesToTexture(
-    TARGET_WIDTH,
-    TARGET_HEIGHT,
-    new Float32Array(data.positions) as Pos_Buffer,
-    data.color_map,
-  )
+  const tex =
+    gen.item_type === 'triangle'
+      ? drawTrianglesToTexture(
+          TARGET_WIDTH,
+          TARGET_HEIGHT,
+          new Float32Array(data.positions) as Pos_Buffer,
+          data.color_map,
+        )
+      : drawCirclesToNewTex(
+          TARGET_WIDTH,
+          TARGET_HEIGHT,
+          new Float32Array(data.positions) as Pos_Buffer,
+          data.color_map,
+        )
 
   const imageData = texToImageData(tex, TARGET_WIDTH, TARGET_HEIGHT)
 
