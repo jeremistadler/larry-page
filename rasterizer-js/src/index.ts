@@ -19,7 +19,7 @@ import {RisoColors} from './FluorescentPink'
 
 async function initialize() {
   const settings: Settings = {
-    size: 16,
+    size: 128,
     viewportSize: 512,
     triangleCount: 20,
     historySize: 512,
@@ -91,7 +91,7 @@ async function initialize() {
   ) as Triangle_Buffer
   for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(domain[i])
 
-  let optimizerType: OptimizerType = 'particle_swarm_optimization'
+  let optimizerType: OptimizerType = 'grid_search_4d'
   let optimizer = createOptimizer(optimizerType, lossFn, domain, best)
 
   let nextIterationCount = 1
