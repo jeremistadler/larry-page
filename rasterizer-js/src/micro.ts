@@ -1,14 +1,16 @@
 export type Settings = {
   size: number
   viewportSize: number
-  triangleCount: number
+  itemCount: number
   historySize: number
+  itemSize: number
 }
 
 export type ColorMapItemNormalized = [R: number, G: number, B: number]
 export type ColorMapNormalized = ColorMapItemNormalized[]
 
 export const TRIANGLE_SIZE = 2 * 3 + 1 * 1 // (pos) + (alpha) = 9
+export const CIRCLE_SIZE = 2 + 1 + 1 // (pos) radius + (alpha) = 4
 
 export function indexToName(index: number) {
   switch (index % TRIANGLE_SIZE) {
@@ -43,8 +45,8 @@ export function indexToName(index: number) {
  *
  * All values are from 0.0 to 1.0
  */
-export type Triangle_Buffer = Float32Array & {
-  readonly Triangle_Buffer: unique symbol
+export type Pos_Buffer = Float32Array & {
+  readonly Pos_Buffer: unique symbol
 }
 
 /**
@@ -78,14 +80,14 @@ export type R_Bit_Buffer = Uint8Array & {
 export type DomainBounds = [start: number, end: number]
 
 export type Particle = {
-  pos: Triangle_Buffer
+  pos: Pos_Buffer
   fitness: number
 }
 
 export type Optimizer = {
   runNext: (iteration: number) => void
   best: {
-    pos: Triangle_Buffer
+    pos: Pos_Buffer
     fitness: number
   }
   particles: Particle[]

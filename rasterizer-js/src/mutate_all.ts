@@ -1,12 +1,12 @@
-import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
 
 export function createMutateAll(
-  cost_func: (data: Triangle_Buffer) => number,
-  previousBest: Triangle_Buffer,
+  cost_func: (data: Pos_Buffer) => number,
+  previousBest: Pos_Buffer,
   domain: DomainBounds[],
 ): Optimizer {
   const MAX_CHANGE = 0.4
-  const testBuffer = new Float32Array(previousBest) as Triangle_Buffer
+  const testBuffer = new Float32Array(previousBest) as Pos_Buffer
 
   const state = {
     pos: previousBest,
@@ -26,7 +26,7 @@ export function createMutateAll(
       const fitness = cost_func(testBuffer)
       if (fitness < state.fitness) {
         state.fitness = fitness
-        state.pos = new Float32Array(testBuffer) as Triangle_Buffer
+        state.pos = new Float32Array(testBuffer) as Pos_Buffer
       }
     },
   }

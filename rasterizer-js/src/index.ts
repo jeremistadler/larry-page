@@ -1,7 +1,8 @@
-import imageUrl from 'url:../images/twoTriangles.png'
+// import imageUrl from 'url:../images/twoTriangles.png'
 // import imageUrl from 'url:../images/threeRgbTriangles.png'
-// import imageUrl from 'url:../images/sasha-matic-vgcVUM1IsZU-unsplash.jpg'
+import imageUrl from 'url:../images/sasha-matic-vgcVUM1IsZU-unsplash.jpg'
 import {
+  CIRCLE_SIZE,
   ColorMapNormalized,
   DomainBounds,
   indexToName,
@@ -9,10 +10,9 @@ import {
   Particle,
   RGB_Norm_Buffer,
   Settings,
-  Triangle_Buffer,
-  TRIANGLE_SIZE,
+  Pos_Buffer,
 } from './micro'
-import {calculateFitness, drawTrianglesToTexture} from './fitness-calculator'
+import {calculateFitnessCircle, drawCirclesToNewTex} from './fitness-calculator'
 import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
 import {randomNumberBounds} from './randomNumberBetween'
 import {RisoColors} from './FluorescentPink'
@@ -21,17 +21,18 @@ async function initialize() {
   const settings: Settings = {
     size: 128,
     viewportSize: 512,
-    triangleCount: 20,
+    itemCount: 100,
     historySize: 512,
+    itemSize: CIRCLE_SIZE,
   }
   const viewportScale = settings.viewportSize / settings.size
 
   console.log('Loading image...')
   const originalImage = await fetchImage(imageUrl, settings.size)
 
-  // console.log('Drawing original image...')
-  // const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
-  // drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
+  console.log('Drawing original image...')
+  const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
+  drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
 
   const palette = [
     // FluorescentPink, //
@@ -42,26 +43,46 @@ async function initialize() {
   ]
   const colorMap: ColorMapNormalized = []
 
-  for (let i = 0; i < settings.triangleCount; i++) {
+  for (let i = 0; i < settings.itemCount; i++) {
     colorMap.push(
-      palette[Math.floor((i / settings.triangleCount) * palette.length)],
+      palette[Math.floor((i / settings.itemCount) * palette.length)],
     )
   }
   const domain: DomainBounds[] = Array.from({
-    length: settings.triangleCount * TRIANGLE_SIZE,
-  }).map((_, i): DomainBounds => {
-    return [0, 1]
-    // const a = i % TRIANGLE_SIZE
-    // return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
+    length: settings.itemCount,
   })
+    .map((_, i): DomainBounds[] => {
+      return [
+        [0, 1], // x
+        [0, 1], // y
+        [0.05, 0.2], // radius
+        [0.1, 0.2], // alpha
+      ]
+      // const a = i % TRIANGLE_SIZE
+      // return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
+    })
+    .flat(1)
 
   const imageTex = imageToImageTex(originalImage, settings.size)
 
   let globalFitnessTests = 0
 
-  const lossFn = (pos: Triangle_Buffer) => {
+  const lossFn = (pos: Pos_Buffer) => {
     globalFitnessTests++
-    return calculateFitness(settings, pos, imageTex, colorMap)
+    const fitness = calculateFitnessCircle(settings, pos, imageTex, colorMap)
+
+    if (isNaN(fitness)) {
+      throw new Error('Fitness is NaN')
+    }
+
+    if (fitness < 0) {
+      throw new Error('Fitness is less than 0')
+    }
+
+    if (fitness > 1) {
+      throw new Error('Fitness is more than 1')
+    }
+    return fitness
   }
 
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
@@ -75,7 +96,7 @@ async function initialize() {
   const dimensionsCtxList = Array.from({
     length: Math.min(
       30,
-      Math.floor((TRIANGLE_SIZE * settings.triangleCount) / 2),
+      Math.floor((settings.itemSize * settings.itemCount) / 2),
     ),
   }).map((_, i) =>
     createCanvas(
@@ -87,11 +108,11 @@ async function initialize() {
   )
 
   let best = new Float32Array(
-    TRIANGLE_SIZE * settings.triangleCount,
-  ) as Triangle_Buffer
+    settings.itemSize * settings.itemCount,
+  ) as Pos_Buffer
   for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(domain[i])
 
-  let optimizerType: OptimizerType = 'grid_search_4d'
+  let optimizerType: OptimizerType = 'differential_evolution'
   let optimizer = createOptimizer(optimizerType, lossFn, domain, best)
 
   let nextIterationCount = 1
@@ -137,13 +158,13 @@ async function initialize() {
       )
     }
 
-    const triangleTex = drawTrianglesToTexture(
+    const bestTex = drawCirclesToNewTex(
       settings.size,
       settings.size,
       best,
       colorMap,
     )
-    drawTextureToCanvas(bestCtx, triangleTex, settings.size, viewportScale)
+    drawTextureToCanvas(bestCtx, bestTex, settings.size, viewportScale)
 
     requestAnimationFrame(runIterations)
   }
@@ -154,10 +175,6 @@ async function initialize() {
 document.addEventListener('DOMContentLoaded', function () {
   initialize().catch(err => console.error(err))
 })
-
-function delay(ms: number) {
-  return new Promise(r => setTimeout(r, ms))
-}
 
 type Canvas = {
   canvas: HTMLCanvasElement
@@ -217,12 +234,12 @@ function fetchImage(url: string, size: number): Promise<ImageData> {
 
 function drawDimensionToCanvas(
   {ctx, size}: Canvas,
-  pos: Triangle_Buffer,
-  cost_fn: (pos: Triangle_Buffer) => number,
+  pos: Pos_Buffer,
+  cost_fn: (pos: Pos_Buffer) => number,
   index: number,
   particles: Particle[],
 ) {
-  const temp = new Float32Array(pos) as Triangle_Buffer
+  const temp = new Float32Array(pos) as Pos_Buffer
   // const orgValue = pos[index]
   const EVALUATION_COUNT = 6
   const pointSize = size / EVALUATION_COUNT

@@ -1,9 +1,9 @@
 import {randomNumberBounds} from './randomNumberBetween'
-import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
 
 export function createDifferentialEvolution(
-  cost_func: (data: Triangle_Buffer) => number,
-  previousBest: Triangle_Buffer,
+  cost_func: (data: Pos_Buffer) => number,
+  previousBest: Pos_Buffer,
   domain: DomainBounds[],
 ): Optimizer {
   const state = {
@@ -20,7 +20,7 @@ export function createDifferentialEvolution(
       const pos =
         particleIndex === 0
           ? previousBest
-          : (new Float32Array(previousBest.length) as Triangle_Buffer)
+          : (new Float32Array(previousBest.length) as Pos_Buffer)
 
       if (particleIndex > 0)
         for (let i = 0; i < pos.length; i++)
@@ -30,7 +30,7 @@ export function createDifferentialEvolution(
 
       if (fitness < state.fitness) {
         state.fitness = fitness
-        state.pos = new Float32Array(pos) as Triangle_Buffer
+        state.pos = new Float32Array(pos) as Pos_Buffer
       }
 
       return {
@@ -40,14 +40,14 @@ export function createDifferentialEvolution(
     },
   )
 
-  const temp = new Float32Array(previousBest.length) as Triangle_Buffer
+  const temp = new Float32Array(previousBest.length) as Pos_Buffer
 
   return {
     best: state,
     particles,
     runNext: (iteration: number) => {
       if (iteration % 100 === 1) {
-        const pos = new Float32Array(previousBest.length) as Triangle_Buffer
+        const pos = new Float32Array(previousBest.length) as Pos_Buffer
 
         for (let i = 0; i < pos.length; i++)
           pos[i] = randomNumberBounds(domain[i])
@@ -56,7 +56,7 @@ export function createDifferentialEvolution(
 
         if (fitness < state.fitness) {
           state.fitness = fitness
-          state.pos = new Float32Array(pos) as Triangle_Buffer
+          state.pos = new Float32Array(pos) as Pos_Buffer
         }
 
         // console.log('Adding one', particles.length)
@@ -101,7 +101,7 @@ export function createDifferentialEvolution(
 
         if (testFitness < particle.fitness) {
           particle.fitness = testFitness
-          particle.pos = new Float32Array(temp) as Triangle_Buffer
+          particle.pos = new Float32Array(temp) as Pos_Buffer
 
           if (testFitness < state.fitness) {
             state.fitness = testFitness

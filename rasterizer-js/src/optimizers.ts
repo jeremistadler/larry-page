@@ -1,7 +1,7 @@
 import {createParticleSwarmOptimization} from './swarm'
 import {createMutateAll} from './mutate_all'
 import {createMutateOne} from './mutate_one'
-import {DomainBounds, Optimizer, OptimizerType, Triangle_Buffer} from './micro'
+import {DomainBounds, Optimizer, OptimizerType, Pos_Buffer} from './micro'
 import {createDifferentialEvolution} from './differential_evolution'
 import {createStochasticGradientDescent} from './stochastic_gradient_descent'
 import {createGridSearch} from './grid_search'
@@ -19,9 +19,9 @@ export const OPTIMIZER_LIST: OptimizerType[] = [
 
 export function createOptimizer(
   type: OptimizerType,
-  cost_func: (data: Triangle_Buffer) => number,
+  cost_func: (data: Pos_Buffer) => number,
   domain: DomainBounds[],
-  previousBest: Triangle_Buffer,
+  previousBest: Pos_Buffer,
 ): Optimizer {
   switch (type) {
     case 'particle_swarm_optimization':

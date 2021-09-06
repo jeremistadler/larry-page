@@ -4,7 +4,7 @@ import pkg from 'snappy'
 const {uncompressSync} = pkg
 
 import * as fs from 'fs/promises'
-import {ColorMapNormalized, RGB_Norm_Buffer, Triangle_Buffer} from './micro'
+import {ColorMapNormalized, RGB_Norm_Buffer, Pos_Buffer} from './micro'
 import {drawTrianglesToTexture} from './fitness-calculator'
 
 const prisma = new Prisma.PrismaClient()
@@ -46,7 +46,7 @@ for (const imageName of images) {
   console.log('Uncompressing data...')
   const data = JSON.parse(
     uncompressSync(gen.compressed_data, {asBuffer: true}).toString('utf8'),
-  ) as {positions: Triangle_Buffer; color_map: ColorMapNormalized}
+  ) as {positions: Pos_Buffer; color_map: ColorMapNormalized}
 
   console.log('Creating dir...')
   const folderPath = './rendered/' + gen.source_image_name
@@ -62,7 +62,7 @@ for (const imageName of images) {
   const tex = drawTrianglesToTexture(
     TARGET_WIDTH,
     TARGET_HEIGHT,
-    new Float32Array(data.positions) as Triangle_Buffer,
+    new Float32Array(data.positions) as Pos_Buffer,
     data.color_map,
   )
 

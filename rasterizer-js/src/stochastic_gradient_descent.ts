@@ -1,13 +1,13 @@
-import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
 import incrSGDRegression from '@stdlib/ml-incr-sgd-regression'
 import {randomNumberBounds} from './randomNumberBetween'
 
 export function createStochasticGradientDescent(
-  cost_func: (data: Triangle_Buffer) => number,
-  previousBest: Triangle_Buffer,
+  cost_func: (data: Pos_Buffer) => number,
+  previousBest: Pos_Buffer,
   domain: DomainBounds[],
 ): Optimizer {
-  const testBuffer = new Float32Array(previousBest) as Triangle_Buffer
+  const testBuffer = new Float32Array(previousBest) as Pos_Buffer
 
   const state = {
     pos: previousBest,
@@ -33,7 +33,7 @@ export function createStochasticGradientDescent(
 
         if (fitness < state.fitness) {
           state.fitness = fitness
-          state.pos = new Float32Array(testBuffer) as Triangle_Buffer
+          state.pos = new Float32Array(testBuffer) as Pos_Buffer
         }
       }
     },

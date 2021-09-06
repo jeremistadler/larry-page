@@ -1,9 +1,10 @@
 import {
+  CIRCLE_SIZE,
   ColorMapItemNormalized,
   ColorMapNormalized,
   RGB_Norm_Buffer,
   Settings,
-  Triangle_Buffer,
+  Pos_Buffer,
   TRIANGLE_SIZE,
 } from './micro'
 
@@ -29,15 +30,107 @@ function orient2d(
   return (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
 }
 
+function distance(p1x: number, p1y: number, p2x: number, p2y: number) {
+  var dx = p2x - p1x
+  var dy = p2y - p1y
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
 // (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0])
 
 // (A.x−B.x)∗(P.y−A.y)−(A.y−B.y)∗(P.x−A.x).
 
 const cache = new Map<number, RGB_Norm_Buffer>()
 
-export function calculateFitness(
+export function calculateFitnessCircle(
   settings: Settings,
-  triangles: Triangle_Buffer,
+  pos: Pos_Buffer,
+  imageTex: RGB_Norm_Buffer,
+  colorMap: ColorMapNormalized,
+) {
+  // let tex = cache.get(settings.size)
+
+  // if (tex === undefined) {
+  const tex = new Float32Array(
+    settings.size * settings.size * 3,
+  ) as RGB_Norm_Buffer
+  //   cache.set(settings.size, tex)
+  // }
+
+  tex.fill(1)
+
+  drawCirclesToTex(tex, settings.size, settings.size, pos, colorMap)
+
+  return diffAndCalculateFitness(imageTex, tex)
+}
+
+export function drawCirclesToNewTex(
+  width: number,
+  height: number,
+  triangles: Pos_Buffer,
+  colorMap: ColorMapNormalized,
+) {
+  const tex = new Float32Array(width * height * 3) as RGB_Norm_Buffer
+  tex.fill(1)
+
+  drawCirclesToTex(tex, width, height, triangles, colorMap)
+  return tex
+}
+
+function drawCirclesToTex(
+  tex: RGB_Norm_Buffer,
+  width: number,
+  height: number,
+  triangles: Pos_Buffer,
+  colorMap: ColorMapNormalized,
+) {
+  const err = 0.01
+
+  for (let y = 0; y < height; y++) {
+    const yNorm = y / height
+
+    for (let x = 0; x < width; x++) {
+      const xNorm = x / width
+
+      for (
+        let i = 0, triangleIndex = 0;
+        i < triangles.length;
+        i += CIRCLE_SIZE, triangleIndex++
+      ) {
+        const centerX = triangles[i + 0]
+        const centerY = triangles[i + 1]
+        const radius = triangles[i + 2]
+        const a0 = triangles[i + 3]
+
+        const dist = distance(centerX, centerY, xNorm, yNorm)
+
+        if (dist > (1 + err) * radius || radius <= 0) {
+          continue
+        }
+
+        const r = colorMap[triangleIndex][0]
+        const g = colorMap[triangleIndex][1]
+        const b = colorMap[triangleIndex][2]
+        const alp =
+          dist < (1.0 - err) * radius
+            ? 1
+            : 1.0 - (dist - (1.0 - err) * radius) / (2 * err * radius)
+
+        const totalAlpha = alp * a0
+        const totalAlphaI = 1 - totalAlpha
+
+        const index = (y * width + x) * 3
+        tex[index + 0] = totalAlphaI * tex[index + 0] + r * totalAlpha
+        tex[index + 1] = totalAlphaI * tex[index + 1] + g * totalAlpha
+        tex[index + 2] = totalAlphaI * tex[index + 2] + b * totalAlpha
+      }
+    }
+  }
+}
+
+export function calculateTriangleFitness(
+  settings: Settings,
+  triangles: Pos_Buffer,
   imageTex: RGB_Norm_Buffer,
   colorMap: ColorMapNormalized,
 ) {
@@ -67,7 +160,7 @@ export function calculateFitness(
 export function drawTrianglesToTexture(
   width: number,
   height: number,
-  triangles: Triangle_Buffer,
+  triangles: Pos_Buffer,
   colorMap: ColorMapNormalized,
 ) {
   const tex = new Float32Array(width * height * 3) as RGB_Norm_Buffer
@@ -81,7 +174,7 @@ export function drawTrianglesToTexture(
 }
 
 function fillTriangle(
-  triangles: Triangle_Buffer,
+  triangles: Pos_Buffer,
   tex: RGB_Norm_Buffer,
   startIndex: number,
   resultCanvasWidth: number,

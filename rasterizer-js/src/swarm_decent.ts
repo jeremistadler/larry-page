@@ -1,15 +1,15 @@
-import {Triangle_Buffer} from './micro'
+import {Pos_Buffer} from './micro'
 
 export async function runPSO(
-  cost_func: (data: Triangle_Buffer) => number,
+  cost_func: (data: Pos_Buffer) => number,
   featureCount: number,
   particleCount: number,
   onGeneration: (
-    best: Triangle_Buffer,
-    particles: {pos: Triangle_Buffer; fitness: number; variable: number}[],
+    best: Pos_Buffer,
+    particles: {pos: Pos_Buffer; fitness: number; variable: number}[],
   ) => Promise<void>,
 ) {
-  let bestGlobalPos = new Float32Array(featureCount) as Triangle_Buffer
+  let bestGlobalPos = new Float32Array(featureCount) as Pos_Buffer
   let bestGlobalFitness = 100000000
   let lastGenerationBestFitness = 100000000
   let rollingFitnessImprovement = 100
@@ -17,7 +17,7 @@ export async function runPSO(
   const particles = Array.from({length: particleCount}).map((_, i) => {
     const pos = new Float32Array(
       Array.from({length: featureCount}).map(() => Math.random()),
-    ) as Triangle_Buffer
+    ) as Pos_Buffer
     const fitness = cost_func(pos)
 
     if (fitness < bestGlobalFitness) {
@@ -32,7 +32,7 @@ export async function runPSO(
       velocity[i] = (Math.random() - 0.5) * 0.1
 
     return {
-      pos: new Float32Array(pos) as Triangle_Buffer,
+      pos: new Float32Array(pos) as Pos_Buffer,
       fitness,
       velocity: velocity,
       variable: (i + 1) / (particleCount * 4),
@@ -77,7 +77,7 @@ export async function runPSO(
 
       if (particle.fitness < bestGlobalFitness) {
         bestGlobalFitness = particle.fitness
-        bestGlobalPos = new Float32Array(particle.pos) as Triangle_Buffer
+        bestGlobalPos = new Float32Array(particle.pos) as Pos_Buffer
       }
     }
 

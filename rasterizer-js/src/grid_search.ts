@@ -1,11 +1,11 @@
-import {DomainBounds, Optimizer, Triangle_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
 
 export function createGridSearch(
-  cost_func: (data: Triangle_Buffer) => number,
-  previousBest: Triangle_Buffer,
+  cost_func: (data: Pos_Buffer) => number,
+  previousBest: Pos_Buffer,
   domain: DomainBounds[],
 ): Optimizer {
-  const testBuffer = new Float32Array(previousBest) as Triangle_Buffer
+  const testBuffer = new Float32Array(previousBest) as Pos_Buffer
 
   const best = {
     pos: previousBest,
@@ -27,7 +27,7 @@ export function createGridSearch(
       const fitness = cost_func(testBuffer)
       if (fitness < best.fitness) {
         best.fitness = fitness
-        best.pos = new Float32Array(testBuffer) as Triangle_Buffer
+        best.pos = new Float32Array(testBuffer) as Pos_Buffer
       }
 
       state.fitness = fitness
