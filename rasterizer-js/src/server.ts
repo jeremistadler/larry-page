@@ -2,6 +2,8 @@ import Prisma from '@prisma/client'
 import imageDecode from 'image-decode'
 import {performance} from 'perf_hooks'
 import sharp from 'sharp'
+import snappy from 'snappy'
+const {compressSync, uncompressSync} = snappy
 
 import * as fs from 'fs/promises'
 import {
@@ -28,14 +30,16 @@ if (!imageName) {
 console.log('Image name', imageName)
 
 const settings: Settings = {
-  size: 64,
+  size: 256,
   viewportSize: 512,
-  triangleCount: 20,
+  triangleCount: 80,
   historySize: 512,
 }
 
 const prisma = new Prisma.PrismaClient()
 const imagePath = './images/' + imageName
+
+const originalImage = imageDecode(await fs.readFile(imagePath))
 
 const resized = await sharp(imagePath)
   .resize(settings.size, settings.size, {
@@ -45,13 +49,13 @@ const resized = await sharp(imagePath)
   .raw()
   .toBuffer({resolveWithObject: true})
 
-const originalImage = {
+const resizedImage = {
   width: resized.info.width,
   height: resized.info.height,
   data: Uint8ClampedArray.from(resized.data),
 }
 const originalTex = imageToImageTex(
-  originalImage,
+  resizedImage,
   settings.size,
   resized.info.channels,
 )
@@ -96,8 +100,13 @@ const dbItem = await prisma.generations.findFirst({
     source_image_name: imageName,
     item_count: settings.triangleCount,
     item_type: 'triangle',
+    fitness: {gt: 0},
+    compressed_data: {not: null},
   },
   orderBy: [
+    {
+      training_resolution: 'desc',
+    },
     {
       fitness: 'asc',
     },
@@ -106,10 +115,23 @@ const dbItem = await prisma.generations.findFirst({
 
 let parentId: null | number = null
 
-if (dbItem != null) {
+if (dbItem != null && dbItem.compressed_data != null) {
   console.log('Got predecessor')
 
-  best = new Float32Array(dbItem.positions as any) as Triangle_Buffer
+  const decompressed = JSON.parse(
+    uncompressSync(dbItem.compressed_data, {asBuffer: false}),
+  ) as {positions: number[]; color_map: ColorMapNormalized}
+
+  if (decompressed.positions.length !== best.length) {
+    throw new Error(
+      'DB positions did not equal triangles ' +
+        decompressed.positions.length +
+        ' ' +
+        best.length,
+    )
+  }
+
+  best = new Float32Array(decompressed.positions) as Triangle_Buffer
   globalGeneration = dbItem.generation
   parentId = dbItem.id
 } else {
@@ -164,19 +186,24 @@ function runIterations() {
       data: {
         training_resolution: settings.size,
         generation: globalGeneration,
-        item_count: settings.triangleCount,
         optimizer_algorithm: optimizerType,
+        item_count: settings.triangleCount,
         item_type: 'triangle',
-        positions: JSON.stringify([...best]),
-        color_map: JSON.stringify(colorMap),
-        stencils: JSON.stringify([]),
-        bounds: JSON.stringify(bounds),
         source_image_height: originalImage.height,
         source_image_width: originalImage.width,
         source_image_name: imageName,
         fitness: optimizer.best.fitness,
         parent_id: parentId,
         ms_per_generation: time / generationsUsed,
+
+        compressed_data: compressSync(
+          JSON.stringify({
+            positions: [...best],
+            color_map: colorMap,
+            stencils: [],
+            bounds: bounds,
+          }),
+        ),
       },
     })
     .then(saveResult => {

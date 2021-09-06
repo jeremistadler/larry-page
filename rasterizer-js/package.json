@@ -9,7 +9,7 @@
     "server": "node --loader ts-node/esm --experimental-specifier-resolution=node  src/server.ts",
     "render": "node --loader ts-node/esm --experimental-specifier-resolution=node src/renderImages.ts",
     "runAllImages": "node src/startAllServers.mjs",
-    "proxyDB": "ssh -N -L 3307:127.0.0.1:3306 jeremi@185.20.12.212"
+    "proxyDB": "ssh -N -L 3306:127.0.0.1:3306 jeremi@185.20.12.212"
   },
   "dependencies": {
     "@prisma/client": "2.30.0",
@@ -23,6 +23,7 @@
     "parcel": "^2.0.0-rc.0",
     "prettier": "^2.3.2",
     "sharp": "^0.29.0",
+    "snappy": "^7.0.3",
     "ts-node": "^10.2.1",
     "typescript": "^4.3.5"
   },

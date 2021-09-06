@@ -1,5 +1,7 @@
 import Prisma from '@prisma/client'
 import imageEncode from 'image-encode'
+import pkg from 'snappy'
+const {uncompressSync} = pkg
 
 import * as fs from 'fs/promises'
 import {ColorMapNormalized, RGB_Norm_Buffer, Triangle_Buffer} from './micro'
@@ -9,17 +11,22 @@ const prisma = new Prisma.PrismaClient()
 
 const images = await fetchImagesList()
 
-console.log('Creating dir...')
-await fs.mkdir('./rendered', {recursive: true})
+const bestPath = './rendered/best'
+await fs.mkdir(bestPath, {recursive: true})
 
 for (const imageName of images) {
-  console.log('Fetching best image...')
+  console.log(imageName, 'Fetching best image...')
   const gen = await prisma.generations.findFirst({
     where: {
       source_image_name: imageName,
+      item_type: 'triangle',
       fitness: {gt: 0},
+      compressed_data: {not: null},
     },
     orderBy: [
+      {
+        training_resolution: 'desc',
+      },
       {
         fitness: 'asc',
       },
@@ -31,9 +38,23 @@ for (const imageName of images) {
     continue
   }
 
+  if (gen.compressed_data == null) {
+    console.log('No compressed_data for image', imageName)
+    continue
+  }
+
+  console.log('Uncompressing data...')
+  const data = JSON.parse(
+    uncompressSync(gen.compressed_data, {asBuffer: true}).toString('utf8'),
+  ) as {positions: Triangle_Buffer; color_map: ColorMapNormalized}
+
+  console.log('Creating dir...')
+  const folderPath = './rendered/' + gen.source_image_name
+  await fs.mkdir(folderPath, {recursive: true})
+
   console.log('Rendering', gen.source_image_name, gen.id)
 
-  const TARGET_HEIGHT = 512
+  const TARGET_HEIGHT = 1024
   const TARGET_WIDTH = Math.floor(
     (gen.source_image_width / gen.source_image_height) * TARGET_HEIGHT,
   )
@@ -41,8 +62,8 @@ for (const imageName of images) {
   const tex = drawTrianglesToTexture(
     TARGET_WIDTH,
     TARGET_HEIGHT,
-    new Float32Array(JSON.parse(gen.positions)) as Triangle_Buffer,
-    JSON.parse(gen.color_map) as ColorMapNormalized,
+    new Float32Array(data.positions) as Triangle_Buffer,
+    data.color_map,
   )
 
   const imageData = texToImageData(tex, TARGET_WIDTH, TARGET_HEIGHT)
@@ -53,7 +74,19 @@ for (const imageName of images) {
   })
   const buf = arrayBufferToBufferCycle(arrBuff)
   await fs.writeFile(
-    './rendered/' + gen.source_image_name + '_' + gen.generation + '.png',
+    folderPath +
+      '/' +
+      gen.item_type +
+      '_' +
+      gen.item_count +
+      '_' +
+      gen.generation +
+      '.png',
+    buf as any,
+  )
+
+  await fs.writeFile(
+    bestPath + '/' + gen.source_image_name + '.png',
     buf as any,
   )
 }
