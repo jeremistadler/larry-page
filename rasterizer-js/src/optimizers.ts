@@ -5,6 +5,7 @@ import {DomainBounds, Optimizer, OptimizerType, Triangle_Buffer} from './micro'
 import {createDifferentialEvolution} from './differential_evolution'
 import {createStochasticGradientDescent} from './stochastic_gradient_descent'
 import {createGridSearch} from './grid_search'
+import {createGridSearch4D} from './grid_search_4d'
 
 export const OPTIMIZER_LIST: OptimizerType[] = [
   'particle_swarm_optimization',
@@ -12,6 +13,7 @@ export const OPTIMIZER_LIST: OptimizerType[] = [
   'mutate_all',
   'mutate_one',
   'grid_search',
+  'grid_search_4d',
   // 'stochastic_gradient_descent',
 ]
 
@@ -36,6 +38,9 @@ export function createOptimizer(
 
     case 'grid_search':
       return createGridSearch(cost_func, previousBest, domain)
+
+    case 'grid_search_4d':
+      return createGridSearch4D(cost_func, previousBest, domain)
 
     case 'stochastic_gradient_descent':
       return createStochasticGradientDescent(cost_func, previousBest, domain)

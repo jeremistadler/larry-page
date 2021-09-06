@@ -98,3 +98,4 @@ export type OptimizerType =
   | 'mutate_all'
   | 'stochastic_gradient_descent'
   | 'grid_search'
+  | 'grid_search_4d'
