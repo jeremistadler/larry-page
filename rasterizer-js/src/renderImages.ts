@@ -29,7 +29,7 @@ for (const imageName of images) {
     where: {
       source_image_name: imageName,
       item_type: 'triangle',
-      item_count: 120,
+      item_count: 180,
       fitness: {gt: 0},
       compressed_data: {not: null},
     },

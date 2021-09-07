@@ -6,8 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "parcel index.html",
-    "server": "node --loader ts-node/esm --experimental-specifier-resolution=node  src/server.ts",
-    "render": "node --loader ts-node/esm --experimental-specifier-resolution=node src/renderImages.ts",
+    "render": "tsc && node dist/renderImages.js",
     "runAllImages": "tsc && node src/startAllServers.mjs",
     "proxyDB": "ssh -N -L 3306:127.0.0.1:3306 jeremi@185.20.12.212"
   },
