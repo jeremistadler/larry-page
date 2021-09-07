@@ -4,7 +4,13 @@ import pkg from 'snappy'
 const {uncompressSync} = pkg
 
 import * as fs from 'fs/promises'
-import {ColorMapNormalized, RGB_Norm_Buffer, Pos_Buffer} from './micro'
+import {
+  ColorMapNormalized,
+  RGB_Norm_Buffer,
+  Pos_Buffer,
+  TRIANGLE_SIZE,
+  CIRCLE_SIZE,
+} from './micro'
 import {drawCirclesToNewTex, drawTrianglesToTexture} from './fitness-calculator'
 
 const prisma = new Prisma.PrismaClient()
@@ -19,7 +25,8 @@ for (const imageName of images) {
   const gen = await prisma.generations.findFirst({
     where: {
       source_image_name: imageName,
-      item_type: 'circle',
+      item_type: 'triangle',
+      item_count: 160,
       fitness: {gt: 0},
       compressed_data: {not: null},
     },
@@ -47,6 +54,14 @@ for (const imageName of images) {
   const data = JSON.parse(
     uncompressSync(gen.compressed_data, {asBuffer: true}).toString('utf8'),
   ) as {positions: Pos_Buffer; color_map: ColorMapNormalized}
+
+  console.log({
+    itemCount: gen.item_count,
+    posItemCount:
+      data.positions.length /
+      (gen.item_type === 'triangle' ? TRIANGLE_SIZE : CIRCLE_SIZE),
+    colorItemCount: data.color_map.length,
+  })
 
   console.log('Creating dir...')
   const folderPath = './rendered/' + gen.source_image_name

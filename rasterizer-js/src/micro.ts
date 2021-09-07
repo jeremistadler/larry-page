@@ -4,12 +4,13 @@ export type Settings = {
   itemCount: number
   historySize: number
   itemSize: number
+  type: 'triangle' | 'circle'
 }
 
 export type ColorMapItemNormalized = [R: number, G: number, B: number]
 export type ColorMapNormalized = ColorMapItemNormalized[]
 
-export const TRIANGLE_SIZE = 2 * 3 + 1 * 1 // (pos) + (alpha) = 9
+export const TRIANGLE_SIZE = 2 * 3 + 1 // (pos: 2 * 3) + (alpha * 1) = 7
 export const CIRCLE_SIZE = 2 + 1 + 1 // (pos) radius + (alpha) = 4
 
 export function indexToName(index: number) {

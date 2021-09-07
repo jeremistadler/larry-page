@@ -285,5 +285,5 @@ function diffAndCalculateFitness(
     diff += q
   }
 
-  return diff / img.length
+  return diff
 }

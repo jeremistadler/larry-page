@@ -14,11 +14,16 @@ import {
   Settings,
   Pos_Buffer,
   CIRCLE_SIZE,
+  TRIANGLE_SIZE,
 } from './micro'
 import {RisoColors} from './FluorescentPink'
-import {calculateFitnessCircle} from './fitness-calculator'
+import {
+  calculateFitnessCircle,
+  calculateTriangleFitness,
+} from './fitness-calculator'
 import {randomNumberBounds} from './randomNumberBetween'
 import {createOptimizer, OPTIMIZER_LIST} from './optimizers'
+import {createBounds} from './createBounds'
 
 const imageName = process.argv[2]
 
@@ -32,9 +37,10 @@ console.log('Image name', imageName)
 const settings: Settings = {
   size: 256,
   viewportSize: 512,
-  itemCount: 80,
+  itemCount: 160,
   historySize: 512,
-  itemSize: CIRCLE_SIZE,
+  itemSize: TRIANGLE_SIZE,
+  type: 'triangle',
 }
 
 const prisma = new Prisma.PrismaClient()
@@ -61,33 +67,22 @@ const originalTex = imageToImageTex(
   resized.info.channels,
 )
 
-const palette = [RisoColors.Red, RisoColors.Green]
+const palette = [RisoColors.FluorescentPink, RisoColors.Blue]
 const colorMap: ColorMapNormalized = []
 
 for (let i = 0; i < settings.itemCount; i++) {
   colorMap.push(palette[Math.floor((i / settings.itemCount) * palette.length)])
 }
-const bounds: DomainBounds[] = Array.from({
-  length: settings.itemCount * settings.itemSize,
-})
-  .map((_, i): DomainBounds[] => {
-    return [
-      [0, 1], // x
-      [0, 1], // y
-      [0.05, 0.2], // radius
-      [0.1, 0.4], // alpha
-    ]
+const bounds = createBounds(settings.itemCount, settings.type)
 
-    // const a = i % TRIANGLE_SIZE
-    // return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
-  })
-  .flat(1)
+if (bounds.length !== settings.itemSize * settings.itemCount)
+  throw new Error('Bounds are not the same length as pos ' + bounds.length)
 
 let globalGeneration = 0
 
 const lossFn = (pos: Pos_Buffer) => {
   globalGeneration++
-  const f = calculateFitnessCircle(settings, pos, originalTex, colorMap)
+  const f = calculateTriangleFitness(settings, pos, originalTex, colorMap)
 
   // if (f === 0 || f < 0 || f > 1 || isNaN(f)) {
   //   throw new Error('calculateFitness returned invalid result ' + f)
@@ -107,7 +102,7 @@ const dbItem = await prisma.generations.findFirst({
   where: {
     source_image_name: imageName,
     item_count: settings.itemCount,
-    item_type: 'circle',
+    item_type: settings.type,
     fitness: {gt: 0},
     compressed_data: {not: null},
   },
@@ -122,6 +117,7 @@ const dbItem = await prisma.generations.findFirst({
 })
 
 let parentId: null | number = null
+let lastSavedFitness: number = 0
 
 if (dbItem != null && dbItem.compressed_data != null) {
   console.log('Got predecessor')
@@ -146,7 +142,7 @@ if (dbItem != null && dbItem.compressed_data != null) {
   console.log('No predecessor found, starting from scratch')
 }
 
-let optimizerType: OptimizerType = 'differential_evolution'
+let optimizerType: OptimizerType = 'particle_swarm_optimization'
 let optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
 
 let nextIterationCount = 1
@@ -189,39 +185,43 @@ function runIterations() {
     throw new Error('Fitness is invalid ' + optimizerType)
   }
 
-  prisma.generations
-    .create({
-      data: {
-        training_resolution: settings.size,
-        generation: globalGeneration,
-        optimizer_algorithm: optimizerType,
-        item_type: 'circle',
-        item_count: settings.itemCount,
-        source_image_height: originalImage.height,
-        source_image_width: originalImage.width,
-        source_image_name: imageName,
-        fitness: optimizer.best.fitness,
-        parent_id: parentId,
-        ms_per_generation: time / generationsUsed,
+  if (lastSavedFitness !== optimizer.best.fitness) {
+    lastSavedFitness = optimizer.best.fitness
 
-        compressed_data: compressSync(
-          JSON.stringify({
-            positions: [...best],
-            color_map: colorMap,
-            stencils: [],
-            bounds: bounds,
-          }),
-        ),
-      },
-    })
-    .then(saveResult => {
-      parentId = saveResult.id
-    })
-    .catch(err => {
-      console.error('Save error', err)
-    })
+    prisma.generations
+      .create({
+        data: {
+          training_resolution: settings.size,
+          generation: globalGeneration,
+          optimizer_algorithm: optimizerType,
+          item_type: settings.type,
+          item_count: settings.itemCount,
+          source_image_height: originalImage.height,
+          source_image_width: originalImage.width,
+          source_image_name: imageName,
+          fitness: optimizer.best.fitness,
+          parent_id: parentId,
+          ms_per_generation: time / generationsUsed,
 
-  if (globalGeneration - globalGenerationStartForOptimizer > 100000) {
+          compressed_data: compressSync(
+            JSON.stringify({
+              positions: [...best],
+              color_map: colorMap,
+              stencils: [],
+              bounds: bounds,
+            }),
+          ),
+        },
+      })
+      .then(saveResult => {
+        parentId = saveResult.id
+      })
+      .catch(err => {
+        console.error('Save error', err)
+      })
+  }
+
+  if (globalGeneration - globalGenerationStartForOptimizer > 10000) {
     globalGenerationStartForOptimizer = globalGeneration
     optimizerType =
       OPTIMIZER_LIST[

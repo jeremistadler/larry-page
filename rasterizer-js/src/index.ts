@@ -11,19 +11,25 @@ import {
   RGB_Norm_Buffer,
   Settings,
   Pos_Buffer,
+  TRIANGLE_SIZE,
 } from './micro'
-import {calculateFitnessCircle, drawCirclesToNewTex} from './fitness-calculator'
+import {
+  calculateTriangleFitness,
+  drawTrianglesToTexture,
+} from './fitness-calculator'
 import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
 import {randomNumberBounds} from './randomNumberBetween'
 import {RisoColors} from './FluorescentPink'
+import {createBounds} from './createBounds'
 
 async function initialize() {
   const settings: Settings = {
-    size: 128,
+    size: 256,
     viewportSize: 512,
     itemCount: 100,
     historySize: 512,
-    itemSize: CIRCLE_SIZE,
+    itemSize: TRIANGLE_SIZE,
+    type: 'triangle',
   }
   const viewportScale = settings.viewportSize / settings.size
 
@@ -48,28 +54,14 @@ async function initialize() {
       palette[Math.floor((i / settings.itemCount) * palette.length)],
     )
   }
-  const domain: DomainBounds[] = Array.from({
-    length: settings.itemCount,
-  })
-    .map((_, i): DomainBounds[] => {
-      return [
-        [0, 1], // x
-        [0, 1], // y
-        [0.05, 0.2], // radius
-        [0.1, 0.2], // alpha
-      ]
-      // const a = i % TRIANGLE_SIZE
-      // return a === TRIANGLE_SIZE - 1 ? [0.1, 0.8] : [0.05, 0.95]
-    })
-    .flat(1)
-
+  const bounds = createBounds(settings.itemCount, settings.type)
   const imageTex = imageToImageTex(originalImage, settings.size)
 
   let globalFitnessTests = 0
 
   const lossFn = (pos: Pos_Buffer) => {
     globalFitnessTests++
-    const fitness = calculateFitnessCircle(settings, pos, imageTex, colorMap)
+    const fitness = calculateTriangleFitness(settings, pos, imageTex, colorMap)
 
     if (isNaN(fitness)) {
       throw new Error('Fitness is NaN')
@@ -79,9 +71,9 @@ async function initialize() {
       throw new Error('Fitness is less than 0')
     }
 
-    if (fitness > 1) {
-      throw new Error('Fitness is more than 1')
-    }
+    // if (fitness > 1) {
+    //   throw new Error('Fitness is more than 1')
+    // }
     return fitness
   }
 
@@ -89,9 +81,6 @@ async function initialize() {
 
   const infoDiv = document.createElement('div')
   document.body.append(infoDiv)
-
-  const infoDiv2 = document.createElement('div')
-  document.body.append(infoDiv2)
 
   const dimensionsCtxList = Array.from({
     length: Math.min(
@@ -107,13 +96,16 @@ async function initialize() {
     ),
   )
 
+  const infoDiv2 = document.createElement('div')
+  document.body.append(infoDiv2)
+
   let best = new Float32Array(
     settings.itemSize * settings.itemCount,
   ) as Pos_Buffer
-  for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(domain[i])
+  for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(bounds[i])
 
-  let optimizerType: OptimizerType = 'differential_evolution'
-  let optimizer = createOptimizer(optimizerType, lossFn, domain, best)
+  let optimizerType: OptimizerType = 'particle_swarm_optimization'
+  let optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
 
   let nextIterationCount = 1
   let nextIterationOptimizer = 0
@@ -125,7 +117,7 @@ async function initialize() {
       OPTIMIZER_LIST[
         (OPTIMIZER_LIST.indexOf(optimizerType) + 1) % OPTIMIZER_LIST.length
       ]
-    optimizer = createOptimizer(optimizerType, lossFn, domain, best)
+    optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
     infoDiv.innerHTML = optimizerType
     nextIterationCount = 1
     nextIterationOptimizer = 0
@@ -158,7 +150,7 @@ async function initialize() {
       )
     }
 
-    const bestTex = drawCirclesToNewTex(
+    const bestTex = drawTrianglesToTexture(
       settings.size,
       settings.size,
       best,

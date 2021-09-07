@@ -6,7 +6,7 @@ export function createParticleSwarmOptimization(
   previousBest: Pos_Buffer,
   domain: DomainBounds[],
 ): Optimizer {
-  const particleCount = 30
+  const particleCount = 50
 
   const best = {
     pos: previousBest,
@@ -38,10 +38,8 @@ export function createParticleSwarmOptimization(
 
       return {
         pos: new Float32Array(pos) as Pos_Buffer,
-        bestPos: new Float32Array(pos) as Pos_Buffer,
         fitness,
         rollingFitnessDelta: 1,
-        bestFitness: fitness,
         velocity: velocity,
         variables: [
           // Math.random() * 1.9,
@@ -50,7 +48,7 @@ export function createParticleSwarmOptimization(
           // Math.random() * 0.1,
           // Math.random() * 1.0,
 
-          0.8, 0.1, 0.1, 0.01, 0.1,
+          0.9, 0.1, 0.001, 0.1,
         ],
       }
     },
@@ -66,18 +64,16 @@ export function createParticleSwarmOptimization(
     particles,
     runNext: (iteration: number) => {
       for (const particle of particles) {
-        const [omega, phiParticle, phiGlobal, megaDelta, learningRate] =
-          particle.variables
+        const [omega, phiGlobal, megaDelta, learningRate] = particle.variables
 
         for (let i = 0; i < particle.pos.length; i++) {
-          const bestPos = particle.bestPos[i]
+          // const bestPos = particle.bestPos[i]
           const pos = particle.pos[i]
           const vel = particle.velocity[i]
 
           particle.velocity[i] =
             vel * omega +
             phiGlobal * Math.random() * (best.pos[i] - pos) +
-            phiParticle * Math.random() * (bestPos - pos) +
             (Math.random() - 0.5) * megaDelta
 
           particle.pos[i] += particle.velocity[i] * learningRate
@@ -104,28 +100,31 @@ export function createParticleSwarmOptimization(
           0.5,
         )
 
-        if (particle.fitness < particle.bestFitness) {
-          particle.bestFitness = particle.fitness
-          particle.bestPos = new Float32Array(particle.pos) as Pos_Buffer
-
-          if (particle.fitness < best.fitness) {
-            best.fitness = particle.fitness
-            best.pos = new Float32Array(particle.pos) as Pos_Buffer
-          }
+        if (particle.fitness < best.fitness) {
+          best.fitness = particle.fitness
+          best.pos = new Float32Array(particle.pos) as Pos_Buffer
         }
       }
 
-      if (iteration !== 0 && iteration % 1000 === 0) {
-        for (let p = 0; p < particles.length; p++) {
-          const particle = particles[p]
+      if (iteration !== 0 && iteration % 100 === 0) {
+        let totalVelocity = 0
 
-          for (let i = 0; i < particle.pos.length; i++) {
-            particle.pos[i] = randomNumberBetween(domain[i][0], domain[i][1])
-            // particle.bestPos[i] = randomNumberBetween(
-            //   domain[i][0],
-            //   domain[i][1],
-            // )
-            particle.velocity[i] = randomNumberBetween(-0.2, 0.2)
+        for (let i = 0; i < particles.length; i++) {
+          for (let p = 0; p < best.pos.length; p++) {
+            totalVelocity += Math.abs(particles[i].velocity[p])
+          }
+        }
+
+        const scaledVel = totalVelocity / (particles.length * best.pos.length)
+
+        if (scaledVel < 0.0006) {
+          for (let p = 0; p < particles.length; p++) {
+            const particle = particles[p]
+
+            for (let i = 0; i < particle.pos.length; i++) {
+              particle.pos[i] = randomNumberBounds(domain[i])
+              particle.velocity[i] = randomNumberBetween(-1, 1)
+            }
           }
         }
       }

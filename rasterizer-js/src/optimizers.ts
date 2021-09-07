@@ -10,9 +10,9 @@ import {createGridSearch4D} from './grid_search_4d'
 export const OPTIMIZER_LIST: OptimizerType[] = [
   'particle_swarm_optimization',
   'differential_evolution',
-  'mutate_all',
+  // 'mutate_all',
   'mutate_one',
-  'grid_search',
+  // 'grid_search',
   'grid_search_4d',
   // 'stochastic_gradient_descent',
 ]
