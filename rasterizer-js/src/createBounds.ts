@@ -1,4 +1,4 @@
-import {DomainBounds} from './micro'
+import {DomainBounds} from './micro.js'
 
 export function createBounds(
   itemCount: number,

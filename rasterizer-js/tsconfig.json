@@ -19,7 +19,8 @@
     "noImplicitAny": false,
     "resolveJsonModule": false,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": false,
+    "outDir": "dist"
   },
   "include": [
     "./src/**/*.ts" ]

@@ -1,4 +1,4 @@
-import {Pos_Buffer} from './micro'
+import {Pos_Buffer} from './micro.js'
 
 export async function runPSO(
   cost_func: (data: Pos_Buffer) => number,

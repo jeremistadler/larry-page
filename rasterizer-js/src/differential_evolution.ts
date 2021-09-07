@@ -1,5 +1,5 @@
-import {randomNumberBounds} from './randomNumberBetween'
-import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
+import {randomNumberBounds} from './randomNumberBetween.js'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro.js'
 
 export function createDifferentialEvolution(
   cost_func: (data: Pos_Buffer) => number,
@@ -45,27 +45,40 @@ export function createDifferentialEvolution(
   return {
     best: state,
     particles,
-    runNext: (iteration: number) => {
-      if (iteration % 100 === 1) {
-        const pos = new Float32Array(previousBest.length) as Pos_Buffer
-
-        for (let i = 0; i < pos.length; i++)
-          pos[i] = randomNumberBounds(domain[i])
-
-        const fitness = cost_func(pos)
-
-        if (fitness < state.fitness) {
-          state.fitness = fitness
-          state.pos = new Float32Array(pos) as Pos_Buffer
+    hasConverged: () => {
+      const MAX_DIFF = 0.05
+      const center = particles[0]
+      for (let p = 1; p < particles.length; p++) {
+        for (let i = 0; i < center.pos.length; i++) {
+          if (Math.abs(center.pos[i] - particles[p].pos[i]) > MAX_DIFF) {
+            return false
+          }
         }
-
-        // console.log('Adding one', particles.length)
-
-        particles.push({
-          pos,
-          fitness,
-        })
       }
+
+      return true
+    },
+    runNext: (iteration: number) => {
+      // if (iteration % 100 === 1) {
+      //   const pos = new Float32Array(previousBest.length) as Pos_Buffer
+
+      //   for (let i = 0; i < pos.length; i++)
+      //     pos[i] = randomNumberBounds(domain[i])
+
+      //   const fitness = cost_func(pos)
+
+      //   if (fitness < state.fitness) {
+      //     state.fitness = fitness
+      //     state.pos = new Float32Array(pos) as Pos_Buffer
+      //   }
+
+      //   // console.log('Adding one', particles.length)
+
+      //   particles.push({
+      //     pos,
+      //     fitness,
+      //   })
+      // }
 
       for (const particle of particles) {
         let a = randomIn(particles)

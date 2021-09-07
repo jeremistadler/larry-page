@@ -1,4 +1,4 @@
-import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro.js'
 
 export function createMutateOne(
   cost_func: (data: Pos_Buffer) => number,
@@ -16,6 +16,7 @@ export function createMutateOne(
   return {
     best: state,
     particles: [state],
+    hasConverged: () => false,
     runNext: (iteration: number) => {
       const dim = Math.floor(Math.random() * previousBest.length)
       for (let i = 0; i < testBuffer.length; i++) {

@@ -15,6 +15,7 @@ import {
 } from './micro'
 import {
   calculateTriangleFitness,
+  calculateTriangleFitnessWithPrerender,
   drawTrianglesToTexture,
 } from './fitness-calculator'
 import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
@@ -24,9 +25,10 @@ import {createBounds} from './createBounds'
 
 async function initialize() {
   const settings: Settings = {
-    size: 256,
+    size: 128,
     viewportSize: 512,
-    itemCount: 100,
+    itemCount: 4,
+    targetItemCount: 80,
     historySize: 512,
     itemSize: TRIANGLE_SIZE,
     type: 'triangle',
@@ -40,28 +42,54 @@ async function initialize() {
   const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
   drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
 
+  if (settings.targetItemCount % settings.itemCount !== 0) {
+    throw new Error('targetItemCount needs to be multiple of itemCount')
+  }
+
   const palette = [
-    // FluorescentPink, //
-    // Blue,
-    // Orange,
-    RisoColors.Red,
-    RisoColors.Green,
+    RisoColors.FluorescentPink, //
+    RisoColors.Blue,
+    // RisoColors.Orange,
+    // RisoColors.Red,
+    // RisoColors.Green,
   ]
   const colorMap: ColorMapNormalized = []
 
-  for (let i = 0; i < settings.itemCount; i++) {
+  for (let i = 0; i < settings.targetItemCount; i++) {
     colorMap.push(
-      palette[Math.floor((i / settings.itemCount) * palette.length)],
+      palette[Math.floor((i / settings.targetItemCount) * palette.length)],
     )
   }
-  const bounds = createBounds(settings.itemCount, settings.type)
-  const imageTex = imageToImageTex(originalImage, settings.size)
+  const bounds = createBounds(settings.targetItemCount, settings.type)
+  const originalTex = imageToImageTex(originalImage, settings.size)
 
   let globalFitnessTests = 0
+  let best = new Float32Array(
+    settings.itemSize * settings.targetItemCount,
+  ) as Pos_Buffer
+  let currentPosSlice = new Float32Array(
+    settings.itemSize * settings.itemCount,
+  ) as Pos_Buffer
+  for (let i = 0; i < currentPosSlice.length; i++)
+    currentPosSlice[i] = randomNumberBounds(bounds[i])
+
+  let prerenderIndex = 0
+  let prerendered = new Float32Array(
+    settings.size * settings.size * 3,
+  ) as RGB_Norm_Buffer
+  prerendered.fill(1)
 
   const lossFn = (pos: Pos_Buffer) => {
     globalFitnessTests++
-    const fitness = calculateTriangleFitness(settings, pos, imageTex, colorMap)
+    const fitness = calculateTriangleFitnessWithPrerender(
+      settings,
+      pos,
+      best,
+      prerenderIndex,
+      originalTex,
+      prerendered,
+      colorMap,
+    )
 
     if (isNaN(fitness)) {
       throw new Error('Fitness is NaN')
@@ -78,13 +106,17 @@ async function initialize() {
   }
 
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
+  const prerenderedCtx = createCanvas('Prerender', settings.viewportSize).ctx
+  const historyCtx = createCanvas('History', settings.viewportSize)
+
+  const historyList: number[][] = [[]]
 
   const infoDiv = document.createElement('div')
   document.body.append(infoDiv)
 
   const dimensionsCtxList = Array.from({
     length: Math.min(
-      30,
+      0,
       Math.floor((settings.itemSize * settings.itemCount) / 2),
     ),
   }).map((_, i) =>
@@ -99,13 +131,13 @@ async function initialize() {
   const infoDiv2 = document.createElement('div')
   document.body.append(infoDiv2)
 
-  let best = new Float32Array(
-    settings.itemSize * settings.itemCount,
-  ) as Pos_Buffer
-  for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(bounds[i])
-
-  let optimizerType: OptimizerType = 'particle_swarm_optimization'
-  let optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
+  let optimizerType: OptimizerType = 'differential_evolution'
+  let optimizer = createOptimizer(
+    optimizerType,
+    lossFn,
+    bounds,
+    currentPosSlice,
+  )
 
   let nextIterationCount = 1
   let nextIterationOptimizer = 0
@@ -117,11 +149,14 @@ async function initialize() {
       OPTIMIZER_LIST[
         (OPTIMIZER_LIST.indexOf(optimizerType) + 1) % OPTIMIZER_LIST.length
       ]
-    optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
+    optimizer = createOptimizer(optimizerType, lossFn, bounds, currentPosSlice)
     infoDiv.innerHTML = optimizerType
     nextIterationCount = 1
     nextIterationOptimizer = 0
   }
+
+  let iterationC = 0
+  let fitnessChecksSinceNextLevel = 0
 
   function runIterations() {
     const start = performance.now()
@@ -131,19 +166,80 @@ async function initialize() {
     const time = performance.now() - start
     infoDiv2.innerHTML =
       (time / (globalFitnessTests - lastGlobalFitnessTests)).toFixed(4) +
-      ' ms per iteration'
+      ' ms per iteration<br>ittr: ' +
+      fitnessChecksSinceNextLevel +
+      '<br>ItemCount: ' +
+      settings.itemCount
+    fitnessChecksSinceNextLevel += globalFitnessTests - lastGlobalFitnessTests
     lastGlobalFitnessTests = globalFitnessTests
 
     nextIterationCount = Math.max(
       1,
       Math.floor((nextIterationCount / time) * 100),
     )
-    best = optimizer.best.pos
+
+    for (let i = 0; i < optimizer.best.pos.length; i++) {
+      best[i + prerenderIndex] = optimizer.best.pos[i]
+    }
+
+    historyList[0].push(optimizer.best.fitness)
+    if (historyList[0].length > 1000) historyList[0].shift()
+
+    iterationC++
+    if (
+      fitnessChecksSinceNextLevel > 5000 ||
+      (iterationC > 0 && iterationC % 10 && optimizer.hasConverged())
+    ) {
+      fitnessChecksSinceNextLevel = 0
+      prerenderIndex += currentPosSlice.length
+      if (prerenderIndex === best.length) {
+        prerenderIndex = 0
+
+        if (settings.targetItemCount === settings.itemCount) {
+          settings.itemCount = 1
+        } else {
+          settings.itemCount++
+          while (settings.targetItemCount % settings.itemCount !== 0) {
+            settings.itemCount++
+          }
+
+          settings.itemCount = Math.min(
+            settings.targetItemCount,
+            settings.itemCount,
+          )
+        }
+      }
+
+      const prerenderPos = new Float32Array(prerenderIndex) as Pos_Buffer
+      for (let i = 0; i < prerenderPos.length; i++) prerenderPos[i] = best[i]
+
+      prerendered = drawTrianglesToTexture(
+        settings.size,
+        settings.size,
+        prerenderPos,
+        colorMap,
+      )
+
+      currentPosSlice = new Float32Array(
+        settings.itemCount * settings.itemSize,
+      ) as Pos_Buffer
+
+      for (let i = 0; i < currentPosSlice.length; i++)
+        currentPosSlice[i] = best[i + prerenderIndex]
+
+      optimizer = createOptimizer(
+        optimizerType,
+        lossFn,
+        bounds,
+        currentPosSlice,
+      )
+    }
 
     for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
       drawDimensionToCanvas(
         dimensionsCtxList[dim],
-        best,
+        settings,
+        currentPosSlice,
         lossFn,
         dim * 2,
         optimizer.particles,
@@ -157,6 +253,14 @@ async function initialize() {
       colorMap,
     )
     drawTextureToCanvas(bestCtx, bestTex, settings.size, viewportScale)
+
+    drawTextureToCanvas(
+      prerenderedCtx,
+      prerendered,
+      settings.size,
+      viewportScale,
+    )
+    drawHistoryToCanvas(historyCtx, historyList, -1)
 
     requestAnimationFrame(runIterations)
   }
@@ -226,6 +330,7 @@ function fetchImage(url: string, size: number): Promise<ImageData> {
 
 function drawDimensionToCanvas(
   {ctx, size}: Canvas,
+  settings: Settings,
   pos: Pos_Buffer,
   cost_fn: (pos: Pos_Buffer) => number,
   index: number,
@@ -233,27 +338,27 @@ function drawDimensionToCanvas(
 ) {
   const temp = new Float32Array(pos) as Pos_Buffer
   // const orgValue = pos[index]
-  const EVALUATION_COUNT = 6
+  const EVALUATION_COUNT = 8
   const pointSize = size / EVALUATION_COUNT
   ctx.fillStyle = 'rgb(255, 255, 255)'
   ctx.fillRect(0, 0, size, size)
 
-  // for (let x = 0; x < EVALUATION_COUNT; x++) {
-  //   for (let y = 0; y < EVALUATION_COUNT; y++) {
-  //     const percX = x / EVALUATION_COUNT
-  //     const percY = y / EVALUATION_COUNT
+  for (let x = 0; x < EVALUATION_COUNT; x++) {
+    for (let y = 0; y < EVALUATION_COUNT; y++) {
+      const percX = x / EVALUATION_COUNT
+      const percY = y / EVALUATION_COUNT
 
-  //     temp[index + 0] = percX
-  //     temp[index + 1] = percY
+      temp[index + 0] = percX
+      temp[index + 1] = percY
 
-  //     const fitness = cost_fn(temp)
+      const fitness = cost_fn(temp) / (settings.size * settings.size)
 
-  //     ctx.fillStyle = `hsl(${(fitness * 360 * 6) % 360}, 70%, 50%)`
-  //     ctx.beginPath()
-  //     ctx.fillRect(percX * size, percY * size, pointSize + 1, pointSize + 1)
-  //     ctx.fill()
-  //   }
-  // }
+      ctx.fillStyle = `hsl(${(fitness * 360 * 6) % 360}, 70%, 50%)`
+      ctx.beginPath()
+      ctx.fillRect(percX * size, percY * size, pointSize + 1, pointSize + 1)
+      ctx.fill()
+    }
+  }
 
   for (let i = 0; i < particles.length; i++) {
     ctx.fillStyle = `hsla(${
@@ -282,12 +387,12 @@ function drawHistoryToCanvas(
   ctx.fillStyle = 'rgb(245, 245, 255)'
   ctx.fillRect(0, 0, size, size)
 
-  let max = -111000
+  let max = -111000000
   for (let a = 0; a < history.length; a++)
     for (let b = 0; b < history[a].length; b++)
       max = Math.max(history[a][b], max)
 
-  let min = 1000000
+  let min = 10000000000
   for (let a = 0; a < history.length; a++)
     for (let b = 0; b < history[a].length; b++)
       min = Math.min(history[a][b], min)
@@ -308,7 +413,7 @@ function drawHistoryToCanvas(
     ctx.lineWidth = selectedIndex === -1 ? 2 : selectedIndex === a ? 4 : 1
     ctx.lineJoin = 'round'
     ctx.strokeStyle = `hsla(${(a / history.length) * 360}, 40%, 50%, ${
-      selectedIndex === -1 ? 1 : selectedIndex === a ? 1 : 0.3
+      selectedIndex === -1 ? 1 : selectedIndex === a ? 1 : 0.6
     })`
     ctx.stroke()
   }
@@ -383,4 +488,13 @@ function imageToImageTex(imageData: ImageData, size: number): RGB_Norm_Buffer {
   }
 
   return tex
+}
+
+function randomDivisableBy(num: number, limit: number) {
+  // getting a random number
+  const random = Math.random() * limit
+
+  // rounding it off to be divisible by num
+  const res = Math.round(random / num) * num
+  return res
 }

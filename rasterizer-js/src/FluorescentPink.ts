@@ -1,4 +1,4 @@
-import {ColorMapItemNormalized} from './micro'
+import {ColorMapItemNormalized} from './micro.js'
 
 export const RisoColors = {
   FluorescentPink: [255 / 255, 72 / 255, 176 / 255] as ColorMapItemNormalized,

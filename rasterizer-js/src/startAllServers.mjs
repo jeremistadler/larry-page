@@ -5,7 +5,10 @@ const allImageNames = await fetchImagesList()
 
 for (const imageName of allImageNames) {
   console.log('Starting', imageName)
-  childP.spawn('yarn server', [imageName], {shell: true, stdio: 'inherit'})
+  childP.spawn('node ./dist/server.js', [imageName], {
+    shell: true,
+    stdio: 'inherit',
+  })
 }
 
 async function fetchImagesList() {

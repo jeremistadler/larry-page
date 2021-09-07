@@ -1,4 +1,4 @@
-import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro.js'
 
 export function createGridSearch(
   cost_func: (data: Pos_Buffer) => number,
@@ -23,6 +23,7 @@ export function createGridSearch(
   return {
     best: best,
     particles: [state],
+    hasConverged: () => false,
     runNext: (iteration: number) => {
       const fitness = cost_func(testBuffer)
       if (fitness < best.fitness) {

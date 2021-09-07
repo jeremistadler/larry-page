@@ -10,8 +10,11 @@ import {
   Pos_Buffer,
   TRIANGLE_SIZE,
   CIRCLE_SIZE,
-} from './micro'
-import {drawCirclesToNewTex, drawTrianglesToTexture} from './fitness-calculator'
+} from './micro.js'
+import {
+  drawCirclesToNewTex,
+  drawTrianglesToTexture,
+} from './fitness-calculator.js'
 
 const prisma = new Prisma.PrismaClient()
 
@@ -26,7 +29,7 @@ for (const imageName of images) {
     where: {
       source_image_name: imageName,
       item_type: 'triangle',
-      item_count: 160,
+      item_count: 120,
       fitness: {gt: 0},
       compressed_data: {not: null},
     },

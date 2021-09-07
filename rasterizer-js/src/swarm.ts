@@ -1,5 +1,5 @@
-import {randomNumberBetween, randomNumberBounds} from './randomNumberBetween'
-import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
+import {randomNumberBetween, randomNumberBounds} from './randomNumberBetween.js'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro.js'
 
 export function createParticleSwarmOptimization(
   cost_func: (data: Pos_Buffer) => number,
@@ -62,6 +62,7 @@ export function createParticleSwarmOptimization(
   return {
     best: best,
     particles,
+    hasConverged: () => false,
     runNext: (iteration: number) => {
       for (const particle of particles) {
         const [omega, phiGlobal, megaDelta, learningRate] = particle.variables

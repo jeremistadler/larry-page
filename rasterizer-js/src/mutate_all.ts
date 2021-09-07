@@ -1,4 +1,4 @@
-import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro.js'
 
 export function createMutateAll(
   cost_func: (data: Pos_Buffer) => number,
@@ -16,6 +16,7 @@ export function createMutateAll(
   return {
     best: state,
     particles: [state],
+    hasConverged: () => false,
     runNext: (iteration: number) => {
       for (let i = 0; i < testBuffer.length; i++) {
         let value = state.pos[i] + (Math.random() - 0.5) * MAX_CHANGE

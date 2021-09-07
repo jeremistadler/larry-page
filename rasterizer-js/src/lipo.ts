@@ -1,4 +1,4 @@
-import {Pos_Buffer} from './micro'
+import {Pos_Buffer} from './micro.js'
 import {norm} from 'mathjs'
 
 export type KnownPoints = {

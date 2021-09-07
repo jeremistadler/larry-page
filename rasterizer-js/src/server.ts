@@ -8,22 +8,19 @@ const {compressSync, uncompressSync} = snappy
 import * as fs from 'fs/promises'
 import {
   ColorMapNormalized,
-  DomainBounds,
   OptimizerType,
   RGB_Norm_Buffer,
   Settings,
   Pos_Buffer,
-  CIRCLE_SIZE,
   TRIANGLE_SIZE,
-} from './micro'
-import {RisoColors} from './FluorescentPink'
+} from './micro.js'
+import {RisoColors} from './FluorescentPink.js'
 import {
-  calculateFitnessCircle,
-  calculateTriangleFitness,
-} from './fitness-calculator'
-import {randomNumberBounds} from './randomNumberBetween'
-import {createOptimizer, OPTIMIZER_LIST} from './optimizers'
-import {createBounds} from './createBounds'
+  calculateTriangleFitnessWithPrerender,
+  drawTrianglesToTexture,
+} from './fitness-calculator.js'
+import {createOptimizer} from './optimizers.js'
+import {createBounds} from './createBounds.js'
 
 const imageName = process.argv[2]
 
@@ -35,12 +32,17 @@ if (!imageName) {
 console.log('Image name', imageName)
 
 const settings: Settings = {
-  size: 256,
+  size: 128,
   viewportSize: 512,
-  itemCount: 160,
+  itemCount: 4,
+  targetItemCount: 180,
   historySize: 512,
   itemSize: TRIANGLE_SIZE,
   type: 'triangle',
+}
+
+if (settings.targetItemCount % settings.itemCount !== 0) {
+  throw new Error('targetItemCount needs to be multiple of itemCount')
 }
 
 const prisma = new Prisma.PrismaClient()
@@ -70,38 +72,50 @@ const originalTex = imageToImageTex(
 const palette = [RisoColors.FluorescentPink, RisoColors.Blue]
 const colorMap: ColorMapNormalized = []
 
-for (let i = 0; i < settings.itemCount; i++) {
-  colorMap.push(palette[Math.floor((i / settings.itemCount) * palette.length)])
+for (let i = 0; i < settings.targetItemCount; i++) {
+  colorMap.push(
+    palette[Math.floor((i / settings.targetItemCount) * palette.length)],
+  )
 }
-const bounds = createBounds(settings.itemCount, settings.type)
+const bounds = createBounds(settings.targetItemCount, settings.type)
 
-if (bounds.length !== settings.itemSize * settings.itemCount)
+if (bounds.length !== settings.itemSize * settings.targetItemCount)
   throw new Error('Bounds are not the same length as pos ' + bounds.length)
 
 let globalGeneration = 0
+let best = new Float32Array(
+  settings.itemSize * settings.targetItemCount,
+) as Pos_Buffer
+let currentPosSlice = new Float32Array(
+  settings.itemSize * settings.itemCount,
+) as Pos_Buffer
+
+let prerenderIndex = 0
+let prerendered = new Float32Array(
+  settings.size * settings.size * 3,
+) as RGB_Norm_Buffer
+prerendered.fill(1)
 
 const lossFn = (pos: Pos_Buffer) => {
   globalGeneration++
-  const f = calculateTriangleFitness(settings, pos, originalTex, colorMap)
 
-  // if (f === 0 || f < 0 || f > 1 || isNaN(f)) {
-  //   throw new Error('calculateFitness returned invalid result ' + f)
-  // }
-
-  return f
+  return calculateTriangleFitnessWithPrerender(
+    settings,
+    pos,
+    best,
+    prerenderIndex,
+    originalTex,
+    prerendered,
+    colorMap,
+  )
 }
-
-let best = new Float32Array(
-  settings.itemSize * settings.itemCount,
-) as Pos_Buffer
-for (let i = 0; i < best.length; i++) best[i] = randomNumberBounds(bounds[i])
 
 console.log('Fetching predecessor...')
 
 const dbItem = await prisma.generations.findFirst({
   where: {
     source_image_name: imageName,
-    item_count: settings.itemCount,
+    item_count: settings.targetItemCount,
     item_type: settings.type,
     fitness: {gt: 0},
     compressed_data: {not: null},
@@ -142,13 +156,13 @@ if (dbItem != null && dbItem.compressed_data != null) {
   console.log('No predecessor found, starting from scratch')
 }
 
-let optimizerType: OptimizerType = 'particle_swarm_optimization'
-let optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
+let optimizerType: OptimizerType = 'differential_evolution'
+let optimizer = createOptimizer(optimizerType, lossFn, bounds, currentPosSlice)
 
 let nextIterationCount = 1
 let nextIterationOptimizer = 0
-let globalGenerationStartForOptimizer = globalGeneration
 let lastGlobalGeneration = globalGeneration
+let fitnessChecksSinceNextLevel = 0
 
 let isExiting = false
 
@@ -175,14 +189,60 @@ function runIterations() {
     1,
     Math.floor((nextIterationCount / time) * 1000 * 5),
   )
-  best = optimizer.best.pos
+  for (let i = 0; i < optimizer.best.pos.length; i++) {
+    best[i + prerenderIndex] = optimizer.best.pos[i]
+  }
 
+  fitnessChecksSinceNextLevel += globalGeneration - lastGlobalGeneration
   const generationsUsed = globalGeneration - lastGlobalGeneration
   lastGlobalGeneration = globalGeneration
 
   if (optimizer.best.fitness === 0 || isNaN(optimizer.best.fitness)) {
     console.log(optimizer)
     throw new Error('Fitness is invalid ' + optimizerType)
+  }
+
+  if (fitnessChecksSinceNextLevel > 10000 || optimizer.hasConverged()) {
+    fitnessChecksSinceNextLevel = 0
+    prerenderIndex += currentPosSlice.length
+    if (prerenderIndex === best.length) {
+      prerenderIndex = 0
+
+      if (settings.targetItemCount === settings.itemCount) {
+        settings.itemCount = 1
+      } else {
+        settings.itemCount++
+        while (settings.targetItemCount % settings.itemCount !== 0) {
+          settings.itemCount++
+        }
+
+        settings.itemCount = Math.min(
+          settings.targetItemCount,
+          settings.itemCount,
+        )
+      }
+
+      console.log('Changed batch size to', settings.itemCount)
+    }
+
+    const prerenderPos = new Float32Array(prerenderIndex) as Pos_Buffer
+    for (let i = 0; i < prerenderPos.length; i++) prerenderPos[i] = best[i]
+
+    prerendered = drawTrianglesToTexture(
+      settings.size,
+      settings.size,
+      prerenderPos,
+      colorMap,
+    )
+
+    currentPosSlice = new Float32Array(
+      settings.itemCount * settings.itemSize,
+    ) as Pos_Buffer
+
+    for (let i = 0; i < currentPosSlice.length; i++)
+      currentPosSlice[i] = best[i + prerenderIndex]
+
+    optimizer = createOptimizer(optimizerType, lossFn, bounds, currentPosSlice)
   }
 
   if (lastSavedFitness !== optimizer.best.fitness) {
@@ -195,7 +255,7 @@ function runIterations() {
           generation: globalGeneration,
           optimizer_algorithm: optimizerType,
           item_type: settings.type,
-          item_count: settings.itemCount,
+          item_count: settings.targetItemCount,
           source_image_height: originalImage.height,
           source_image_width: originalImage.width,
           source_image_name: imageName,
@@ -221,17 +281,17 @@ function runIterations() {
       })
   }
 
-  if (globalGeneration - globalGenerationStartForOptimizer > 10000) {
-    globalGenerationStartForOptimizer = globalGeneration
-    optimizerType =
-      OPTIMIZER_LIST[
-        (OPTIMIZER_LIST.indexOf(optimizerType) + 1) % OPTIMIZER_LIST.length
-      ]
-    optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
-    nextIterationCount = 1
-    nextIterationOptimizer = 0
-    console.log('Changed optimizer to', optimizerType)
-  }
+  // if (globalGeneration - globalGenerationStartForOptimizer > 10000) {
+  //   globalGenerationStartForOptimizer = globalGeneration
+  //   optimizerType =
+  //     OPTIMIZER_LIST[
+  //       (OPTIMIZER_LIST.indexOf(optimizerType) + 1) % OPTIMIZER_LIST.length
+  //     ]
+  //   optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
+  //   nextIterationCount = 1
+  //   nextIterationOptimizer = 0
+  //   console.log('Changed optimizer to', optimizerType)
+  // }
 
   if (!isExiting) setImmediate(runIterations)
 }

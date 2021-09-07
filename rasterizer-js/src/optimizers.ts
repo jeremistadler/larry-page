@@ -1,11 +1,11 @@
-import {createParticleSwarmOptimization} from './swarm'
-import {createMutateAll} from './mutate_all'
-import {createMutateOne} from './mutate_one'
-import {DomainBounds, Optimizer, OptimizerType, Pos_Buffer} from './micro'
-import {createDifferentialEvolution} from './differential_evolution'
-import {createStochasticGradientDescent} from './stochastic_gradient_descent'
-import {createGridSearch} from './grid_search'
-import {createGridSearch4D} from './grid_search_4d'
+import {createParticleSwarmOptimization} from './swarm.js'
+import {createMutateAll} from './mutate_all.js'
+import {createMutateOne} from './mutate_one.js'
+import {DomainBounds, Optimizer, OptimizerType, Pos_Buffer} from './micro.js'
+import {createDifferentialEvolution} from './differential_evolution.js'
+import {createStochasticGradientDescent} from './stochastic_gradient_descent.js'
+import {createGridSearch} from './grid_search.js'
+import {createGridSearch4D} from './grid_search_4d.js'
 
 export const OPTIMIZER_LIST: OptimizerType[] = [
   'particle_swarm_optimization',

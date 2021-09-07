@@ -6,7 +6,7 @@ import {
   Settings,
   Pos_Buffer,
   TRIANGLE_SIZE,
-} from './micro'
+} from './micro.js'
 
 function cross(
   ax: number,
@@ -123,6 +123,55 @@ function drawCirclesToTex(
       }
     }
   }
+}
+
+export function calculateTriangleFitnessWithPrerender(
+  settings: Settings,
+  triangles: Pos_Buffer,
+  postTriangles: Pos_Buffer,
+  prerenderIndex: number,
+  imageTex: RGB_Norm_Buffer,
+  prerender: RGB_Norm_Buffer,
+  colorMap: ColorMapNormalized,
+) {
+  let tex = cache.get(settings.size)
+
+  if (tex === undefined) {
+    tex = new Float32Array(settings.size * settings.size * 3) as RGB_Norm_Buffer
+    cache.set(settings.size, tex)
+  }
+
+  for (let i = 0; i < tex.length; i++) {
+    tex[i] = prerender[i]
+  }
+
+  for (let i = 0; i < triangles.length; i += TRIANGLE_SIZE) {
+    fillTriangle(
+      triangles,
+      tex,
+      i,
+      settings.size,
+      settings.size,
+      colorMap[(i + prerenderIndex) / TRIANGLE_SIZE],
+    )
+  }
+
+  for (
+    let i = prerenderIndex + triangles.length;
+    i < postTriangles.length;
+    i += TRIANGLE_SIZE
+  ) {
+    fillTriangle(
+      postTriangles,
+      tex,
+      i,
+      settings.size,
+      settings.size,
+      colorMap[i / TRIANGLE_SIZE],
+    )
+  }
+
+  return diffAndCalculateFitness(imageTex, tex)
 }
 
 export function calculateTriangleFitness(

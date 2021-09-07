@@ -2,6 +2,7 @@ export type Settings = {
   size: number
   viewportSize: number
   itemCount: number
+  targetItemCount: number
   historySize: number
   itemSize: number
   type: 'triangle' | 'circle'
@@ -87,6 +88,7 @@ export type Particle = {
 
 export type Optimizer = {
   runNext: (iteration: number) => void
+  hasConverged: () => boolean
   best: {
     pos: Pos_Buffer
     fitness: number

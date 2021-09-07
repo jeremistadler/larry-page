@@ -1,6 +1,6 @@
-import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro.js'
 import incrSGDRegression from '@stdlib/ml-incr-sgd-regression'
-import {randomNumberBounds} from './randomNumberBetween'
+import {randomNumberBounds} from './randomNumberBetween.js'
 
 export function createStochasticGradientDescent(
   cost_func: (data: Pos_Buffer) => number,
@@ -19,6 +19,7 @@ export function createStochasticGradientDescent(
   return {
     best: state,
     particles: [state],
+    hasConverged: () => false,
     runNext: (iteration: number) => {
       for (let i = 0; i < testBuffer.length; i++) {
         testBuffer[i] = randomNumberBounds(domain[i])

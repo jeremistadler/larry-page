@@ -1,4 +1,4 @@
-import {DomainBounds, Optimizer, Pos_Buffer} from './micro'
+import {DomainBounds, Optimizer, Pos_Buffer} from './micro.js'
 
 export function createGridSearch4D(
   cost_func: (data: Pos_Buffer) => number,
@@ -23,6 +23,7 @@ export function createGridSearch4D(
   return {
     best: best,
     particles: [state],
+    hasConverged: () => false,
     runNext: (iteration: number) => {
       for (let i = 0; i < testBuffer.length; i++) {
         testBuffer[i] = best.pos[i]

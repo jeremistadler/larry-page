@@ -1,4 +1,4 @@
-import {DomainBounds} from './micro'
+import {DomainBounds} from './micro.js'
 
 export function randomNumberBetween(min: number, max: number) {
   return Math.random() * (max - min) + min
