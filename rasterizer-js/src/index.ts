@@ -20,14 +20,14 @@ import {
 } from './fitness-calculator'
 import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
 import {randomNumberBounds} from './randomNumberBetween'
-import {RisoColors} from './FluorescentPink'
 import {createBounds} from './createBounds'
+import {RisoColors} from './createColorMap'
 
 async function initialize() {
   const settings: Settings = {
     size: 128,
     viewportSize: 512,
-    itemCount: 4,
+    sliceItemCount: 4,
     targetItemCount: 80,
     historySize: 512,
     itemSize: TRIANGLE_SIZE,
@@ -42,7 +42,7 @@ async function initialize() {
   const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
   drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
 
-  if (settings.targetItemCount % settings.itemCount !== 0) {
+  if (settings.targetItemCount % settings.sliceItemCount !== 0) {
     throw new Error('targetItemCount needs to be multiple of itemCount')
   }
 
@@ -68,7 +68,7 @@ async function initialize() {
     settings.itemSize * settings.targetItemCount,
   ) as Pos_Buffer
   let currentPosSlice = new Float32Array(
-    settings.itemSize * settings.itemCount,
+    settings.itemSize * settings.sliceItemCount,
   ) as Pos_Buffer
   for (let i = 0; i < currentPosSlice.length; i++)
     currentPosSlice[i] = randomNumberBounds(bounds[i])
@@ -117,7 +117,7 @@ async function initialize() {
   const dimensionsCtxList = Array.from({
     length: Math.min(
       0,
-      Math.floor((settings.itemSize * settings.itemCount) / 2),
+      Math.floor((settings.itemSize * settings.sliceItemCount) / 2),
     ),
   }).map((_, i) =>
     createCanvas(
@@ -169,7 +169,7 @@ async function initialize() {
       ' ms per iteration<br>ittr: ' +
       fitnessChecksSinceNextLevel +
       '<br>ItemCount: ' +
-      settings.itemCount
+      settings.sliceItemCount
     fitnessChecksSinceNextLevel += globalFitnessTests - lastGlobalFitnessTests
     lastGlobalFitnessTests = globalFitnessTests
 
@@ -195,17 +195,17 @@ async function initialize() {
       if (prerenderIndex === best.length) {
         prerenderIndex = 0
 
-        if (settings.targetItemCount === settings.itemCount) {
-          settings.itemCount = 1
+        if (settings.targetItemCount === settings.sliceItemCount) {
+          settings.sliceItemCount = 1
         } else {
-          settings.itemCount++
-          while (settings.targetItemCount % settings.itemCount !== 0) {
-            settings.itemCount++
+          settings.sliceItemCount++
+          while (settings.targetItemCount % settings.sliceItemCount !== 0) {
+            settings.sliceItemCount++
           }
 
-          settings.itemCount = Math.min(
+          settings.sliceItemCount = Math.min(
             settings.targetItemCount,
-            settings.itemCount,
+            settings.sliceItemCount,
           )
         }
       }
@@ -221,7 +221,7 @@ async function initialize() {
       )
 
       currentPosSlice = new Float32Array(
-        settings.itemCount * settings.itemSize,
+        settings.sliceItemCount * settings.itemSize,
       ) as Pos_Buffer
 
       for (let i = 0; i < currentPosSlice.length; i++)

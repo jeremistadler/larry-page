@@ -1,78 +1,49 @@
-import Prisma from '@prisma/client'
-import imageEncode from 'image-encode'
 import pkg from 'snappy'
 const {uncompressSync} = pkg
 
 import * as fs from 'fs/promises'
-import {
-  ColorMapNormalized,
-  RGB_Norm_Buffer,
-  Pos_Buffer,
-  TRIANGLE_SIZE,
-  CIRCLE_SIZE,
-} from './micro.js'
+import {RGB_Norm_Buffer, Generations} from './micro.js'
 import {
   drawCirclesToNewTex,
   drawTrianglesToTexture,
 } from './fitness-calculator.js'
+import imageEncode from 'image-encode'
 
-const prisma = new Prisma.PrismaClient()
-
+const TARGET_HEIGHT = 1024
 const images = await fetchImagesList()
-
-const bestPath = './rendered/best'
-await fs.mkdir(bestPath, {recursive: true})
 
 for (const imageName of images) {
   console.log(imageName, 'Fetching best image...')
-  const gen = await prisma.generations.findFirst({
-    where: {
-      source_image_name: imageName,
-      item_type: 'triangle',
-      item_count: 180,
-      fitness: {gt: 0},
-      compressed_data: {not: null},
-    },
-    orderBy: [
-      {
-        training_resolution: 'desc',
-      },
-      {
-        fitness: 'asc',
-      },
-    ],
-  })
 
-  if (gen == null) {
-    console.log('No results for image', imageName)
-    continue
-  }
+  const fileName =
+    [imageName, 'triangle', 44, 'FluorescentPink,Blue'].join('_') + '.json'
+  const filePath = './data_best/' + fileName
 
-  if (gen.compressed_data == null) {
-    console.log('No compressed_data for image', imageName)
-    continue
-  }
+  const gen = await fs
+    .readFile(filePath, 'utf8')
+    .then(f => JSON.parse(f))
+    .then(item => {
+      item.data = JSON.parse(
+        uncompressSync(Buffer.from(item.compressed_data, 'base64'), {
+          asBuffer: false,
+        }),
+      )
+      item.compressed_data = null
+      item.data.positions = new Float32Array(item.data.positions)
+      return item as Generations
+    })
+    .catch(err => {
+      if (err.code === 'ENOENT') {
+        console.log(fileName, 'not found')
+        return null
+      }
+      console.log(imageName, err)
+    })
 
-  console.log('Uncompressing data...')
-  const data = JSON.parse(
-    uncompressSync(gen.compressed_data, {asBuffer: true}).toString('utf8'),
-  ) as {positions: Pos_Buffer; color_map: ColorMapNormalized}
-
-  console.log({
-    itemCount: gen.item_count,
-    posItemCount:
-      data.positions.length /
-      (gen.item_type === 'triangle' ? TRIANGLE_SIZE : CIRCLE_SIZE),
-    colorItemCount: data.color_map.length,
-  })
-
-  console.log('Creating dir...')
-  const folderPath = './rendered/' + gen.source_image_name
-  await fs.mkdir(folderPath, {recursive: true})
+  if (gen == null) continue
 
   console.log('Rendering', gen.source_image_name, gen.id)
 
-  const TARGET_HEIGHT = 1024
   const TARGET_WIDTH = Math.floor(
     (gen.source_image_width / gen.source_image_height) * TARGET_HEIGHT,
   )
@@ -82,14 +53,14 @@ for (const imageName of images) {
       ? drawTrianglesToTexture(
           TARGET_WIDTH,
           TARGET_HEIGHT,
-          new Float32Array(data.positions) as Pos_Buffer,
-          data.color_map,
+          gen.data.positions,
+          gen.data.color_map,
         )
       : drawCirclesToNewTex(
           TARGET_WIDTH,
           TARGET_HEIGHT,
-          new Float32Array(data.positions) as Pos_Buffer,
-          data.color_map,
+          gen.data.positions,
+          gen.data.color_map,
         )
 
   const imageData = texToImageData(tex, TARGET_WIDTH, TARGET_HEIGHT)
@@ -99,26 +70,52 @@ for (const imageName of images) {
     height: TARGET_HEIGHT,
   })
   const buf = arrayBufferToBufferCycle(arrBuff)
+
+  console.log('Creating dirs...')
+
+  const nameFolder = './rendered_by_name/' + imageName
+  await fs.mkdir(nameFolder, {recursive: true})
+
+  const bestFolder = './rendered_best'
+  await fs.mkdir(bestFolder, {recursive: true})
+
+  const instanceFolder =
+    './rendered_by_instance/' +
+    [imageName, gen.item_type, gen.item_count, gen.color_map_hash].join('_')
+  await fs.mkdir(instanceFolder, {recursive: true})
+
+  console.log('Saving files...')
+
   await fs.writeFile(
-    folderPath +
+    nameFolder +
       '/' +
-      gen.item_type +
-      '_' +
-      gen.item_count +
-      '_' +
-      gen.generation +
+      [gen.item_type, gen.item_count, gen.color_map_hash, gen.generation].join(
+        '_',
+      ) +
+      '.png',
+    buf,
+  )
+
+  await fs.writeFile(
+    bestFolder +
+      '/' +
+      [gen.item_type, gen.item_count, gen.color_map_hash].join('_') +
       '.png',
     buf as any,
   )
 
   await fs.writeFile(
-    bestPath + '/' + gen.source_image_name + '.png',
+    instanceFolder +
+      '/' +
+      [gen.item_type, gen.item_count, gen.color_map_hash, gen.generation].join(
+        '_',
+      ) +
+      '.png',
     buf as any,
   )
 }
 
 console.log('Done')
-prisma.$disconnect()
 
 function arrayBufferToBufferCycle(ab: ArrayBuffer) {
   var buffer = Buffer.alloc(ab.byteLength)

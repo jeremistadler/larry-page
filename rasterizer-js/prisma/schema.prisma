@@ -21,13 +21,15 @@ model generations {
   updated_at          DateTime      @default(now()) @db.Timestamp(0)
   optimizer_algorithm String        @db.VarChar(30)
   fitness             Float
+  color_map_hash      Int           @default(0)
   ms_per_generation   Float         @default(0) @db.Float
   compressed_data     Bytes?        @db.MediumBlob
-  parent              generations?  @relation("generationsTogenerations_parent_id", fields: [parent_id], references: [id])
+  parent              generations?  @relation("generationsTogenerations_parent_id", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "generations_ibfk_1")
   children            generations[] @relation("generationsTogenerations_parent_id")
 
-  @@index([fitness], name: "idx_fitness")
-  @@index([source_image_name, fitness], name: "idx_name_fitness")
-  @@index([source_image_name, item_type, training_resolution, fitness], name: "idx_name_type_res_fitness")
-  @@index([parent_id], name: "parent_id")
+  @@index([fitness], map: "idx_fitness")
+  @@index([source_image_name, fitness], map: "idx_name_fitness")
+  @@index([source_image_name, item_type, item_count, color_map_hash], map: "idx_name_type_count_color")
+  @@index([source_image_name, item_type, training_resolution, fitness], map: "idx_name_type_res_fitness")
+  @@index([parent_id], map: "parent_id")
 }

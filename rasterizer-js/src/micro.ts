@@ -1,11 +1,38 @@
+export type ItemType = 'triangle' | 'circle'
+
 export type Settings = {
   size: number
   viewportSize: number
-  itemCount: number
+  sliceItemCount: number
   targetItemCount: number
   historySize: number
   itemSize: number
-  type: 'triangle' | 'circle'
+  type: ItemType
+}
+
+export type Generations = {
+  id: number
+  parent_id: number | null
+  generation: number
+  source_image_name: string
+  source_image_width: number
+  source_image_height: number
+  item_count: number
+  item_type: string
+  training_resolution: number
+  created_at: Date
+  updated_at: Date
+  optimizer_algorithm: OptimizerType
+  fitness: number
+  color_map_hash: string
+  ms_per_generation: number
+  compressed_data: Buffer | null
+  data: {
+    positions: Pos_Buffer
+    bounds: DomainBounds[]
+    color_map: ColorMapNormalized
+    palette: ColorMapNormalized
+  }
 }
 
 export type ColorMapItemNormalized = [R: number, G: number, B: number]
