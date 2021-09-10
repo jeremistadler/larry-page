@@ -83,10 +83,11 @@ for (const fileName of filesToSync) {
 }
 
 console.log('... uploading local items')
-await prisma.generations.createMany({
-  skipDuplicates: true,
+const createResult = await prisma.generations.createMany({
+  skipDuplicates: false,
   data: docs,
 })
+console.log('Create result', createResult)
 
 console.log('... deleting local items')
 for (const fileName of filesToSync) {

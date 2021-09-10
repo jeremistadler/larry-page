@@ -16,7 +16,13 @@ import {loadAndResizeTex} from './resized.js'
 import {loadGeneration, saveGeneration} from './loadGeneration.js'
 import {createColorMap, RisoColors} from './createColorMap.js'
 import {generateId} from './generateId.js'
-import {getOptimalTextureSize} from './getOptimalTextureSize.js'
+import {
+  GENERATIONS_PER_EXIT,
+  GENERATIONS_PER_SAVE,
+  getOptimalTextureSize,
+  MAX_GENERATIONS_PER_LEVEL,
+} from './getOptimalTextureSize.js'
+import {countUntouchedFeatures} from './countUntouchedFeatures.js'
 
 let isExiting = false
 
@@ -34,15 +40,10 @@ await fs.mkdir('./data_best/', {recursive: true})
 const settings: Settings = {
   size: 64,
   viewportSize: 512,
-  sliceItemCount: 4,
-  targetItemCount: 44,
+  targetItemCount: 300,
   historySize: 512,
   itemSize: TRIANGLE_SIZE,
   type: 'triangle',
-}
-
-if (settings.targetItemCount % settings.sliceItemCount !== 0) {
-  throw new Error('targetItemCount needs to be multiple of itemCount')
 }
 
 const palette = [RisoColors.FluorescentPink, RisoColors.Blue]
@@ -63,10 +64,7 @@ const resizedTex = await loadAndResizeTex(imageName, settings.size)
 
 let fitnessTestCounter = generation.generation
 let best = generation.data.positions
-
-let currentPosSlice = new Float32Array(
-  settings.itemSize * settings.sliceItemCount,
-) as Pos_Buffer
+let currentSlice = new Float32Array(settings.itemSize * 1) as Pos_Buffer
 
 let prerenderIndex = 0
 let prerendered = new Float32Array(
@@ -111,7 +109,7 @@ let optimizer = createOptimizer(
   optimizerType,
   lossFn,
   generation.data.bounds,
-  currentPosSlice,
+  currentSlice,
 )
 
 let samplesNextRound = 1
@@ -120,6 +118,11 @@ let lastFitnessTestCounter = fitnessTestCounter
 let fitnessTestsSinceNextLevel = 0
 let fitnestTestsSinceStart = 0
 let fitnestTestsSinceLastSave = 0
+
+const untouchedFeatures = countUntouchedFeatures(best, generation.data.bounds)
+let targetFeatureCount =
+  Math.max(1, Math.ceil(untouchedFeatures / settings.itemSize)) *
+  settings.itemSize
 
 async function save(ms_per_generation: number) {
   if (generation.fitness !== optimizer.best.fitness) {
@@ -130,6 +133,8 @@ async function save(ms_per_generation: number) {
     generation.id = generateId()
     generation.generation = fitnessTestCounter
     generation.ms_per_generation = ms_per_generation
+    generation.created_at = new Date()
+    generation.updated_at = generation.created_at
 
     return saveGeneration(generation).catch(err => {
       console.error('Save error', err)
@@ -173,37 +178,48 @@ function runIterations() {
     throw new Error('Fitness is invalid ' + optimizerType)
   }
 
-  if (fitnestTestsSinceStart > 200_000) {
+  if (fitnestTestsSinceStart > GENERATIONS_PER_EXIT) {
+    console.log('Exiting...')
     isExiting = true
   }
 
-  if (fitnestTestsSinceLastSave > 80_000 || isExiting) {
+  if (fitnestTestsSinceLastSave > GENERATIONS_PER_SAVE || isExiting === true) {
     fitnestTestsSinceLastSave = 0
     console.log('Saving...')
     save(time / testsSinceLastRound)
   }
 
-  if (fitnessTestsSinceNextLevel > 40000 || optimizer.hasConverged()) {
+  if (
+    fitnessTestsSinceNextLevel > MAX_GENERATIONS_PER_LEVEL ||
+    optimizer.hasConverged()
+  ) {
     fitnessTestsSinceNextLevel = 0
-    prerenderIndex += currentPosSlice.length
-    if (prerenderIndex === best.length) {
+    let targetSliceSize = currentSlice.length
+
+    if (
+      targetFeatureCount - targetSliceSize === prerenderIndex &&
+      targetFeatureCount === targetSliceSize
+    ) {
+      console.log('New triangle!')
+
+      if (targetFeatureCount < settings.targetItemCount * settings.itemSize)
+        targetFeatureCount += settings.itemSize
+      targetSliceSize = settings.itemSize
+    } else if (targetFeatureCount - targetSliceSize === prerenderIndex) {
+      console.log('Increase slice size and restart')
+
       prerenderIndex = 0
+      targetSliceSize += settings.itemSize
+    } else {
+      // Bump index
+      console.log('Bump index')
 
-      if (settings.targetItemCount === settings.sliceItemCount) {
-        settings.sliceItemCount = 1
-      } else {
-        settings.sliceItemCount++
-        while (settings.targetItemCount % settings.sliceItemCount !== 0) {
-          settings.sliceItemCount++
-        }
+      prerenderIndex += targetSliceSize
 
-        settings.sliceItemCount = Math.min(
-          settings.targetItemCount,
-          settings.sliceItemCount,
-        )
+      // Last slice to big, move back so we match the end
+      if (prerenderIndex + targetSliceSize >= targetFeatureCount) {
+        prerenderIndex = targetFeatureCount - targetSliceSize
       }
-
-      console.log('Changed batch size to', settings.sliceItemCount)
     }
 
     const prerenderPos = new Float32Array(prerenderIndex) as Pos_Buffer
@@ -216,21 +232,26 @@ function runIterations() {
       colorMap,
     )
 
-    if (
-      settings.sliceItemCount * settings.sliceItemCount !==
-      currentPosSlice.length
-    ) {
-      currentPosSlice = new Float32Array(
-        settings.sliceItemCount * settings.itemSize,
-      ) as Pos_Buffer
+    if (targetSliceSize !== currentSlice.length) {
+      console.log(
+        'Changed batch size from',
+        currentSlice.length,
+        'to',
+        targetSliceSize,
+      )
+      currentSlice = new Float32Array(targetSliceSize) as Pos_Buffer
     }
 
-    for (let i = 0; i < currentPosSlice.length; i++)
-      currentPosSlice[i] = best[i + prerenderIndex]
+    for (let i = 0; i < currentSlice.length; i++)
+      currentSlice[i] = best[i + prerenderIndex]
 
     console.log(
-      'Recreating optimizer with size',
-      currentPosSlice.length,
+      'Generation',
+      fitnessTestCounter,
+      ', feature count:',
+      targetFeatureCount,
+      ', slice size:',
+      currentSlice.length,
       'at index',
       prerenderIndex,
     )
@@ -239,7 +260,7 @@ function runIterations() {
       optimizerType,
       lossFn,
       generation.data.bounds,
-      currentPosSlice,
+      currentSlice,
     )
   }
 

@@ -3,7 +3,6 @@ export type ItemType = 'triangle' | 'circle'
 export type Settings = {
   size: number
   viewportSize: number
-  sliceItemCount: number
   targetItemCount: number
   historySize: number
   itemSize: number

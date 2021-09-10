@@ -8,3 +8,4 @@ frontend/src/scripts/rasterizer.worker.js.map
 .DS_Store
 frontend/.parcel-cache
 .parcel-cache/
+rasterizer-js/rendered_by_instance/filrand-QVfJAbiyQNM-unsplash.jpg_triangle_44_FluorescentPink,Blue/triangle_44_FluorescentPink,Blue_201699.png

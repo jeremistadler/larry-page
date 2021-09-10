@@ -21,7 +21,7 @@ model generations {
   updated_at          DateTime      @default(now()) @db.Timestamp(0)
   optimizer_algorithm String        @db.VarChar(30)
   fitness             Float
-  color_map_hash      Int           @default(0)
+  color_map_hash      String        @default("0") @db.VarChar(255)
   ms_per_generation   Float         @default(0) @db.Float
   compressed_data     Bytes?        @db.MediumBlob
   parent              generations?  @relation("generationsTogenerations_parent_id", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "generations_ibfk_1")

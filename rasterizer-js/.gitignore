@@ -5,3 +5,6 @@ rendered/
 data_best/
 data_unsynced/
 images_resized/
+rendered_best/
+rendered_by_instance/
+rendered_by_name/

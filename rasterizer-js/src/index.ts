@@ -14,7 +14,6 @@ import {
   TRIANGLE_SIZE,
 } from './micro'
 import {
-  calculateTriangleFitness,
   calculateTriangleFitnessWithPrerender,
   drawTrianglesToTexture,
 } from './fitness-calculator'
@@ -27,7 +26,6 @@ async function initialize() {
   const settings: Settings = {
     size: 128,
     viewportSize: 512,
-    sliceItemCount: 4,
     targetItemCount: 80,
     historySize: 512,
     itemSize: TRIANGLE_SIZE,
@@ -41,10 +39,6 @@ async function initialize() {
   console.log('Drawing original image...')
   const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
   drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
-
-  if (settings.targetItemCount % settings.sliceItemCount !== 0) {
-    throw new Error('targetItemCount needs to be multiple of itemCount')
-  }
 
   const palette = [
     RisoColors.FluorescentPink, //
@@ -67,9 +61,7 @@ async function initialize() {
   let best = new Float32Array(
     settings.itemSize * settings.targetItemCount,
   ) as Pos_Buffer
-  let currentPosSlice = new Float32Array(
-    settings.itemSize * settings.sliceItemCount,
-  ) as Pos_Buffer
+  let currentPosSlice = new Float32Array(settings.itemSize * 1) as Pos_Buffer
   for (let i = 0; i < currentPosSlice.length; i++)
     currentPosSlice[i] = randomNumberBounds(bounds[i])
 
@@ -117,7 +109,7 @@ async function initialize() {
   const dimensionsCtxList = Array.from({
     length: Math.min(
       0,
-      Math.floor((settings.itemSize * settings.sliceItemCount) / 2),
+      Math.floor((settings.itemSize * settings.targetItemCount) / 2),
     ),
   }).map((_, i) =>
     createCanvas(
@@ -163,13 +155,15 @@ async function initialize() {
     for (let iteration = 0; iteration < nextIterationCount; iteration++) {
       optimizer.runNext(nextIterationOptimizer++)
     }
+    const targetItemCount = 1
+
     const time = performance.now() - start
     infoDiv2.innerHTML =
       (time / (globalFitnessTests - lastGlobalFitnessTests)).toFixed(4) +
       ' ms per iteration<br>ittr: ' +
       fitnessChecksSinceNextLevel +
       '<br>ItemCount: ' +
-      settings.sliceItemCount
+      targetItemCount
     fitnessChecksSinceNextLevel += globalFitnessTests - lastGlobalFitnessTests
     lastGlobalFitnessTests = globalFitnessTests
 
@@ -192,23 +186,23 @@ async function initialize() {
     ) {
       fitnessChecksSinceNextLevel = 0
       prerenderIndex += currentPosSlice.length
-      if (prerenderIndex === best.length) {
-        prerenderIndex = 0
+      // if (prerenderIndex === best.length) {
+      //   prerenderIndex = 0
 
-        if (settings.targetItemCount === settings.sliceItemCount) {
-          settings.sliceItemCount = 1
-        } else {
-          settings.sliceItemCount++
-          while (settings.targetItemCount % settings.sliceItemCount !== 0) {
-            settings.sliceItemCount++
-          }
+      //   if (settings.targetItemCount === settings.sliceItemCount) {
+      //     settings.sliceItemCount = 1
+      //   } else {
+      //     settings.sliceItemCount++
+      //     while (settings.targetItemCount % settings.sliceItemCount !== 0) {
+      //       settings.sliceItemCount++
+      //     }
 
-          settings.sliceItemCount = Math.min(
-            settings.targetItemCount,
-            settings.sliceItemCount,
-          )
-        }
-      }
+      //     settings.sliceItemCount = Math.min(
+      //       settings.targetItemCount,
+      //       settings.sliceItemCount,
+      //     )
+      //   }
+      // }
 
       const prerenderPos = new Float32Array(prerenderIndex) as Pos_Buffer
       for (let i = 0; i < prerenderPos.length; i++) prerenderPos[i] = best[i]
@@ -220,9 +214,9 @@ async function initialize() {
         colorMap,
       )
 
-      currentPosSlice = new Float32Array(
-        settings.sliceItemCount * settings.itemSize,
-      ) as Pos_Buffer
+      // currentPosSlice = new Float32Array(
+      //   settings.sliceItemCount * settings.itemSize,
+      // ) as Pos_Buffer
 
       for (let i = 0; i < currentPosSlice.length; i++)
         currentPosSlice[i] = best[i + prerenderIndex]

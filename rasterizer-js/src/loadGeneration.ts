@@ -1,4 +1,5 @@
 import * as fs from 'fs/promises'
+import * as path from 'path'
 import {
   ColorMapNormalized,
   Pos_Buffer,
@@ -46,31 +47,33 @@ export async function loadGeneration(
 ): Promise<Generations> {
   const featureCount =
     itemCount * (type === 'triangle' ? TRIANGLE_SIZE : CIRCLE_SIZE)
-
   const colorHash = colorPaletteToHash(palette)
   const fileName = [imageName, type, itemCount, colorHash].join('_') + '.json'
-  const filePath = './data_best/' + fileName
+  const filePath = path.resolve('./data_best', fileName)
   const data = await fs
     .readFile(filePath, 'utf8')
-    .then(f => JSON.parse(f))
+    .then(f => JSON.parse(f) as Generations)
     .then(item => {
       item.data = JSON.parse(
-        uncompressSync(Buffer.from(item.compressed_data, 'base64'), {
-          asBuffer: false,
-        }),
+        uncompressSync(
+          Buffer.from(item.compressed_data as unknown as string, 'base64'),
+          {
+            asBuffer: false,
+          },
+        ),
       )
       item.compressed_data = null
-      item.data.positions = new Float32Array(item.data.positions)
-      return item as Generations
+      item.data.positions = new Float32Array(item.data.positions) as Pos_Buffer
+      return item
     })
     .catch(err => {
       if (err.code === 'ENOENT') return null
       throw err
     })
 
-  console.log('No previous found, creating new...')
-
   if (data) {
+    console.log('Loading previous save...')
+
     if (data.data.positions.length !== featureCount) {
       throw new Error(
         'DB positions did not equal settings ' +
@@ -100,6 +103,8 @@ export async function loadGeneration(
 
     return data
   }
+
+  console.log('No previous found, creating new...')
 
   const bounds = createBounds(itemCount, type)
   if (bounds.length !== featureCount)
