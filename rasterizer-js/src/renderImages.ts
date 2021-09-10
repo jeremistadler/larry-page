@@ -16,7 +16,7 @@ for (const bestFileName of bestFileList) {
   console.log(bestFileName, 'Fetching best image...')
 
   const gen = await fs
-    .readFile(bestFileName, 'utf8')
+    .readFile('./data_best/' + bestFileName, 'utf8')
     .then(f => JSON.parse(f))
     .then(item => {
       item.data = JSON.parse(
