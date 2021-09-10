@@ -10,17 +10,13 @@ import {
 import imageEncode from 'image-encode'
 
 const TARGET_HEIGHT = 1024
-const images = await fetchImagesList()
+const bestFileList = await fetchBestList()
 
-for (const imageName of images) {
-  console.log(imageName, 'Fetching best image...')
-
-  const fileName =
-    [imageName, 'triangle', 44, 'FluorescentPink,Blue'].join('_') + '.json'
-  const filePath = './data_best/' + fileName
+for (const bestFileName of bestFileList) {
+  console.log(bestFileName, 'Fetching best image...')
 
   const gen = await fs
-    .readFile(filePath, 'utf8')
+    .readFile(bestFileName, 'utf8')
     .then(f => JSON.parse(f))
     .then(item => {
       item.data = JSON.parse(
@@ -34,10 +30,10 @@ for (const imageName of images) {
     })
     .catch(err => {
       if (err.code === 'ENOENT') {
-        console.log(fileName, 'not found')
+        console.log(bestFileName, 'not found')
         return null
       }
-      console.log(imageName, err)
+      console.log(bestFileName, err)
     })
 
   if (gen == null) continue
@@ -73,7 +69,7 @@ for (const imageName of images) {
 
   console.log('Creating dirs...')
 
-  const nameFolder = './rendered_by_name/' + imageName
+  const nameFolder = './rendered_by_name/' + gen.source_image_name
   await fs.mkdir(nameFolder, {recursive: true})
 
   const bestFolder = './rendered_best'
@@ -81,7 +77,12 @@ for (const imageName of images) {
 
   const instanceFolder =
     './rendered_by_instance/' +
-    [imageName, gen.item_type, gen.item_count, gen.color_map_hash].join('_')
+    [
+      gen.source_image_name,
+      gen.item_type,
+      gen.item_count,
+      gen.color_map_hash,
+    ].join('_')
   await fs.mkdir(instanceFolder, {recursive: true})
 
   console.log('Saving files...')
@@ -150,4 +151,9 @@ function texToImageData(
 async function fetchImagesList() {
   const files = await fs.readdir('images')
   return files.filter(f => f.endsWith('.jpg') || f.endsWith('.png'))
+}
+
+async function fetchBestList() {
+  const files = await fs.readdir('data_best')
+  return files.filter(f => f.endsWith('.json'))
 }
