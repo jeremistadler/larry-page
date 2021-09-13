@@ -23,6 +23,7 @@ import {
   MAX_GENERATIONS_PER_LEVEL,
 } from './getOptimalTextureSize.js'
 import {countUntouchedFeatures} from './countUntouchedFeatures.js'
+import {createStatsAggregator} from './stats.js'
 
 let isExiting = false
 
@@ -119,6 +120,8 @@ let fitnessTestsSinceNextLevel = 0
 let fitnestTestsSinceStart = 0
 let fitnestTestsSinceLastSave = 0
 
+const stats = createStatsAggregator()
+
 const untouchedFeatures = countUntouchedFeatures(best, generation.data.bounds)
 let targetFeatureCount =
   Math.max(1, Math.ceil(untouchedFeatures / settings.itemSize)) *
@@ -193,6 +196,12 @@ function runIterations() {
     fitnessTestsSinceNextLevel > MAX_GENERATIONS_PER_LEVEL ||
     optimizer.hasConverged()
   ) {
+    stats.levelCompleted({
+      generationsUsed: fitnessTestCounter,
+      fitness: optimizer.best.fitness,
+      sliceSize: currentSlice.length,
+    })
+
     fitnessTestsSinceNextLevel = 0
     let targetSliceSize = currentSlice.length
 
@@ -200,19 +209,18 @@ function runIterations() {
       targetFeatureCount - targetSliceSize === prerenderIndex &&
       targetFeatureCount === targetSliceSize
     ) {
-      console.log('New triangle!')
+      // New triangle
 
       if (targetFeatureCount < settings.targetItemCount * settings.itemSize)
         targetFeatureCount += settings.itemSize
       targetSliceSize = settings.itemSize
     } else if (targetFeatureCount - targetSliceSize === prerenderIndex) {
-      console.log('Increase slice size and restart')
+      // Increase slice size and restart
 
       prerenderIndex = 0
       targetSliceSize += settings.itemSize
     } else {
       // Bump index
-      console.log('Bump index')
 
       prerenderIndex += targetSliceSize
 
@@ -233,12 +241,6 @@ function runIterations() {
     )
 
     if (targetSliceSize !== currentSlice.length) {
-      console.log(
-        'Changed batch size from',
-        currentSlice.length,
-        'to',
-        targetSliceSize,
-      )
       currentSlice = new Float32Array(targetSliceSize) as Pos_Buffer
     }
 
@@ -255,6 +257,14 @@ function runIterations() {
       'at index',
       prerenderIndex,
     )
+
+    stats.levelStart({
+      sliceSize: currentSlice.length,
+      optimizerType,
+      featureCount: targetFeatureCount,
+      generationsUsed: fitnessTestCounter,
+      fitness: optimizer.best.fitness,
+    })
 
     optimizer = createOptimizer(
       optimizerType,

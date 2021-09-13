@@ -8,6 +8,7 @@
     "start": "parcel index.html",
     "server": "tsc && node dist/server.js",
     "render": "tsc && node dist/renderImages.js",
+    "sync": "node src/syncDb.mjs",
     "runAllImages": "tsc && node src/startAllServers.mjs",
     "proxyDB": "ssh -N -L 3306:127.0.0.1:3306 jeremi@185.20.12.212"
   },

@@ -100,9 +100,14 @@ for (const bestFileName of bestFileList) {
   await fs.writeFile(
     bestFolder +
       '/' +
-      [gen.item_type, gen.item_count, gen.color_map_hash].join('_') +
+      [
+        gen.source_image_name,
+        gen.item_type,
+        gen.item_count,
+        gen.color_map_hash,
+      ].join('_') +
       '.png',
-    buf as any,
+    buf,
   )
 
   await fs.writeFile(
@@ -112,7 +117,7 @@ for (const bestFileName of bestFileList) {
         '_',
       ) +
       '.png',
-    buf as any,
+    buf,
   )
 }
 
