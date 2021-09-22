@@ -14,6 +14,7 @@ import {
   TRIANGLE_SIZE,
 } from './micro'
 import {
+  calculateTriangleFitness,
   calculateTriangleFitnessWithPrerender,
   drawTrianglesToTexture,
 } from './fitness-calculator'
@@ -26,7 +27,7 @@ async function initialize() {
   const settings: Settings = {
     size: 128,
     viewportSize: 512,
-    targetItemCount: 80,
+    targetItemCount: 240,
     historySize: 512,
     itemSize: TRIANGLE_SIZE,
     type: 'triangle',
@@ -41,11 +42,12 @@ async function initialize() {
   drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
 
   const palette = [
-    RisoColors.FluorescentPink, //
+    RisoColors.Yellow,
+    RisoColors.White,
+    RisoColors.Green,
+    RisoColors.White,
     RisoColors.Blue,
-    // RisoColors.Orange,
-    // RisoColors.Red,
-    // RisoColors.Green,
+    RisoColors.White,
   ]
   const colorMap: ColorMapNormalized = []
 
@@ -61,25 +63,13 @@ async function initialize() {
   let best = new Float32Array(
     settings.itemSize * settings.targetItemCount,
   ) as Pos_Buffer
-  let currentPosSlice = new Float32Array(settings.itemSize * 1) as Pos_Buffer
-  for (let i = 0; i < currentPosSlice.length; i++)
-    currentPosSlice[i] = randomNumberBounds(bounds[i])
-
-  let prerenderIndex = 0
-  let prerendered = new Float32Array(
-    settings.size * settings.size * 3,
-  ) as RGB_Norm_Buffer
-  prerendered.fill(1)
 
   const lossFn = (pos: Pos_Buffer) => {
     globalFitnessTests++
-    const fitness = calculateTriangleFitnessWithPrerender(
+    const fitness = calculateTriangleFitness(
       settings,
       pos,
-      best,
-      prerenderIndex,
       originalTex,
-      prerendered,
       colorMap,
     )
 
@@ -98,7 +88,6 @@ async function initialize() {
   }
 
   const bestCtx = createCanvas('Best', settings.viewportSize).ctx
-  const prerenderedCtx = createCanvas('Prerender', settings.viewportSize).ctx
   const historyCtx = createCanvas('History', settings.viewportSize)
 
   const historyList: number[][] = [[]]
@@ -123,13 +112,8 @@ async function initialize() {
   const infoDiv2 = document.createElement('div')
   document.body.append(infoDiv2)
 
-  let optimizerType: OptimizerType = 'differential_evolution'
-  let optimizer = createOptimizer(
-    optimizerType,
-    lossFn,
-    bounds,
-    currentPosSlice,
-  )
+  let optimizerType: OptimizerType = 'mutate_one'
+  let optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
 
   let nextIterationCount = 1
   let nextIterationOptimizer = 0
@@ -141,13 +125,12 @@ async function initialize() {
       OPTIMIZER_LIST[
         (OPTIMIZER_LIST.indexOf(optimizerType) + 1) % OPTIMIZER_LIST.length
       ]
-    optimizer = createOptimizer(optimizerType, lossFn, bounds, currentPosSlice)
+    optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
     infoDiv.innerHTML = optimizerType
     nextIterationCount = 1
     nextIterationOptimizer = 0
   }
 
-  let iterationC = 0
   let fitnessChecksSinceNextLevel = 0
 
   function runIterations() {
@@ -155,7 +138,7 @@ async function initialize() {
     for (let iteration = 0; iteration < nextIterationCount; iteration++) {
       optimizer.runNext(nextIterationOptimizer++)
     }
-    const targetItemCount = 1
+    const targetItemCount = settings.targetItemCount
 
     const time = performance.now() - start
     infoDiv2.innerHTML =
@@ -173,67 +156,17 @@ async function initialize() {
     )
 
     for (let i = 0; i < optimizer.best.pos.length; i++) {
-      best[i + prerenderIndex] = optimizer.best.pos[i]
+      best[i] = optimizer.best.pos[i]
     }
 
     historyList[0].push(optimizer.best.fitness)
     if (historyList[0].length > 1000) historyList[0].shift()
 
-    iterationC++
-    if (
-      fitnessChecksSinceNextLevel > 5000 ||
-      (iterationC > 0 && iterationC % 10 && optimizer.hasConverged())
-    ) {
-      fitnessChecksSinceNextLevel = 0
-      prerenderIndex += currentPosSlice.length
-      // if (prerenderIndex === best.length) {
-      //   prerenderIndex = 0
-
-      //   if (settings.targetItemCount === settings.sliceItemCount) {
-      //     settings.sliceItemCount = 1
-      //   } else {
-      //     settings.sliceItemCount++
-      //     while (settings.targetItemCount % settings.sliceItemCount !== 0) {
-      //       settings.sliceItemCount++
-      //     }
-
-      //     settings.sliceItemCount = Math.min(
-      //       settings.targetItemCount,
-      //       settings.sliceItemCount,
-      //     )
-      //   }
-      // }
-
-      const prerenderPos = new Float32Array(prerenderIndex) as Pos_Buffer
-      for (let i = 0; i < prerenderPos.length; i++) prerenderPos[i] = best[i]
-
-      prerendered = drawTrianglesToTexture(
-        settings.size,
-        settings.size,
-        prerenderPos,
-        colorMap,
-      )
-
-      // currentPosSlice = new Float32Array(
-      //   settings.sliceItemCount * settings.itemSize,
-      // ) as Pos_Buffer
-
-      for (let i = 0; i < currentPosSlice.length; i++)
-        currentPosSlice[i] = best[i + prerenderIndex]
-
-      optimizer = createOptimizer(
-        optimizerType,
-        lossFn,
-        bounds,
-        currentPosSlice,
-      )
-    }
-
     for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
       drawDimensionToCanvas(
         dimensionsCtxList[dim],
         settings,
-        currentPosSlice,
+        best,
         lossFn,
         dim * 2,
         optimizer.particles,
@@ -247,14 +180,18 @@ async function initialize() {
       colorMap,
     )
     drawTextureToCanvas(bestCtx, bestTex, settings.size, viewportScale)
-
-    drawTextureToCanvas(
-      prerenderedCtx,
-      prerendered,
-      settings.size,
-      viewportScale,
-    )
     drawHistoryToCanvas(historyCtx, historyList, -1)
+
+    if (
+      optimizerType === 'differential_evolution' &&
+      optimizer.hasConverged()
+    ) {
+      optimizerType = 'mutate_one'
+      optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
+      infoDiv.innerHTML = optimizerType
+      nextIterationCount = 1
+      nextIterationOptimizer = 0
+    }
 
     requestAnimationFrame(runIterations)
   }
