@@ -15,6 +15,8 @@ export const RisoColors = {
   Green: [0, 169 / 255, 92 / 255] as ColorMapItemNormalized,
   Orange: [255 / 255, 108 / 255, 47 / 255] as ColorMapItemNormalized,
   Red: [255 / 255, 10 / 255, 10 / 255] as ColorMapItemNormalized,
+  White: [255 / 255, 255 / 255, 255 / 255] as ColorMapItemNormalized,
+  Yellow: [255 / 255, 232 / 255, 0 / 255] as ColorMapItemNormalized,
 } as const
 
 const ColorMap = new Map<ColorMapItemNormalized, string>(
@@ -22,8 +24,8 @@ const ColorMap = new Map<ColorMapItemNormalized, string>(
 )
 
 export function colorPaletteToHash(palette: ColorMapNormalized) {
-  if (palette.length > 5)
-    throw new Error('Palette cannot have more than 5 colors')
+  if (palette.length > 10)
+    throw new Error('Palette cannot have more than 10 colors')
 
   return palette.map(item => ColorMap.get(item)).join(',')
 }
