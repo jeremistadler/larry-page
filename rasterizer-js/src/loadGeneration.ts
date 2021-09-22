@@ -112,6 +112,10 @@ export async function loadGeneration(
 
   const positions = new Float32Array(featureCount) as Pos_Buffer
 
+  for (let i = 0; i < positions.length; i++) {
+    positions[i] = bounds[0][0]
+  }
+
   const originalSizeList = await fs
     .readFile('./images_resized/map.json', 'utf8')
     .then(
