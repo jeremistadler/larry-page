@@ -23,6 +23,10 @@ const ColorMap = new Map<ColorMapItemNormalized, string>(
   Object.keys(RisoColors).map(key => [RisoColors[key], key]),
 )
 
+export function colorToName(color: ColorMapItemNormalized) {
+  return ColorMap.get(color)
+}
+
 export function colorPaletteToHash(palette: ColorMapNormalized) {
   if (palette.length > 10)
     throw new Error('Palette cannot have more than 10 colors')

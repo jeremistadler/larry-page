@@ -12,20 +12,62 @@ import {
   Settings,
   Pos_Buffer,
   TRIANGLE_SIZE,
+  ColorMapItemNormalized,
+  RGBA_Norm_Buffer,
+  ColorLayer,
 } from './micro'
 import {
   calculateTriangleFitness,
   calculateTriangleFitnessWithPrerender,
+  drawTrianglesRGBA,
   drawTrianglesToTexture,
+  drawAllLayers,
+  calculateFitnessForLayers,
 } from './fitness-calculator'
 import {OPTIMIZER_LIST, createOptimizer} from './optimizers'
 import {randomNumberBounds} from './randomNumberBetween'
 import {createBounds} from './createBounds'
-import {RisoColors} from './createColorMap'
+import {colorToName, RisoColors} from './createColorMap'
+
+function createColorLayer(
+  color: ColorMapItemNormalized,
+  itemCount: number,
+  settings: Settings,
+) {
+  const ctx = createCanvas(
+    colorToName(color) || 'Color layer',
+    settings.viewportSize,
+  )
+
+  const result = {
+    color,
+
+    texBuffer: new Float32Array(
+      settings.size * settings.size * 4,
+    ) as RGBA_Norm_Buffer,
+
+    posBuffer: new Float32Array(itemCount * settings.itemSize) as Pos_Buffer,
+
+    drawToCtx: () => {
+      drawRGBATextureToCanvas(
+        ctx.ctx,
+        result.texBuffer,
+        settings.size,
+        settings.viewportSize / settings.size,
+      )
+    },
+
+    drawToTestBuffer: (pos: Pos_Buffer) => {
+      drawTrianglesRGBA(settings, pos, result.texBuffer, color)
+    },
+  }
+
+  return result
+}
 
 async function initialize() {
   const settings: Settings = {
-    size: 128,
+    size: 64,
     viewportSize: 512,
     targetItemCount: 240,
     historySize: 512,
@@ -41,36 +83,34 @@ async function initialize() {
   const ctxOriginal = createCanvas('Original', settings.viewportSize).ctx
   drawImageDataScaled(ctxOriginal, originalImage, viewportScale)
 
-  const palette = [
-    RisoColors.Yellow,
-    RisoColors.White,
-    RisoColors.Green,
-    RisoColors.White,
-    RisoColors.Blue,
-    RisoColors.White,
+  const layers = [
+    createColorLayer(RisoColors.Yellow, 1, settings),
+    createColorLayer(RisoColors.Green, 1, settings),
+    createColorLayer(RisoColors.Blue, 10, settings),
   ]
-  const colorMap: ColorMapNormalized = []
 
-  for (let i = 0; i < settings.targetItemCount; i++) {
-    colorMap.push(
-      palette[Math.floor((i / settings.targetItemCount) * palette.length)],
-    )
-  }
   const bounds = createBounds(settings.targetItemCount, settings.type)
   const originalTex = imageToImageTex(originalImage, settings.size)
 
+  layers.forEach(layer => {
+    for (let i = 0; i < layer.posBuffer.length; i++) {
+      layer.posBuffer[i] = randomNumberBounds(bounds[i])
+    }
+    layer.drawToTestBuffer(layer.posBuffer)
+  })
+
   let globalFitnessTests = 0
-  let best = new Float32Array(
-    settings.itemSize * settings.targetItemCount,
-  ) as Pos_Buffer
+  let currentLayer = layers[0]
 
   const lossFn = (pos: Pos_Buffer) => {
     globalFitnessTests++
-    const fitness = calculateTriangleFitness(
-      settings,
-      pos,
+
+    currentLayer.drawToTestBuffer(pos)
+
+    const fitness = calculateFitnessForLayers(
+      settings.size,
+      layers,
       originalTex,
-      colorMap,
     )
 
     if (isNaN(fitness)) {
@@ -95,25 +135,30 @@ async function initialize() {
   const infoDiv = document.createElement('div')
   document.body.append(infoDiv)
 
-  const dimensionsCtxList = Array.from({
-    length: Math.min(
-      0,
-      Math.floor((settings.itemSize * settings.targetItemCount) / 2),
-    ),
-  }).map((_, i) =>
-    createCanvas(
-      indexToName(Math.floor(i * 2)) +
-        '  ' +
-        indexToName(Math.floor(i * 2 + 1)),
-      settings.viewportSize / 2,
-    ),
-  )
+  // const dimensionsCtxList = Array.from({
+  //   length: Math.min(
+  //     0,
+  //     Math.floor((settings.itemSize * settings.targetItemCount) / 2),
+  //   ),
+  // }).map((_, i) =>
+  //   createCanvas(
+  //     indexToName(Math.floor(i * 2)) +
+  //       '  ' +
+  //       indexToName(Math.floor(i * 2 + 1)),
+  //     settings.viewportSize / 2,
+  //   ),
+  // )
 
   const infoDiv2 = document.createElement('div')
   document.body.append(infoDiv2)
 
   let optimizerType: OptimizerType = 'mutate_one'
-  let optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
+  let optimizer = createOptimizer(
+    optimizerType,
+    lossFn,
+    bounds,
+    currentLayer.posBuffer,
+  )
 
   let nextIterationCount = 1
   let nextIterationOptimizer = 0
@@ -125,7 +170,16 @@ async function initialize() {
       OPTIMIZER_LIST[
         (OPTIMIZER_LIST.indexOf(optimizerType) + 1) % OPTIMIZER_LIST.length
       ]
-    optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
+    for (let i = 0; i < optimizer.best.pos.length; i++) {
+      currentLayer.posBuffer[i] = optimizer.best.pos[i]
+    }
+    currentLayer.drawToTestBuffer(currentLayer.posBuffer)
+    optimizer = createOptimizer(
+      optimizerType,
+      lossFn,
+      bounds,
+      currentLayer.posBuffer,
+    )
     infoDiv.innerHTML = optimizerType
     nextIterationCount = 1
     nextIterationOptimizer = 0
@@ -146,48 +200,57 @@ async function initialize() {
       ' ms per iteration<br>ittr: ' +
       fitnessChecksSinceNextLevel +
       '<br>ItemCount: ' +
-      targetItemCount
+      targetItemCount +
+      '<br>optimizer ittr:' +
+      nextIterationOptimizer
     fitnessChecksSinceNextLevel += globalFitnessTests - lastGlobalFitnessTests
     lastGlobalFitnessTests = globalFitnessTests
 
-    nextIterationCount = Math.max(
-      1,
-      Math.floor((nextIterationCount / time) * 100),
+    nextIterationCount = Math.min(
+      10000,
+      Math.max(1, Math.floor((nextIterationCount / time) * 100)),
     )
 
     for (let i = 0; i < optimizer.best.pos.length; i++) {
-      best[i] = optimizer.best.pos[i]
+      currentLayer.posBuffer[i] = optimizer.best.pos[i]
     }
 
     historyList[0].push(optimizer.best.fitness)
     if (historyList[0].length > 1000) historyList[0].shift()
 
-    for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
-      drawDimensionToCanvas(
-        dimensionsCtxList[dim],
-        settings,
-        best,
-        lossFn,
-        dim * 2,
-        optimizer.particles,
-      )
-    }
+    // for (let dim = 0; dim < dimensionsCtxList.length; dim++) {
+    //   drawDimensionToCanvas(
+    //     dimensionsCtxList[dim],
+    //     settings,
+    //     best,
+    //     lossFn,
+    //     dim * 2,
+    //     optimizer.particles,
+    //   )
+    // }
 
-    const bestTex = drawTrianglesToTexture(
-      settings.size,
-      settings.size,
-      best,
-      colorMap,
-    )
-    drawTextureToCanvas(bestCtx, bestTex, settings.size, viewportScale)
+    const bestTex = drawAllLayers(settings.size, layers)
+    drawRGBTextureToCanvas(bestCtx, bestTex, settings.size, viewportScale)
     drawHistoryToCanvas(historyCtx, historyList, -1)
 
+    layers.forEach(layer => {
+      layer.drawToCtx()
+    })
+
     if (
-      optimizerType === 'differential_evolution' &&
-      optimizer.hasConverged()
+      (optimizerType === 'differential_evolution' &&
+        optimizer.hasConverged()) ||
+      nextIterationOptimizer > 10000
     ) {
+      currentLayer.drawToTestBuffer(currentLayer.posBuffer)
+      currentLayer = layers[(layers.indexOf(currentLayer) + 1) % layers.length]
       optimizerType = 'mutate_one'
-      optimizer = createOptimizer(optimizerType, lossFn, bounds, best)
+      optimizer = createOptimizer(
+        optimizerType,
+        lossFn,
+        bounds,
+        currentLayer.posBuffer,
+      )
       infoDiv.innerHTML = optimizerType
       nextIterationCount = 1
       nextIterationOptimizer = 0
@@ -350,7 +413,7 @@ function drawHistoryToCanvas(
   }
 }
 
-function drawTextureToCanvas(
+function drawRGBTextureToCanvas(
   ctx: CanvasRenderingContext2D,
   tex: RGB_Norm_Buffer,
   texSize: number,
@@ -367,6 +430,47 @@ function drawTextureToCanvas(
         ',' +
         tex[pos * 3 + 2] * 255 +
         ',1)'
+
+      ctx.fillRect(x * scale, y * scale, scale, scale)
+    }
+  }
+}
+
+function drawRGBATextureToCanvas(
+  ctx: CanvasRenderingContext2D,
+  tex: RGBA_Norm_Buffer,
+  texSize: number,
+  scale: number,
+) {
+  const fullSize = texSize * scale
+
+  ctx.fillStyle = 'black'
+  ctx.fillRect(0, 0, fullSize, fullSize)
+
+  const rectCount = 16
+  const rectSize = fullSize / rectCount
+  ctx.fillStyle = 'white'
+
+  for (var y = 0; y < rectCount; y++) {
+    for (var x = 0; x < rectCount; x++) {
+      if (y % 2 === 0 ? x % 2 === 0 : x % 2 === 1)
+        ctx.fillRect(x * rectSize, y * rectSize, rectSize, rectSize)
+    }
+  }
+
+  for (var y = 0; y < texSize; y++) {
+    for (var x = 0; x < texSize; x++) {
+      var pos = y * texSize + x
+      ctx.fillStyle =
+        'rgba(' +
+        tex[pos * 4 + 0] * 255 +
+        ',' +
+        tex[pos * 4 + 1] * 255 +
+        ',' +
+        tex[pos * 4 + 2] * 255 +
+        ',' +
+        tex[pos * 4 + 3] +
+        ')'
 
       ctx.fillRect(x * scale, y * scale, scale, scale)
     }

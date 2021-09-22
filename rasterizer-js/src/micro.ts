@@ -9,6 +9,12 @@ export type Settings = {
   type: ItemType
 }
 
+export type ColorLayer = {
+  color: ColorMapItemNormalized
+  texBuffer: RGBA_Norm_Buffer
+  posBuffer: Pos_Buffer
+}
+
 export type Generations = {
   id: number
   parent_id: number | null
@@ -82,6 +88,13 @@ export type Pos_Buffer = Float32Array & {
  */
 export type RGB_Norm_Buffer = Float32Array & {
   readonly RGB_Norm_Buffer: unique symbol
+}
+
+/**
+ * RGBA 0.0 to 1.0
+ */
+export type RGBA_Norm_Buffer = Float32Array & {
+  readonly RGBA_Norm_Buffer: unique symbol
 }
 
 /**
