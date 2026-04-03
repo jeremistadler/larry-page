@@ -19,6 +19,6 @@
     "wrangler": "^3.25.0"
   },
   "dependencies": {
-    "shared": "1.0.0"
+    "shared": "workspace:*"
   }
 }
