@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useState, useEffect } from 'react'
 import DnaGrid from './dna-grid/grid'
 import DnaRenderer from './dna-renderer/renderer'
 import Uploader from './uploader/uploader'
@@ -7,9 +7,9 @@ import {Dna} from 'shared/src/dna'
 import {DnaApi} from './scripts/api'
 
 const App = () => {
-  let [dna, setDna] = React.useState<Dna | null>(null)
+  const [dna, setDna] = useState<Dna | null>(null)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const dnaId = urlParams.get('dna')
 

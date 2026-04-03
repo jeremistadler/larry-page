@@ -1,28 +1,19 @@
 {
-  "compileOnSave": true,
   "compilerOptions": {
-    "module": "esnext",
-    "target": "ES2019",
-    "jsx": "react",
+    "module": "ESNext",
+    "target": "ES2022",
+    "jsx": "react-jsx",
     "sourceMap": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext",
-      "WebWorker"
-    ],
-    "allowJs": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src", "vite-env.d.ts"]
 }

@@ -2,19 +2,19 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "homepage": "https://larry.jeremi.se",
   "dependencies": {
     "gifencoder": "^2.0.1",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-redux": "^7.2.0",
-    "redux": "^4.0.5",
-    "shared": "workspace:*",
-    "use-debounce": "^3.4.2"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "shared": "*",
+    "use-debounce": "^10.0.4"
   },
   "scripts": {
-    "start": "parcel serve index.html",
-    "build": "parcel build index.html --public-url /"
+    "start": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "browserslist": {
     "production": [
@@ -30,10 +30,10 @@
   },
   "devDependencies": {
     "@types/gifencoder": "^2.0.1",
-    "@types/react": "^16.9.34",
-    "@types/react-dom": "^16.9.7",
-    "@types/react-redux": "^7.1.7",
-    "parcel": "next",
-    "typescript": "^3.8.3"
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.5"
   }
 }

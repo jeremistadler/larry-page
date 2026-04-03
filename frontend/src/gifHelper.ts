@@ -11,7 +11,7 @@ const downloadURL = function (data: string, fileName: string) {
   a.remove()
 }
 
-const addGifToBody = function (data: Uint8Array) {
+const addGifToBody = function (data: Uint8Array<ArrayBuffer>) {
   const blob = new Blob([data], {
     type: 'image/gif',
   })
@@ -26,7 +26,7 @@ const addGifToBody = function (data: Uint8Array) {
   document.body.appendChild(a)
 }
 
-const downloadBlob = function (data: Uint8Array, fileName: string) {
+const downloadBlob = function (data: Uint8Array<ArrayBuffer>, fileName: string) {
   const blob = new Blob([data], {
     type: 'image/gif',
   })
@@ -42,8 +42,8 @@ export function createGif(dna: Dna) {
   const encoder = new gifencoder(512, 512)
   const stream = encoder.createReadStream()
 
-  const bufs: Uint8Array[] = []
-  stream.on('data', (data: Uint8Array) => bufs.push(data))
+  const bufs: Uint8Array<ArrayBuffer>[] = []
+  stream.on('data', (data: Uint8Array<ArrayBuffer>) => bufs.push(data))
   stream.on('end', () => {
     const totalSize = bufs.reduce((len, buf) => len + buf.length, 0)
     const total = new Uint8Array(totalSize)

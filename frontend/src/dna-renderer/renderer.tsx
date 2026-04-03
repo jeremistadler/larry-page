@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {Dna, ISettings} from 'shared/src/dna'
 import {JsRasterizer} from '../scripts/rasterizer'
 import './renderer.css'
@@ -6,7 +6,6 @@ import {
   drawDnaOnCanvas,
   drawFitnessDiffOnCanvas,
 } from '../scripts/drawDnaOnCanvas'
-import {useRef} from 'react'
 
 function DnaRenderer({
   dna,
@@ -16,7 +15,7 @@ function DnaRenderer({
   onDnaChanged: (dn: Dna) => void
 }) {
   const dnaId = dna.id
-  const [settings, setSettings] = React.useState<ISettings>({
+  const [settings, setSettings] = useState<ISettings>({
     newMinOpacity: 0.1,
     newMaxOpacity: 1,
 
@@ -38,11 +37,11 @@ function DnaRenderer({
 
   const rasterizerRef = useRef<JsRasterizer | null>(null)
 
-  const canvasRef = React.useRef<HTMLCanvasElement>(null)
-  const fitnessCanvasRef = React.useRef<HTMLCanvasElement>(null)
-  const originalCanvasRef = React.useRef<HTMLCanvasElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fitnessCanvasRef = useRef<HTMLCanvasElement>(null)
+  const originalCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const rasterizer = (rasterizerRef.current = new JsRasterizer(dna, settings))
 
     rasterizer.onFrameCompleted.push(onDnaChanged)
@@ -52,7 +51,7 @@ function DnaRenderer({
     }
   }, [dnaId, settings])
 
-  React.useEffect(() => {
+  useEffect(() => {
     const rasterizer = rasterizerRef.current
 
     if (rasterizer == null) return

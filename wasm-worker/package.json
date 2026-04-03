@@ -15,7 +15,7 @@
     "@assemblyscript/loader": "^0.10.0",
     "assemblyscript": "^0.10.0",
     "nodemark": "^0.3.0",
-    "shared": "workspace:*"
+    "shared": "*"
   },
   "devDependencies": {
     "assemblyscript": "^0.10.0",

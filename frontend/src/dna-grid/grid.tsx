@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useState, useEffect } from 'react'
 import {Dna} from 'shared/src/dna'
 import {DnaApi} from './../scripts/api'
 import {Utils} from 'shared/src/utils'
@@ -6,19 +6,19 @@ import DnaImage from '../dna-image/dna-image'
 import './grid.css'
 
 const DnaGrid = ({onChangeDna}: {onChangeDna: (dna: Dna) => void}) => {
-  const [dnaList, setDnaList] = React.useState<Dna[]>(() =>
+  const [dnaList, setDnaList] = useState<Dna[]>(() =>
     [1, 2, 3, 4, 5, 6, 7, 8].map(f => Utils.createDna(0, f.toString())),
   )
 
-  React.useEffect(() => {
+  useEffect(() => {
     DnaApi.fetchDnaList().then(response => {
       setDnaList(response)
     })
   }, [])
 
-  const [isVisible, setIsVisible] = React.useState(false)
+  const [isVisible, setIsVisible] = useState(false)
 
-  React.useEffect(() => {
+  useEffect(() => {
     setTimeout(() => {
       setIsVisible(true)
     }, 100)
