@@ -1,34 +1,46 @@
 import {RenderConfig} from 'shared/src/shared'
 import {Dna} from 'shared/src/dna'
 
+function convertImageToPng(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => {
+      URL.revokeObjectURL(url)
+      const canvas = document.createElement('canvas')
+      canvas.width = image.naturalWidth
+      canvas.height = image.naturalHeight
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(image, 0, 0)
+      canvas.toBlob(
+        blob => {
+          if (!blob) {
+            reject(new Error('Failed to convert image to PNG'))
+            return
+          }
+          blob.arrayBuffer().then(resolve, reject)
+        },
+        'image/png',
+      )
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Failed to load image'))
+    }
+    image.src = url
+  })
+}
+
 export class DnaApi {
   static async uploadNewImage(file: File): Promise<string> {
-    const base64 = await new Promise<string | ArrayBuffer | null>(
-      (resolve, reject) => {
-        const reader = new FileReader()
-        reader.addEventListener(
-          'load',
-          () => {
-            let r = reader.result
-            resolve(r)
-            // convert image file to base64 string
-          },
-          false,
-        )
-        reader.addEventListener('error', ev => {
-          reject(reader.error)
-        })
-
-        reader.readAsArrayBuffer(file)
-      },
-    )
+    const pngBuffer = await convertImageToPng(file)
 
     const response = await fetch(RenderConfig.baseUrl + '?route=upload', {
       method: 'POST',
-      body: base64,
+      body: pngBuffer,
     })
-    const data = (await response.json()) as {dna: {id: string}}
-    return data.dna.id
+    const data = (await response.json()) as {id: string}
+    return data.id
   }
 
   static async fetchRandomDna(): Promise<Dna> {

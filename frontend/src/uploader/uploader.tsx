@@ -25,6 +25,7 @@ export default function Uploader(props: {onUploaded: (dna: Dna) => void}) {
           type="file"
           name="uploader"
           id="uploader"
+          accept="image/*"
           className="upload-file"
           onChange={uploadFile}
         />
