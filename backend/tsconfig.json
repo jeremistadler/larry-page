@@ -1,15 +1,16 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
     "target": "esnext",
-    "lib": ["esnext", "webworker"],
+    "lib": ["esnext"],
     "jsx": "react",
     "noImplicitAny": true,
     "preserveConstEnums": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
-    "types": ["@cloudflare/workers-types"]
-
+    "types": ["@cloudflare/workers-types/2023-07-01"],
+    "noEmit": true,
+    "skipLibCheck": true
   },
-  "include": ["src/index.ts"]
+  "include": ["src"]
 }
