@@ -1,63 +1,66 @@
-import {KVNamespace} from '@cloudflare/workers-types'
 import {generateChronologicalId} from './generateChronologicalId'
-import {Utils} from 'shared/src/utils'
-import {getAssetFromKV, mapRequestToAsset} from '@cloudflare/kv-asset-handler'
 import {Dna} from 'shared/src/dna'
 
-declare global {
-  const KV: KVNamespace
+export interface Env {
+  KV: KVNamespace
+  __STATIC_CONTENT: KVNamespace
 }
 
-const CORS_HEADERS = {
+const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Credentials': 'true',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Origin': 'http://localhost:1234',
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
-const DEFAULT_HEADERS = {
+const DEFAULT_HEADERS: Record<string, string> = {
   ...CORS_HEADERS,
   'content-type': 'application/json',
 }
 
-// eslint-disable-next-line no-restricted-globals
-addEventListener('fetch', (event: FetchEvent) => {
-  const params: Record<string, string> = {}
-  const url = new URL(event.request.url)
-  console.log(url)
+export default {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
+    const url = new URL(request.url)
+    console.log(url)
 
-  if (event.request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: CORS_HEADERS,
-    })
-  }
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: CORS_HEADERS,
+      })
+    }
 
-  if (url.protocol === 'http:') {
-    return event.respondWith(
-      Response.redirect(event.request.url.replace('http:', 'https:'), 301),
-    )
-  }
+    if (url.protocol === 'http:') {
+      return Response.redirect(request.url.replace('http:', 'https:'), 301)
+    }
 
-  if (url.pathname.includes('/api')) {
-    const queryString = url.search.slice(1).split('&')
+    if (url.pathname.includes('/api')) {
+      const params: Record<string, string> = {}
+      const queryString = url.search.slice(1).split('&')
 
-    queryString.forEach(item => {
-      const kv = item.split('=')
-      if (kv[0]) params[kv[0]] = kv[1]
-    })
+      queryString.forEach(item => {
+        const kv = item.split('=')
+        if (kv[0]) params[kv[0]] = kv[1]
+      })
 
-    event.respondWith(handleApiRequest(event, params))
-  } else {
-    event.respondWith(handleStaticRequest(event))
-  }
-})
+      return handleApiRequest(request, env, ctx, params)
+    } else {
+      return handleStaticRequest(request, env, ctx)
+    }
+  },
+} satisfies ExportedHandler<Env>
 
 async function handleApiRequest(
-  event: FetchEvent,
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
   query: Record<string, string>,
-) {
-  const {request} = event
+): Promise<Response> {
+  const {KV} = env
 
   if (query.route === 'upload') {
     let buf = await request.arrayBuffer()
@@ -68,7 +71,7 @@ async function handleApiRequest(
     })
   } else if (query.route === 'dna') {
     const dnaId = query.id
-    const dna = await getFittestDnaAsJsonTextById(dnaId)
+    const dna = await getFittestDnaAsJsonTextById(KV, dnaId)
 
     if (dna) {
       await KV.put('lastReturnedId', dnaId)
@@ -85,11 +88,11 @@ async function handleApiRequest(
     const dnaIds = (await KV.get('dnaIdsList', 'json')) as string[]
     const lastReturnedId = await KV.get('lastReturnedId', 'text')
 
-    let index = (dnaIds.indexOf(lastReturnedId) + 1) % dnaIds.length
+    let index = (dnaIds.indexOf(lastReturnedId ?? '') + 1) % dnaIds.length
 
     for (let i = 0; i < dnaIds.length; i++) {
       const dnaId = dnaIds[index]
-      const dna = await getFittestDnaAsJsonTextById(dnaId)
+      const dna = await getFittestDnaAsJsonTextById(KV, dnaId)
 
       if (dna) {
         await KV.put('lastReturnedId', dnaId)
@@ -138,13 +141,13 @@ async function handleApiRequest(
 
     const key = 'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness)
     await KV.put(key, json)
-    await updateDnaCurrentList()
+    await updateDnaCurrentList(KV)
 
     return new Response(JSON.stringify({message: 'Saved to ' + key}), {
       headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'updateCurrentList') {
-    const result = await updateDnaCurrentList()
+    const result = await updateDnaCurrentList(KV)
 
     return new Response(
       JSON.stringify({
@@ -167,12 +170,12 @@ async function handleApiRequest(
         .map(f => f.name)
         .map(async originalKey => {
           const jsonText = await KV.get(originalKey, 'text')
-          const dna = JSON.parse(jsonText) as Dna
+          const dna = JSON.parse(jsonText!) as Dna
           return dna
         }),
     )
 
-    return new Response(JSON.stringify({keys, dnaList, cursor: keys.cursor}), {
+    return new Response(JSON.stringify({keys, dnaList, cursor: (keys as any).cursor}), {
       headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'deleteall') {
@@ -204,20 +207,23 @@ function formatFitnessChronological(fitness: number) {
   return fitness.toString().padStart(14, '0')
 }
 
-async function KvListAll(prefix: string): Promise<string[]> {
+async function KvListAll(KV: KVNamespace, prefix: string): Promise<string[]> {
   let cursor: string | undefined = undefined
   let results: string[] = []
 
   while (true) {
-    const response = await KV.list({prefix, cursor})
-    results = results.concat(response.keys.map(f => f.name))
+    const response: KVNamespaceListResult<unknown, string> = await KV.list({prefix, cursor})
+    results = results.concat(response.keys.map((f: KVNamespaceListKey<unknown, string>) => f.name))
 
     if (response.list_complete || !response.cursor) return results
     cursor = response.cursor
   }
 }
 
-async function getFittestDnaAsJsonTextById(id: string): Promise<string | null> {
+async function getFittestDnaAsJsonTextById(
+  KV: KVNamespace,
+  id: string,
+): Promise<string | null> {
   const listResult = await KV.list({
     prefix: 'fitness4:' + id + ':',
     limit: 10,
@@ -228,14 +234,14 @@ async function getFittestDnaAsJsonTextById(id: string): Promise<string | null> {
   return null
 }
 
-async function updateDnaCurrentList() {
-  const dnaIds = (await KvListAll('dnaIds:')).map(f => f.split(':')[1])
+async function updateDnaCurrentList(KV: KVNamespace) {
+  const dnaIds = (await KvListAll(KV, 'dnaIds:')).map(f => f.split(':')[1])
 
   KV.put('dnaIdsList', JSON.stringify(dnaIds))
 
   const fittestDnaList: string[] = (
-    await Promise.all(dnaIds.map(getFittestDnaAsJsonTextById))
-  ).filter(Boolean)
+    await Promise.all(dnaIds.map(id => getFittestDnaAsJsonTextById(KV, id)))
+  ).filter(Boolean) as string[]
 
   await KV.put('fittestDnaList', '[' + fittestDnaList.join(',') + ']')
 
@@ -245,19 +251,32 @@ async function updateDnaCurrentList() {
   }
 }
 
-async function handleStaticRequest(event: FetchEvent) {
+async function handleStaticRequest(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+) {
   try {
-    const customKeyModifier = (request: Request) => {
-      let url = request.url
-      //custom key mapping optional
+    const {getAssetFromKV, mapRequestToAsset} = await import(
+      '@cloudflare/kv-asset-handler'
+    )
+
+    const customKeyModifier = (req: Request) => {
+      let url = req.url
       url = url.replace('/larry', '').replace(/^\/+/, '').replace(/\?.*$/, '')
-      return mapRequestToAsset(new Request(url, request as any))
+      return mapRequestToAsset(new Request(url, req as unknown as RequestInit))
     }
 
-    return await getAssetFromKV(event, {mapRequestToAsset: customKeyModifier})
+    return await getAssetFromKV(
+      {
+        request,
+        waitUntil: ctx.waitUntil.bind(ctx),
+      } as any,
+      {mapRequestToAsset: customKeyModifier, ASSET_NAMESPACE: env.__STATIC_CONTENT},
+    )
   } catch (e) {
     console.error(e)
-    return new Response(e.toString(), {
+    return new Response(String(e), {
       headers: {'content-type': 'text/plain'},
     })
   }
