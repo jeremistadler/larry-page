@@ -1,13 +1,13 @@
-import * as React from 'react'
+import { useRef, type ChangeEvent } from 'react'
 import './uploader.css'
 import {DnaApi} from '../scripts/api'
 import {Dna} from 'shared/src/dna'
 import {Utils} from 'shared/src/utils'
 
 export default function Uploader(props: {onUploaded: (dna: Dna) => void}) {
-  const uploadForm = React.useRef<HTMLInputElement>(null)
+  const uploadForm = useRef<HTMLInputElement>(null)
 
-  const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = (uploadForm.current?.files ?? [])[0]
     if (!file) return
     console.log('Uploading...')

@@ -51,7 +51,7 @@ export function drawFitnessDiffOnCanvas(
   }
 
   ctx.putImageData(
-    new ImageData(buffer, imageData.width, imageData.height),
+    new ImageData(new Uint8ClampedArray(buffer.buffer) as unknown as Uint8ClampedArray<ArrayBuffer>, imageData.width, imageData.height),
     0,
     0,
   )

@@ -1,4 +1,3 @@
-import * as React from 'react'
 import {Dna} from 'shared/src/dna'
 import './dna-image.css'
 
