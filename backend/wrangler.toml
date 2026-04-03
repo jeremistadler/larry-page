@@ -14,4 +14,4 @@ kv_namespaces = [
 directory = "../frontend/dist"
 
 [build]
-command = "cd ../frontend && yarn build"
+command = "cd .. && pnpm build"

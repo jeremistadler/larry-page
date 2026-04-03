@@ -5,6 +5,7 @@
   "description": "Image vector project",
   "main": "src/index.ts",
   "scripts": {
+    "build": "tsc",
     "format": "prettier --write '**/*.{ts,js,css,json,md}'",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"

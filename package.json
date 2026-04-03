@@ -1,6 +1,7 @@
 {
     "private": true,
     "scripts": {
+        "build": "pnpm --filter frontend --filter backend build",
         "deploy": "cd ./frontend && pnpm build && cd ../backend && wrangler deploy",
         "dev": "cd ./frontend && pnpm start"
     },
