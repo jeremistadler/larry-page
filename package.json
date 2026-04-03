@@ -1,22 +1,8 @@
 {
     "private": true,
-    "workspaces": [
-        "backend",
-        "frontend",
-        "shared",
-        "wasm-worker"
-    ],
     "scripts": {
-        "deploy": "cd ./frontend && yarn build && cd ../backend && wrangler deploy",
-        "dev": "cd ./frontend && yarn start"
+        "deploy": "cd ./frontend && pnpm build && cd ../backend && wrangler deploy",
+        "dev": "cd ./frontend && pnpm start"
     },
-    "packageManager": "yarn@4.5.0",
-    "dependenciesMeta": {
-        "canvas": {
-            "built": false
-        },
-        "lmdb-store": {
-            "built": false
-        }
-    }
+    "packageManager": "pnpm@10.33.0"
 }

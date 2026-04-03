@@ -1,0 +1,11 @@
+packages:
+  - backend
+  - frontend
+  - shared
+  - wasm-worker
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+  - sharp
+  - '@parcel/watcher'
+  - msgpackr-extract
