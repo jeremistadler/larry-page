@@ -1,4 +1,4 @@
-name = "backend"
+name = "larry-page"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 account_id = "71b746635051545ad66a96846ea64800"
