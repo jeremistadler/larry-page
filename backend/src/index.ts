@@ -3,7 +3,6 @@ import {Dna} from 'shared/src/dna'
 
 export interface Env {
   KV: KVNamespace
-  __STATIC_CONTENT: KVNamespace
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -48,9 +47,10 @@ export default {
       })
 
       return handleApiRequest(request, env, ctx, params)
-    } else {
-      return handleStaticRequest(request, env, ctx)
     }
+
+    // Static assets are served automatically by Cloudflare Workers Assets
+    return new Response('Not Found', {status: 404})
   },
 } satisfies ExportedHandler<Env>
 
@@ -248,36 +248,5 @@ async function updateDnaCurrentList(KV: KVNamespace) {
   return {
     dnaIds,
     fittestDnaList,
-  }
-}
-
-async function handleStaticRequest(
-  request: Request,
-  env: Env,
-  ctx: ExecutionContext,
-) {
-  try {
-    const {getAssetFromKV, mapRequestToAsset} = await import(
-      '@cloudflare/kv-asset-handler'
-    )
-
-    const customKeyModifier = (req: Request) => {
-      let url = req.url
-      url = url.replace(/^\/+/, '').replace(/\?.*$/, '')
-      return mapRequestToAsset(new Request(url, req as unknown as RequestInit))
-    }
-
-    return await getAssetFromKV(
-      {
-        request,
-        waitUntil: ctx.waitUntil.bind(ctx),
-      } as any,
-      {mapRequestToAsset: customKeyModifier, ASSET_NAMESPACE: env.__STATIC_CONTENT},
-    )
-  } catch (e) {
-    console.error(e)
-    return new Response(String(e), {
-      headers: {'content-type': 'text/plain'},
-    })
   }
 }
