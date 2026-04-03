@@ -263,7 +263,7 @@ async function handleStaticRequest(
 
     const customKeyModifier = (req: Request) => {
       let url = req.url
-      url = url.replace('/larry', '').replace(/^\/+/, '').replace(/\?.*$/, '')
+      url = url.replace(/^\/+/, '').replace(/\?.*$/, '')
       return mapRequestToAsset(new Request(url, req as unknown as RequestInit))
     }
 

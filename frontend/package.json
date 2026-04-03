@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://jeremi.se/larry",
+  "homepage": "https://larry.jeremi.se",
   "dependencies": {
     "gifencoder": "^2.0.1",
     "react": "^16.13.1",
@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "parcel serve index.html",
-    "build": "parcel build index.html --public-url /larry"
+    "build": "parcel build index.html --public-url /"
   },
   "browserslist": {
     "production": [
