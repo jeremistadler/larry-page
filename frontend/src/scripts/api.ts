@@ -27,8 +27,8 @@ export class DnaApi {
       method: 'POST',
       body: base64,
     })
-    const data = (await response.json()) as {dna: {id: string}}
-    return data.dna.id
+    const data = (await response.json()) as {id: string}
+    return data.id
   }
 
   static async fetchRandomDna(): Promise<Dna> {

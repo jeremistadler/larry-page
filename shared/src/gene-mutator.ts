@@ -37,17 +37,16 @@ export function RectFromGene(f: Triangle): IRectangle {
 }
 
 export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
-  gene1.pos
   return (
     linesIntersect(
-      gene1.pos[0], // a
-      gene1.pos[1], // a
-      gene1.pos[2], // b
-      gene1.pos[3], // b
-      gene2.pos[0], // other.a
-      gene1.pos[1], // other.a
-      gene2.pos[2], // other.b
-      gene2.pos[3], // other.b
+      gene1.pos[0],
+      gene1.pos[1],
+      gene1.pos[2],
+      gene1.pos[3],
+      gene2.pos[0],
+      gene2.pos[1],
+      gene2.pos[2],
+      gene2.pos[3],
     ) ||
     linesIntersect(
       gene1.pos[0],
@@ -55,7 +54,7 @@ export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
       gene1.pos[2],
       gene1.pos[3],
       gene2.pos[0],
-      gene1.pos[1],
+      gene2.pos[1],
       gene2.pos[4],
       gene2.pos[5],
     ) ||
@@ -65,7 +64,7 @@ export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
       gene1.pos[2],
       gene1.pos[3],
       gene2.pos[2],
-      gene1.pos[3],
+      gene2.pos[3],
       gene2.pos[4],
       gene2.pos[5],
     ) ||
@@ -75,7 +74,7 @@ export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
       gene1.pos[4],
       gene1.pos[5],
       gene2.pos[0],
-      gene1.pos[1],
+      gene2.pos[1],
       gene2.pos[2],
       gene2.pos[3],
     ) ||
@@ -85,7 +84,7 @@ export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
       gene1.pos[4],
       gene1.pos[5],
       gene2.pos[0],
-      gene1.pos[1],
+      gene2.pos[1],
       gene2.pos[4],
       gene2.pos[5],
     ) ||
@@ -95,7 +94,7 @@ export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
       gene1.pos[4],
       gene1.pos[5],
       gene2.pos[2],
-      gene1.pos[3],
+      gene2.pos[3],
       gene2.pos[4],
       gene2.pos[5],
     ) ||
@@ -105,7 +104,7 @@ export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
       gene1.pos[4],
       gene1.pos[5],
       gene2.pos[0],
-      gene1.pos[1],
+      gene2.pos[1],
       gene2.pos[2],
       gene2.pos[3],
     ) ||
@@ -115,7 +114,7 @@ export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
       gene1.pos[4],
       gene1.pos[5],
       gene2.pos[0],
-      gene1.pos[1],
+      gene2.pos[1],
       gene2.pos[4],
       gene2.pos[5],
     ) ||
@@ -125,7 +124,7 @@ export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
       gene1.pos[4],
       gene1.pos[5],
       gene2.pos[2],
-      gene1.pos[3],
+      gene2.pos[3],
       gene2.pos[4],
       gene2.pos[5],
     )

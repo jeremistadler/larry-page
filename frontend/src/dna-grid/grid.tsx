@@ -22,7 +22,7 @@ const DnaGrid = ({onChangeDna}: {onChangeDna: (dna: Dna) => void}) => {
     setTimeout(() => {
       setIsVisible(true)
     }, 100)
-  })
+  }, [])
 
   return (
     <div>

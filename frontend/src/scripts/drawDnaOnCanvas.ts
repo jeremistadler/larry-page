@@ -44,8 +44,8 @@ export function drawFitnessDiffOnCanvas(
     buffer[i] = q
   }
 
-  for (let y = 0; y < imageData.width; y++) {
-    for (let x = 0; x < imageData.height; x++) {
+  for (let y = 0; y < imageData.height; y++) {
+    for (let x = 0; x < imageData.width; x++) {
       buffer[y * imageData.width * 4 + x * 4 + 3] = 255
     }
   }
