@@ -8185,6 +8185,11 @@ __metadata:
 "root-workspace-0b6124@workspace:.":
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
+  dependenciesMeta:
+    canvas:
+      built: false
+    lmdb-store:
+      built: false
   languageName: unknown
   linkType: soft
 
