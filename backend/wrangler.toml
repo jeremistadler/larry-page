@@ -3,7 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2024-01-01"
 account_id = "71b746635051545ad66a96846ea64800"
 workers_dev = false
-route = "jeremi.se/larry*"
+route = "larry.jeremi.se/*"
 zone_id = "971fa3e74042d3d8f70d317db262795e"
 
 kv_namespaces = [

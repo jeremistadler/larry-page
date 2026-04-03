@@ -1,4 +1,4 @@
 export const RenderConfig = {
-  baseUrl: 'https://jeremi.se/larry/api',
-  baseAssets: 'https://jeremi.se/larry',
+  baseUrl: 'https://larry.jeremi.se/api',
+  baseAssets: 'https://larry.jeremi.se',
 }
