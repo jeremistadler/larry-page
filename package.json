@@ -8,6 +8,7 @@
     ],
     "scripts": {
         "deploy": "cd ./frontend && yarn build && cd ../backend && wrangler deploy",
-    "dev": "cd ./frontend && yarn start"
-    }
+        "dev": "cd ./frontend && yarn start"
+    },
+    "packageManager": "yarn@4.5.0"
 }
