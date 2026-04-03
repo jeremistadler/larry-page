@@ -10,5 +10,8 @@ kv_namespaces = [
     { binding = "KV", id = "8c3db898d06c4fb083d72ad268763459" }
 ]
 
-[site]
-bucket = "../frontend/dist"
+[assets]
+directory = "../frontend/dist"
+
+[build]
+command = "cd ../frontend && yarn build"
