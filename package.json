@@ -4,7 +4,6 @@
         "backend",
         "frontend",
         "shared",
-        "worker",
         "wasm-worker"
     ],
     "scripts": {
