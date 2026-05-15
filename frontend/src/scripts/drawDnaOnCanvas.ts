@@ -37,21 +37,18 @@ export function drawFitnessDiffOnCanvas(
   if (imageData.width !== ctx.canvas.width) return
   if (imageData.height !== ctx.canvas.height) return
 
-  const buffer = drawOnBuffer(dna, imageData)
+  const rendered = drawOnBuffer(dna, imageData)
+  const out = new Uint8ClampedArray(rendered.length)
 
-  for (var i = 0; i < buffer.length; i++) {
-    var q = Math.abs(imageData.data[i] - buffer[i])
-    buffer[i] = q
-  }
-
-  for (let y = 0; y < imageData.width; y++) {
-    for (let x = 0; x < imageData.height; x++) {
-      buffer[y * imageData.width * 4 + x * 4 + 3] = 255
-    }
+  for (let i = 0; i < rendered.length; i += 4) {
+    out[i] = Math.abs(imageData.data[i] - rendered[i])
+    out[i + 1] = Math.abs(imageData.data[i + 1] - rendered[i + 1])
+    out[i + 2] = Math.abs(imageData.data[i + 2] - rendered[i + 2])
+    out[i + 3] = 255
   }
 
   ctx.putImageData(
-    new ImageData(new Uint8ClampedArray(buffer.buffer) as unknown as Uint8ClampedArray<ArrayBuffer>, imageData.width, imageData.height),
+    new ImageData(out as unknown as Uint8ClampedArray<ArrayBuffer>, imageData.width, imageData.height),
     0,
     0,
   )

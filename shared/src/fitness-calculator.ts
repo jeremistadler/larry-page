@@ -1,88 +1,82 @@
-import {Pos, TransparentColor, Dna} from './dna'
-import {Raster} from './raster'
+import {Dna} from './dna'
+import {drawTriangle} from './raster'
 import {ImageData} from './ImageData'
 
-const Buffers: Record<string, Uint8ClampedArray> = {}
-const posBuffer: Pos = [0, 0, 0, 0, 0, 0]
-const colorBuffer: TransparentColor = [0, 0, 0, 0]
+const Buffers: Record<string, Uint8Array> = {}
 
 function GetBuffer(width: number, height: number) {
-  var buffer = Buffers[width + ':' + height]
+  const key = width + ':' + height
+  let buffer = Buffers[key]
   if (buffer) return buffer
-  buffer = new Uint8ClampedArray(width * height * 4) as any
-  Buffers[width + ':' + height] = buffer
+  buffer = new Uint8Array(width * height * 4)
+  Buffers[key] = buffer
   return buffer
 }
 
-export function drawOnBuffer(dna: Dna, image: ImageData) {
-  var buffer = GetBuffer(image.width, image.height)
-  for (var i = 0; i < buffer.length; i++) buffer[i] = 255
+function clearToWhite(buffer: Uint8Array) {
+  buffer.fill(255)
+}
 
-  for (var i = 0; i < dna.genes.length; i++) {
-    var gene = dna.genes[i]
+function rasterize(dna: Dna, image: ImageData): Uint8Array {
+  const buffer = GetBuffer(image.width, image.height)
+  clearToWhite(buffer)
 
-    colorBuffer[0] = Math.floor(gene.color[0] * 255)
-    colorBuffer[1] = Math.floor(gene.color[1] * 255)
-    colorBuffer[2] = Math.floor(gene.color[2] * 255)
-    colorBuffer[3] = gene.color[3]
+  const w = image.width
+  const h = image.height
+  const genes = dna.genes
 
-    posBuffer[0] = gene.pos[0] * image.width
-    posBuffer[1] = gene.pos[1] * image.height
-    posBuffer[2] = gene.pos[2] * image.width
-    posBuffer[3] = gene.pos[3] * image.height
-    posBuffer[4] = gene.pos[4] * image.width
-    posBuffer[5] = gene.pos[5] * image.height
+  for (let i = 0; i < genes.length; i++) {
+    const gene = genes[i]
+    const color = gene.color
+    const pos = gene.pos
 
-    Raster.drawPolygon(
+    const r = (color[0] * 255) | 0
+    const g = (color[1] * 255) | 0
+    const b = (color[2] * 255) | 0
+    let alphaI = (color[3] * 256) | 0
+    if (alphaI < 0) alphaI = 0
+    else if (alphaI > 256) alphaI = 256
+    if (alphaI === 0) continue
+
+    drawTriangle(
       buffer,
-      image.width,
-      image.height,
-      posBuffer,
-      colorBuffer,
+      w,
+      h,
+      pos[0] * w,
+      pos[1] * h,
+      pos[2] * w,
+      pos[3] * h,
+      pos[4] * w,
+      pos[5] * h,
+      r,
+      g,
+      b,
+      alphaI,
     )
   }
 
   return buffer
 }
 
-export function GetFitness(dna: Dna, image: ImageData) {
-  var buffer = GetBuffer(image.width, image.height)
-  for (var i = 0; i < buffer.length; i++) buffer[i] = 255
+export function drawOnBuffer(dna: Dna, image: ImageData): Uint8Array {
+  return rasterize(dna, image)
+}
 
-  for (var i = 0; i < dna.genes.length; i++) {
-    var gene = dna.genes[i]
-
-    colorBuffer[0] = Math.floor(gene.color[0] * 255)
-    colorBuffer[1] = Math.floor(gene.color[1] * 255)
-    colorBuffer[2] = Math.floor(gene.color[2] * 255)
-    colorBuffer[3] = gene.color[3]
-
-    posBuffer[0] = gene.pos[0] * image.width
-    posBuffer[1] = gene.pos[1] * image.height
-    posBuffer[2] = gene.pos[2] * image.width
-    posBuffer[3] = gene.pos[3] * image.height
-    posBuffer[4] = gene.pos[4] * image.width
-    posBuffer[5] = gene.pos[5] * image.height
-
-    Raster.drawPolygon(
-      buffer,
-      image.width,
-      image.height,
-      posBuffer,
-      colorBuffer,
-    )
-  }
-
+export function GetFitness(dna: Dna, image: ImageData): number {
+  const buffer = rasterize(dna, image)
   return calculateFitness(image, buffer)
 }
 
-function calculateFitness(img: ImageData, buff2: Uint8ClampedArray) {
-  var diff = 0
-  for (var i = 0; i < img.data.length; i++) {
-    var q = Math.abs(img.data[i] - buff2[i])
-    diff += q * q
+function calculateFitness(img: ImageData, buf: Uint8Array): number {
+  const data = img.data
+  const len = data.length
+  let diff = 0
+  for (let i = 0; i < len; i += 4) {
+    const dr = data[i] - buf[i]
+    const dg = data[i + 1] - buf[i + 1]
+    const db = data[i + 2] - buf[i + 2]
+    diff += dr * dr + dg * dg + db * db
   }
-
-  const pixelCount = img.height * img.width
+  const pixelCount = img.width * img.height
   return diff / pixelCount
 }

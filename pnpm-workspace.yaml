@@ -2,6 +2,7 @@ packages:
   - backend
   - frontend
   - shared
+  - benchmark
 onlyBuiltDependencies:
   - esbuild
   - workerd

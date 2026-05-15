@@ -1,230 +1,110 @@
-import {Utils} from './utils'
+let rowMin = new Int32Array(2048)
+let rowMax = new Int32Array(2048)
 
-export class Raster {
-  static _rowMin: number[] = Utils.CreateNumberArray(1024)
-  static _rowMax: number[] = Utils.CreateNumberArray(1024)
+function ensureRowCapacity(n: number) {
+  if (n > rowMin.length) {
+    let size = rowMin.length
+    while (size < n) size *= 2
+    rowMin = new Int32Array(size)
+    rowMax = new Int32Array(size)
+  }
+}
 
-  private static drawHLine(
-    buffer: Uint8ClampedArray,
-    width: number,
-    height: number,
-    x1: number,
-    x2: number,
-    y: number,
-    color: number[],
-  ) {
-    if (y < 0 || y > height - 1) return
-    if (x1 === x2) return
+function walkEdge(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  rowStart: number,
+  rowEnd: number,
+  yBase: number,
+) {
+  if (ay === by) return
 
-    x1 = Math.max(x1, 0)
-    x2 = Math.min(x2, width)
+  if (ay > by) {
+    const tx = ax
+    const ty = ay
+    ax = bx
+    ay = by
+    bx = tx
+    by = ty
+  }
 
-    var alpha = color[3]
-    var inverseAlpha = 1 - alpha
+  const yLo = Math.ceil(ay)
+  const yHi = Math.floor(by)
+  const yFrom = yLo < rowStart ? rowStart : yLo
+  const yTo = yHi > rowEnd ? rowEnd : yHi
+  if (yFrom > yTo) return
 
-    var index = Math.floor(y * width + x1)
-    for (; x1 < x2; x1++) {
-      buffer[index * 4 + 0] =
-        alpha * color[0] + buffer[index * 4 + 0] * inverseAlpha
-      buffer[index * 4 + 1] =
-        alpha * color[1] + buffer[index * 4 + 1] * inverseAlpha
-      buffer[index * 4 + 2] =
-        alpha * color[2] + buffer[index * 4 + 2] * inverseAlpha
-      index++
+  const slope = (bx - ax) / (by - ay)
+  let x = ax + slope * (yFrom - ay)
+  let r = yFrom - yBase
+
+  for (let y = yFrom; y <= yTo; y++) {
+    const xi = x | 0
+    if (xi < rowMin[r]) rowMin[r] = xi
+    if (xi > rowMax[r]) rowMax[r] = xi
+    x += slope
+    r++
+  }
+}
+
+export function drawTriangle(
+  buffer: Uint8Array,
+  width: number,
+  height: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  r: number,
+  g: number,
+  b: number,
+  alphaI: number,
+) {
+  let minY = y0 < y1 ? y0 : y1
+  if (y2 < minY) minY = y2
+  let maxY = y0 > y1 ? y0 : y1
+  if (y2 > maxY) maxY = y2
+
+  const yStart = Math.max(0, Math.ceil(minY))
+  const yEnd = Math.min(height - 1, Math.floor(maxY))
+  if (yStart > yEnd) return
+
+  const rowCount = yEnd - yStart + 1
+  ensureRowCapacity(rowCount)
+
+  for (let i = 0; i < rowCount; i++) {
+    rowMin[i] = 0x7fffffff
+    rowMax[i] = -0x7fffffff
+  }
+
+  walkEdge(x0, y0, x1, y1, yStart, yEnd, yStart)
+  walkEdge(x1, y1, x2, y2, yStart, yEnd, yStart)
+  walkEdge(x2, y2, x0, y0, yStart, yEnd, yStart)
+
+  const invAlpha = 256 - alphaI
+  const rPre = r * alphaI
+  const gPre = g * alphaI
+  const bPre = b * alphaI
+
+  for (let row = 0; row < rowCount; row++) {
+    let xL = rowMin[row]
+    let xR = rowMax[row]
+    if (xL > xR) continue
+    if (xL < 0) xL = 0
+    if (xR > width - 1) xR = width - 1
+    if (xL > xR) continue
+
+    const y = yStart + row
+    let idx = (y * width + xL) * 4
+    for (let x = xL; x <= xR; x++) {
+      buffer[idx] = (rPre + buffer[idx] * invAlpha) >> 8
+      buffer[idx + 1] = (gPre + buffer[idx + 1] * invAlpha) >> 8
+      buffer[idx + 2] = (bPre + buffer[idx + 2] * invAlpha) >> 8
+      idx += 4
     }
-  }
-
-  private static scanline(
-    x1: number,
-    y1: number,
-    x2: number,
-    y2: number,
-    startY: number,
-    endY: number,
-  ) {
-    if (y1 === y2) return
-
-    if (y1 > y2) {
-      var tempY = y1
-      var tempX = x1
-      y1 = y2
-      y2 = tempY
-      x1 = x2
-      x2 = tempX
-    }
-
-    y1 = Math.floor(y1)
-    y2 = Math.min(Math.floor(y2), endY)
-
-    //if ( y2 < y1 ) { y2++ }
-
-    var dx = (x2 - x1) / (y2 - y1) // change in x over change in y will give us the gradient
-    var row = Math.floor(y1 - startY) // the offset the start writing at (into the array)
-
-    for (; y1 <= y2; y1++) {
-      if (this._rowMin[row] > x1) this._rowMin[row] = x1
-      if (this._rowMax[row] < x1) this._rowMax[row] = x1
-
-      x1 += dx
-      row++
-    }
-  }
-
-  private static _drawPolygon(
-    buffer: Uint8ClampedArray,
-    width: number,
-    height: number,
-    points: number[],
-    color: number[],
-  ) {
-    var minY = Math.min(points[1], points[3], points[5])
-    var maxY = Math.max(points[1], points[3], points[5])
-    var polygonHeight = Math.floor(maxY - minY)
-
-    for (var i = 0; i < polygonHeight + 10; i++) this._rowMin[i] = 100000.0
-    for (var i = 0; i < polygonHeight + 10; i++) this._rowMax[i] = -100000.0
-
-    this.scanline(points[0], points[1], points[2], points[3], minY, maxY)
-    this.scanline(points[4], points[5], points[0], points[1], minY, maxY)
-    this.scanline(points[2], points[3], points[4], points[5], minY, maxY)
-
-    //console.group('polygon rows: ', polygonHeight);
-    //console.log('min: ', this._rowMin.slice(0, polygonHeight).map(f => f.toFixed(2)).join(', '));
-    //console.log('max: ', this._rowMax.slice(0, polygonHeight).map(f => f.toFixed(2)).join(', '));
-    //console.log('diff: ', this._rowMax.map((f, i) => (f - this._rowMin[i]).toFixed(2)).slice(0, polygonHeight).join(', '));
-    //console.groupEnd();
-
-    for (var i = 0; i < polygonHeight; i++) {
-      this.drawHLine(
-        buffer,
-        width,
-        height,
-        this._rowMin[i],
-        this._rowMax[i],
-        Math.floor(i + minY),
-        color,
-      )
-    }
-  }
-
-  private static rotPoints(
-    points: {x: number; y: number}[],
-    angle: number,
-    about: {x: number; y: number},
-  ) {
-    var x, y, i
-    var reply = []
-
-    angle = angle * (Math.PI / 180)
-
-    var sin = Math.sin(angle)
-    var cos = Math.cos(angle)
-
-    for (i = 0; i < points.length; i++) {
-      x =
-        about.x +
-        ((points[i].x - about.x) * cos - (points[i].y - about.y) * sin)
-      y =
-        about.y +
-        ((points[i].x - about.x) * sin + (points[i].y - about.y) * cos)
-
-      reply.push({x: x, y: y})
-    }
-
-    return reply
-  }
-
-  private static polyEllipse(x: number, y: number, w: number, h: number) {
-    var ex, ey, i
-    var reply = []
-
-    for (i = 0; i < 2 * Math.PI; i += 0.01) {
-      ex = x + w * Math.cos(i)
-      ey = y + h * Math.sin(i)
-
-      reply.push({x: ex, y: ey})
-    }
-
-    return reply
-  }
-
-  private static polyBox(x: number, y: number, w: number, h: number) {
-    return [
-      {x: x - w / 2, y: y - h / 2},
-      {x: x - w / 2, y: y + h / 2},
-      {x: x + w / 2, y: y + h / 2},
-      {x: x + w / 2, y: y - h / 2},
-    ]
-  }
-
-  static drawPolygon(
-    buffer: Uint8ClampedArray,
-    width: number,
-    height: number,
-    points: number[],
-    color: number[],
-  ) {
-    this._drawPolygon(buffer, width, height, points, color)
-  }
-
-  static drawCircle(
-    buffer: Uint8ClampedArray,
-    width: number,
-    height: number,
-    x: number,
-    y: number,
-    rad: number,
-    color: number[],
-  ) {
-    this._drawPolygon(
-      buffer,
-      width,
-      height,
-      this.polyEllipse(x, y, rad, rad) as any,
-      color,
-    )
-  }
-
-  static drawEllipse(
-    buffer: Uint8ClampedArray,
-    width: number,
-    height: number,
-    x: number,
-    y: number,
-    h: number,
-    w: number,
-    rot: number,
-    color: number[],
-  ) {
-    this._drawPolygon(
-      buffer,
-      width,
-      height,
-      this.rotPoints(this.polyEllipse(x, y, h, w) as any, rot, {
-        x: x,
-        y: y,
-      }) as any,
-      color,
-    )
-  }
-
-  static drawBox(
-    buffer: Uint8ClampedArray,
-    width: number,
-    height: number,
-    x: number,
-    y: number,
-    h: number,
-    w: number,
-    rot: number,
-    color: number[],
-  ) {
-    this._drawPolygon(
-      buffer,
-      width,
-      height,
-      this.rotPoints(this.polyBox(x, y, h, w) as any, rot, {x: x, y: y}) as any,
-      color,
-    )
   }
 }
