@@ -328,14 +328,12 @@ export const GeneMutators: IGeneMutator[] = [
     name: 'Add Small Triangle',
     effectiveness: 1000,
     func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      return null
-
-      // if (ctx.dna.genes.length >= ctx.dna.maxTriangles) return null
-      // if (
-      //   ctx.dna.genes.length >
-      //   ctx.dna.testedPlacements * ctx.dna.genesPerGeneration + 1
-      // )
-      //   return null
+      if (ctx.dna.genes.length >= ctx.settings.maxGenes) return null
+      if (
+        ctx.dna.genes.length >
+        ctx.dna.testedPlacements * ctx.settings.genesPerGeneration + 1
+      )
+        return null
 
       var gene: Triangle = {
         color: [
@@ -364,13 +362,12 @@ export const GeneMutators: IGeneMutator[] = [
     name: 'Add Big Triangle',
     effectiveness: 1000,
     func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      return null
-      // if (ctx.dna.genes.length >= ctx.dna.maxTriangles) return null
-      // if (
-      //   ctx.dna.genes.length >
-      //   ctx.dna.testedPlacements * ctx.dna.genesPerGeneration + 1
-      // )
-      //   return null
+      if (ctx.dna.genes.length >= ctx.settings.maxGenes) return null
+      if (
+        ctx.dna.genes.length >
+        ctx.dna.testedPlacements * ctx.settings.genesPerGeneration + 1
+      )
+        return null
 
       var gene: Triangle = {
         color: [

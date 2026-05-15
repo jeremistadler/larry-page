@@ -14,6 +14,9 @@ export interface ISettings {
 
   workerThreads: number
   size: number
+
+  maxGenes: number
+  genesPerGeneration: number
 }
 
 export interface IRectangle {
