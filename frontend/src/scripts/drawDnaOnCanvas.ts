@@ -1,4 +1,4 @@
-import {Dna} from 'shared/src/dna'
+import {Dna, GENE_FLOATS} from 'shared/src/dna'
 import {drawOnBuffer} from 'shared/src/fitness-calculator'
 
 export function drawDnaOnCanvas(ctx: CanvasRenderingContext2D, image: Dna) {
@@ -8,22 +8,26 @@ export function drawDnaOnCanvas(ctx: CanvasRenderingContext2D, image: Dna) {
   ctx.fillStyle = 'white'
   ctx.fillRect(0, 0, width, height)
 
-  for (const triangle of image.genes) {
+  const genes = image.genes
+  const count = genes.length / GENE_FLOATS
+
+  for (let i = 0; i < count; i++) {
+    const off = i * GENE_FLOATS
     ctx.fillStyle =
       'rgba(' +
-      Math.floor(triangle.color[0] * 255) +
+      Math.floor(genes[off + 6] * 255) +
       ',' +
-      Math.floor(triangle.color[1] * 255) +
+      Math.floor(genes[off + 7] * 255) +
       ',' +
-      Math.floor(triangle.color[2] * 255) +
+      Math.floor(genes[off + 8] * 255) +
       ',' +
-      triangle.color[3] +
+      genes[off + 9] +
       ')'
 
     ctx.beginPath()
-    ctx.moveTo(triangle.pos[0] * width, triangle.pos[1] * height)
-    ctx.lineTo(triangle.pos[2] * width, triangle.pos[3] * height)
-    ctx.lineTo(triangle.pos[4] * width, triangle.pos[5] * height)
+    ctx.moveTo(genes[off + 0] * width, genes[off + 1] * height)
+    ctx.lineTo(genes[off + 2] * width, genes[off + 3] * height)
+    ctx.lineTo(genes[off + 4] * width, genes[off + 5] * height)
     ctx.closePath()
     ctx.fill()
   }
@@ -48,7 +52,11 @@ export function drawFitnessDiffOnCanvas(
   }
 
   ctx.putImageData(
-    new ImageData(out as unknown as Uint8ClampedArray<ArrayBuffer>, imageData.width, imageData.height),
+    new ImageData(
+      out as unknown as Uint8ClampedArray<ArrayBuffer>,
+      imageData.width,
+      imageData.height,
+    ),
     0,
     0,
   )

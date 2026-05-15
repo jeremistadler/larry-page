@@ -1,4 +1,4 @@
-import {Dna, Triangle} from 'shared/src/dna'
+import {Dna, GENE_FLOATS} from 'shared/src/dna'
 
 export function buildDna(
   rng: () => number,
@@ -6,31 +6,27 @@ export function buildDna(
   imageWidth: number,
   imageHeight: number,
 ): Dna {
-  const solidColors: [number, number, number][] = [
-    [rng(), rng(), rng()],
-    [rng(), rng(), rng()],
-    [rng(), rng(), rng()],
-  ]
-
-  const genes: Triangle[] = new Array(numberOfGenes)
+  const genes = new Float32Array(numberOfGenes * GENE_FLOATS)
   for (let i = 0; i < numberOfGenes; i++) {
-    const base = solidColors[i % solidColors.length]
-    genes[i] = {
-      color: [base[0], base[1], base[2], rng() * 0.8 + 0.2],
-      pos: [rng(), rng(), rng(), rng(), rng(), rng()],
-    }
+    const off = i * GENE_FLOATS
+    genes[off + 0] = rng()
+    genes[off + 1] = rng()
+    genes[off + 2] = rng()
+    genes[off + 3] = rng()
+    genes[off + 4] = rng()
+    genes[off + 5] = rng()
+    genes[off + 6] = rng()
+    genes[off + 7] = rng()
+    genes[off + 8] = rng()
+    genes[off + 9] = rng() * 0.8 + 0.2
   }
 
   return {
     id: 'bench',
-    settingsId: 'bench',
-    testedPlacements: 0,
     fitness: Number.MAX_SAFE_INTEGER,
-    parent: null,
-    genes,
-    renderSize: 128,
-    colorSetup: {solidColors, minOpacity: 0, maxOpacity: 1},
+    testedPlacements: 0,
     sourceImageWidth: imageWidth,
     sourceImageHeight: imageHeight,
+    genes,
   }
 }

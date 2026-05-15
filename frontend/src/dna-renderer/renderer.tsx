@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef} from 'react'
-import {Dna, ISettings} from 'shared/src/dna'
+import {Dna, ISettings, geneCount} from 'shared/src/dna'
 import {JsRasterizer} from '../scripts/rasterizer'
 import './renderer.css'
 import {
@@ -100,7 +100,7 @@ function DnaRenderer({
         <div className="renderer-text-container">
           <p>
             Triangles:{' '}
-            <span className="renderer-value-text">{dna.genes.length}</span>
+            <span className="renderer-value-text">{geneCount(dna)}</span>
           </p>
           <p>
             Tested placements:{' '}

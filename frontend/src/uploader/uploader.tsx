@@ -10,7 +10,7 @@ export default function Uploader(props: {onUploaded: (dna: Dna) => void}) {
     const file = (uploadForm.current?.files ?? [])[0]
     if (!file) return
     console.log('Uploading...')
-    const {dna} = await DnaApi.uploadNewImage(file)
+    const dna = await DnaApi.uploadNewImage(file)
     console.log({imageId: dna.id})
     props.onUploaded(dna)
   }

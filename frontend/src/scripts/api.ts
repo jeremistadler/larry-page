@@ -1,5 +1,5 @@
 import {RenderConfig} from 'shared/src/shared'
-import {Dna} from 'shared/src/dna'
+import {Dna, decodeDna, decodeDnaList, encodeDna} from 'shared/src/dna'
 
 function convertImageToPng(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
@@ -12,16 +12,13 @@ function convertImageToPng(file: File): Promise<ArrayBuffer> {
       canvas.height = image.naturalHeight
       const ctx = canvas.getContext('2d')!
       ctx.drawImage(image, 0, 0)
-      canvas.toBlob(
-        blob => {
-          if (!blob) {
-            reject(new Error('Failed to convert image to PNG'))
-            return
-          }
-          blob.arrayBuffer().then(resolve, reject)
-        },
-        'image/png',
-      )
+      canvas.toBlob(blob => {
+        if (!blob) {
+          reject(new Error('Failed to convert image to PNG'))
+          return
+        }
+        blob.arrayBuffer().then(resolve, reject)
+      }, 'image/png')
     }
     image.onerror = () => {
       URL.revokeObjectURL(url)
@@ -31,53 +28,57 @@ function convertImageToPng(file: File): Promise<ArrayBuffer> {
   })
 }
 
+async function fetchDnaBinary(url: string): Promise<Dna | null> {
+  const response = await fetch(url)
+  if (!response.ok) return null
+  const id = response.headers.get('x-dna-id') ?? ''
+  const buf = new Uint8Array(await response.arrayBuffer())
+  return decodeDna(id, buf)
+}
+
 export class DnaApi {
-  static async uploadNewImage(file: File): Promise<{id: string; dna: Dna}> {
+  static async uploadNewImage(file: File): Promise<Dna> {
     const pngBuffer = await convertImageToPng(file)
 
     const response = await fetch(RenderConfig.baseUrl + '?route=upload', {
       method: 'POST',
       body: pngBuffer,
     })
-    return (await response.json()) as {id: string; dna: Dna}
+    if (!response.ok) throw new Error('upload failed: ' + response.status)
+    const id = response.headers.get('x-dna-id') ?? ''
+    const buf = new Uint8Array(await response.arrayBuffer())
+    return decodeDna(id, buf)
   }
 
-  static async fetchRandomDna(): Promise<Dna | null> {
-    const response = await fetch(RenderConfig.baseUrl + '?route=random')
-    if (!response.ok) return null
-    return (await response.json()) as Dna
+  static fetchRandomDna(): Promise<Dna | null> {
+    return fetchDnaBinary(RenderConfig.baseUrl + '?route=random')
   }
 
-  static async fetchDnaById(id: string): Promise<Dna | null> {
-    const response = await fetch(RenderConfig.baseUrl + '?route=dna&id=' + id)
-    if (!response.ok) return null
-    return (await response.json()) as Dna
-  }
-
-  static async fetchDnaToUpdate(cursor: undefined | string) {
-    const response = await fetch(
-      RenderConfig.baseUrl + '?route=updateFitness&cursor=' + (cursor || ''),
+  static fetchDnaById(id: string): Promise<Dna | null> {
+    return fetchDnaBinary(
+      RenderConfig.baseUrl + '?route=dna&id=' + encodeURIComponent(id),
     )
-    const data = await response.json()
-    return data as {dnaList: Dna[]; keys: string[]; cursor: string}
   }
 
   static async fetchDnaList(): Promise<Dna[]> {
     const response = await fetch(RenderConfig.baseUrl + '?route=list')
-    const data = await response.json()
-    return data as Dna[]
+    if (!response.ok) return []
+    const buf = new Uint8Array(await response.arrayBuffer())
+    if (buf.length < 4) return []
+    return decodeDnaList(buf)
   }
 
-  static async saveDna(dna: Dna): Promise<any> {
-    const response = await fetch(RenderConfig.baseUrl + '?route=save', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+  static async saveDna(dna: Dna): Promise<void> {
+    const bytes = encodeDna(dna)
+    const response = await fetch(
+      RenderConfig.baseUrl + '?route=save&id=' + encodeURIComponent(dna.id),
+      {
+        method: 'POST',
+        headers: {'Content-Type': 'application/octet-stream'},
+        body: new Uint8Array(bytes),
       },
-      body: JSON.stringify(dna),
-    })
-    return await response.json()
+    )
+    if (!response.ok) throw new Error('save failed: ' + response.status)
   }
 
   static loadAndScaleImageData(
@@ -85,7 +86,8 @@ export class DnaApi {
     width: number,
     height: number,
   ): Promise<ImageData> {
-    const url = RenderConfig.baseUrl + '?route=image&id=' + dna.id
+    const url =
+      RenderConfig.baseUrl + '?route=image&id=' + encodeURIComponent(dna.id)
     return new Promise((resolve, reject) => {
       var image = new Image()
       image.crossOrigin = ''

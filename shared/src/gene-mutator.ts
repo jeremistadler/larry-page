@@ -1,187 +1,13 @@
 import {
   ISettings,
-  Triangle,
-  IRectangle,
-  IGeneRectangleState,
   IDnaRenderContext,
   IMutatorState,
   IGeneMutator,
+  GENE_FLOATS,
+  Dna,
 } from './dna'
 import {GetFitness} from './fitness-calculator'
 import {Utils} from './utils'
-
-export function RectFromGene(f: Triangle): IRectangle {
-  var minX = f.pos[0]
-  var maxX = f.pos[0]
-  var minY = f.pos[1]
-  var maxY = f.pos[1]
-
-  for (var i = 2; i < f.pos.length; i += 2) {
-    minX = Math.min(minX, f.pos[i])
-    maxX = Math.max(maxX, f.pos[i])
-  }
-
-  for (var i = 3; i < f.pos.length; i += 2) {
-    minY = Math.min(minY, f.pos[i])
-    maxY = Math.max(maxY, f.pos[i])
-  }
-
-  return {
-    x: minX,
-    x2: maxX,
-    y: minY,
-    y2: maxY,
-    width: maxX - minX,
-    height: maxY - minY,
-  }
-}
-
-export function trianglesIntersect(gene1: Triangle, gene2: Triangle) {
-  gene1.pos
-  return (
-    linesIntersect(
-      gene1.pos[0], // a
-      gene1.pos[1], // a
-      gene1.pos[2], // b
-      gene1.pos[3], // b
-      gene2.pos[0], // other.a
-      gene1.pos[1], // other.a
-      gene2.pos[2], // other.b
-      gene2.pos[3], // other.b
-    ) ||
-    linesIntersect(
-      gene1.pos[0],
-      gene1.pos[1],
-      gene1.pos[2],
-      gene1.pos[3],
-      gene2.pos[0],
-      gene1.pos[1],
-      gene2.pos[4],
-      gene2.pos[5],
-    ) ||
-    linesIntersect(
-      gene1.pos[0],
-      gene1.pos[1],
-      gene1.pos[2],
-      gene1.pos[3],
-      gene2.pos[2],
-      gene1.pos[3],
-      gene2.pos[4],
-      gene2.pos[5],
-    ) ||
-    linesIntersect(
-      gene1.pos[0],
-      gene1.pos[1],
-      gene1.pos[4],
-      gene1.pos[5],
-      gene2.pos[0],
-      gene1.pos[1],
-      gene2.pos[2],
-      gene2.pos[3],
-    ) ||
-    linesIntersect(
-      gene1.pos[0],
-      gene1.pos[1],
-      gene1.pos[4],
-      gene1.pos[5],
-      gene2.pos[0],
-      gene1.pos[1],
-      gene2.pos[4],
-      gene2.pos[5],
-    ) ||
-    linesIntersect(
-      gene1.pos[0],
-      gene1.pos[1],
-      gene1.pos[4],
-      gene1.pos[5],
-      gene2.pos[2],
-      gene1.pos[3],
-      gene2.pos[4],
-      gene2.pos[5],
-    ) ||
-    linesIntersect(
-      gene1.pos[2],
-      gene1.pos[3],
-      gene1.pos[4],
-      gene1.pos[5],
-      gene2.pos[0],
-      gene1.pos[1],
-      gene2.pos[2],
-      gene2.pos[3],
-    ) ||
-    linesIntersect(
-      gene1.pos[2],
-      gene1.pos[3],
-      gene1.pos[4],
-      gene1.pos[5],
-      gene2.pos[0],
-      gene1.pos[1],
-      gene2.pos[4],
-      gene2.pos[5],
-    ) ||
-    linesIntersect(
-      gene1.pos[2],
-      gene1.pos[3],
-      gene1.pos[4],
-      gene1.pos[5],
-      gene2.pos[2],
-      gene1.pos[3],
-      gene2.pos[4],
-      gene2.pos[5],
-    )
-  )
-}
-
-function linesIntersect(
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  p: number,
-  q: number,
-  r: number,
-  s: number,
-): boolean {
-  var det, gamma, lambda
-  det = (c - a) * (s - q) - (r - p) * (d - b)
-  if (det === 0) {
-    return false
-  } else {
-    lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det
-    gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det
-    return 0 < lambda && lambda < 1 && 0 < gamma && gamma < 1
-  }
-}
-
-export function CalculateState(
-  f: Triangle,
-  rect: IRectangle,
-): IGeneRectangleState {
-  var minX = f.pos[0]
-  var maxX = f.pos[0]
-  var minY = f.pos[1]
-  var maxY = f.pos[1]
-
-  for (var i = 2; i < f.pos.length; i += 2) {
-    minX = Math.min(minX, f.pos[i])
-    maxX = Math.max(maxX, f.pos[i])
-  }
-
-  for (var i = 3; i < f.pos.length; i += 2) {
-    minY = Math.min(minY, f.pos[i])
-    maxY = Math.max(maxY, f.pos[i])
-  }
-
-  var isContained =
-    minX >= rect.x && maxX <= rect.x2 && minY >= rect.y && maxY <= rect.y2
-
-  return {
-    IsContained: isContained,
-    IsIntersecting:
-      isContained ||
-      !(minX > rect.x2 || maxX < rect.x || minY > rect.y2 || maxY < rect.y),
-  }
-}
 
 const EffectivenessChangeRate = 0.03
 const MinEffectiveness = 0.00001
@@ -204,194 +30,180 @@ export function MutateDna(ctx: IDnaRenderContext) {
 export function getFromName(name: string) {
   for (var i = 0; i < GeneMutators.length; i++)
     if (GeneMutators[i].name === name) return GeneMutators[i]
-
   return null
 }
 
-export function DefaultMutateGene(
-  ctx: IDnaRenderContext,
-): IMutatorState | null {
-  if (ctx.dna.genes.length === 0) return null
+function pickGeneOffset(dna: Dna): number | null {
+  const count = dna.genes.length / GENE_FLOATS
+  if (count === 0) return null
+  return Math.floor(Math.random() * count) * GENE_FLOATS
+}
 
-  const index = Utils.randomIndex(ctx.dna.genes)
-  const oldGene = ctx.dna.genes[index]
+function snapshotGene(dna: Dna, offset: number): Float32Array {
+  return dna.genes.slice(offset, offset + GENE_FLOATS)
+}
 
-  const newGene = {
-    pos: null,
-    color: null,
-  } as any as Triangle
-  ctx.dna.genes[index] = newGene
+function restoreGene(dna: Dna, offset: number, oldData: Float32Array): void {
+  dna.genes.set(oldData, offset)
+}
 
-  return {index, oldGene, newGene}
+function appendGene(dna: Dna, gene: Float32Array): Float32Array {
+  const oldGenes = dna.genes
+  const next = new Float32Array(oldGenes.length + GENE_FLOATS)
+  next.set(oldGenes, 0)
+  next.set(gene, oldGenes.length)
+  dna.genes = next
+  return oldGenes
+}
+
+function undoReplace(ctx: IDnaRenderContext, state: IMutatorState) {
+  if (state.kind !== 'replace') return
+  restoreGene(ctx.dna, state.offset, state.oldData)
+}
+
+function undoAdd(ctx: IDnaRenderContext, state: IMutatorState) {
+  if (state.kind !== 'add') return
+  ctx.dna.genes = state.oldGenes
+}
+
+function canAddGene(dna: Dna, settings: ISettings): boolean {
+  const count = dna.genes.length / GENE_FLOATS
+  if (count >= settings.maxGenes) return false
+  if (count > dna.testedPlacements * settings.genesPerGeneration + 1)
+    return false
+  return true
 }
 
 export const GeneMutators: IGeneMutator[] = [
   {
     name: 'ColorOnly',
     effectiveness: 1000,
-    func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      const state = DefaultMutateGene(ctx)
-      if (state === null) return null
-
-      state.newGene.color = [...state.oldGene.color]
-      state.newGene.pos = [...state.oldGene.pos]
-
-      const indexToChange = Utils.randomInt(0, 2)
-      state.newGene.color[indexToChange] = Utils.ClampFloat(
-        (Math.random() - 0.5) * 0.1 + state.newGene.color[indexToChange],
+    func: ctx => {
+      const off = pickGeneOffset(ctx.dna)
+      if (off === null) return null
+      const oldData = snapshotGene(ctx.dna, off)
+      const channel = Utils.randomInt(0, 2)
+      const idx = off + 6 + channel
+      ctx.dna.genes[idx] = Utils.ClampFloat(
+        ctx.dna.genes[idx] + (Math.random() - 0.5) * 0.1,
       )
-      return state
+      return {kind: 'replace', offset: off, oldData}
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: undoReplace,
   },
   {
     name: 'Opacity',
     effectiveness: 1000,
-    func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      var state = DefaultMutateGene(ctx)
-      if (state === null) return null
-
-      state.newGene.color = [...state.oldGene.color]
-      state.newGene.pos = [...state.oldGene.pos]
-
-      state.newGene.color[3] = Utils.ClampFloat(
-        (Math.random() - 0.5) * 0.1 + state.newGene.color[3],
+    func: ctx => {
+      const off = pickGeneOffset(ctx.dna)
+      if (off === null) return null
+      const oldData = snapshotGene(ctx.dna, off)
+      const idx = off + 9
+      ctx.dna.genes[idx] = Utils.ClampFloat(
+        ctx.dna.genes[idx] + (Math.random() - 0.5) * 0.1,
       )
-      return state
+      return {kind: 'replace', offset: off, oldData}
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: undoReplace,
   },
   {
     name: 'MoveGene',
     effectiveness: 1000,
-    func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      var state = DefaultMutateGene(ctx)
-      if (state === null) return null
-
-      state.newGene.color = [...state.oldGene.color]
-      state.newGene.pos = [0, 0, 0, 0, 0, 0]
-      for (var i = 0; i < state.newGene.pos.length; i += 2)
-        state.newGene.pos[i] = Math.random()
-      for (var i = 1; i < state.newGene.pos.length; i += 2)
-        state.newGene.pos[i] = Math.random()
-      return state
+    func: ctx => {
+      const off = pickGeneOffset(ctx.dna)
+      if (off === null) return null
+      const oldData = snapshotGene(ctx.dna, off)
+      const g = ctx.dna.genes
+      g[off + 0] = Math.random()
+      g[off + 1] = Math.random()
+      g[off + 2] = Math.random()
+      g[off + 3] = Math.random()
+      g[off + 4] = Math.random()
+      g[off + 5] = Math.random()
+      return {kind: 'replace', offset: off, oldData}
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: undoReplace,
   },
   {
     name: 'MoveGenePoint',
     effectiveness: 1000,
-    func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      var state = DefaultMutateGene(ctx)
-      if (state === null) return null
-
-      state.newGene.color = [...state.oldGene.color]
-      state.newGene.pos = [...state.oldGene.pos]
-
-      var indexToMove = Utils.randomIndex(state.newGene.pos)
-      if (indexToMove % 2 === 0)
-        state.newGene.pos[indexToMove] =
-          state.newGene.pos[indexToMove] + (Math.random() - 0.5) * 0.1
-      else
-        state.newGene.pos[indexToMove] =
-          state.newGene.pos[indexToMove] + (Math.random() - 0.5) * 0.1
-      return state
+    func: ctx => {
+      const off = pickGeneOffset(ctx.dna)
+      if (off === null) return null
+      const oldData = snapshotGene(ctx.dna, off)
+      const indexToMove = Utils.randomInt(0, 5)
+      ctx.dna.genes[off + indexToMove] =
+        ctx.dna.genes[off + indexToMove] + (Math.random() - 0.5) * 0.1
+      return {kind: 'replace', offset: off, oldData}
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: undoReplace,
   },
   {
     name: 'All Random',
     effectiveness: 1000,
-    func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      var state = DefaultMutateGene(ctx)
-      if (state === null) return null
-
-      state.newGene.color = [
-        Math.random(),
-        Math.random(),
-        Math.random(),
-        1 / (1 + ctx.dna.testedPlacements * 0.0002),
-      ]
-      state.newGene.pos = [0, 0, 0, 0, 0, 0]
-
-      for (var i = 0; i < state.newGene.pos.length; i += 2)
-        state.newGene.pos[i] = Math.random()
-
-      for (var i = 1; i < state.newGene.pos.length; i += 2)
-        state.newGene.pos[i] = Math.random()
-
-      return state
+    func: ctx => {
+      const off = pickGeneOffset(ctx.dna)
+      if (off === null) return null
+      const oldData = snapshotGene(ctx.dna, off)
+      const g = ctx.dna.genes
+      g[off + 0] = Math.random()
+      g[off + 1] = Math.random()
+      g[off + 2] = Math.random()
+      g[off + 3] = Math.random()
+      g[off + 4] = Math.random()
+      g[off + 5] = Math.random()
+      g[off + 6] = Math.random()
+      g[off + 7] = Math.random()
+      g[off + 8] = Math.random()
+      g[off + 9] = 1 / (1 + ctx.dna.testedPlacements * 0.0002)
+      return {kind: 'replace', offset: off, oldData}
     },
-    undo: (ctx, state) => (ctx.dna.genes[state.index] = state.oldGene),
+    undo: undoReplace,
   },
   {
     name: 'Add Small Triangle',
     effectiveness: 1000,
-    func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      if (ctx.dna.genes.length >= ctx.settings.maxGenes) return null
-      if (
-        ctx.dna.genes.length >
-        ctx.dna.testedPlacements * ctx.settings.genesPerGeneration + 1
-      )
-        return null
-
-      var gene: Triangle = {
-        color: [
-          Math.random(),
-          Math.random(),
-          Math.random(),
-          1 / (1 + ctx.dna.testedPlacements * 0.0002),
-        ],
-        pos: [Math.random(), Math.random(), 0, 0, 0, 0],
-      }
-      gene.pos[2] = gene.pos[0] + Math.random() * 0.2 - 0.1
-      gene.pos[3] = gene.pos[1] + Math.random() * 0.2 - 0.1
-      gene.pos[4] = gene.pos[0] + Math.random() * 0.2 - 0.1
-      gene.pos[5] = gene.pos[1] + Math.random() * 0.2 - 0.1
-
-      ctx.dna.genes.push(gene)
-      return {
-        index: ctx.dna.genes.length - 1,
-        oldGene: null as any,
-        newGene: gene,
-      }
+    func: ctx => {
+      if (!canAddGene(ctx.dna, ctx.settings)) return null
+      const gene = new Float32Array(GENE_FLOATS)
+      gene[0] = Math.random()
+      gene[1] = Math.random()
+      gene[2] = gene[0] + Math.random() * 0.2 - 0.1
+      gene[3] = gene[1] + Math.random() * 0.2 - 0.1
+      gene[4] = gene[0] + Math.random() * 0.2 - 0.1
+      gene[5] = gene[1] + Math.random() * 0.2 - 0.1
+      gene[6] = Math.random()
+      gene[7] = Math.random()
+      gene[8] = Math.random()
+      gene[9] = 1 / (1 + ctx.dna.testedPlacements * 0.0002)
+      const oldGenes = appendGene(ctx.dna, gene)
+      return {kind: 'add', oldGenes}
     },
-    undo: (ctx, state) => ctx.dna.genes.splice(state.index, 1),
+    undo: undoAdd,
   },
   {
     name: 'Add Big Triangle',
     effectiveness: 1000,
-    func: function (ctx: IDnaRenderContext): IMutatorState | null {
-      if (ctx.dna.genes.length >= ctx.settings.maxGenes) return null
-      if (
-        ctx.dna.genes.length >
-        ctx.dna.testedPlacements * ctx.settings.genesPerGeneration + 1
+    func: ctx => {
+      if (!canAddGene(ctx.dna, ctx.settings)) return null
+      const gene = new Float32Array(GENE_FLOATS)
+      gene[0] = Math.random()
+      gene[1] = Math.random()
+      gene[2] = Math.random()
+      gene[3] = Math.random()
+      gene[4] = Math.random()
+      gene[5] = Math.random()
+      gene[6] = Math.random()
+      gene[7] = Math.random()
+      gene[8] = Math.random()
+      gene[9] = Utils.randomFloat(
+        ctx.settings.newMinOpacity,
+        ctx.settings.newMaxOpacity,
       )
-        return null
-
-      var gene: Triangle = {
-        color: [
-          Math.random(),
-          Math.random(),
-          Math.random(),
-          Utils.randomFloat(
-            ctx.settings.newMinOpacity,
-            ctx.settings.newMaxOpacity,
-          ),
-        ],
-        pos: [0, 0, 0, 0, 0, 0],
-      }
-
-      for (var i = 0; i < gene.pos.length; i++) gene.pos[i] = Math.random()
-
-      ctx.dna.genes.push(gene)
-      return {
-        index: ctx.dna.genes.length - 1,
-        oldGene: null as any,
-        newGene: gene,
-      }
+      const oldGenes = appendGene(ctx.dna, gene)
+      return {kind: 'add', oldGenes}
     },
-    undo: (ctx, state) => ctx.dna.genes.splice(state.index, 1),
+    undo: undoAdd,
   },
 ]
 

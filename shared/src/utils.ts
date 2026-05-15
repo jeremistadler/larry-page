@@ -1,8 +1,7 @@
-import {Dna} from './dna'
-import {generateChronologicalId} from './generateChronologicalId'
+import {Dna, GENE_FLOATS} from './dna'
 
 export class Utils {
-  static randomIndex(arr: any[]) {
+  static randomIndex(arr: ArrayLike<unknown>) {
     return Math.floor(Math.random() * arr.length)
   }
 
@@ -41,45 +40,27 @@ export class Utils {
   }
 
   static createDna(numberOfGenes: number, imageId: string): Dna {
-    var dna: Dna = {
+    const genes = new Float32Array(numberOfGenes * GENE_FLOATS)
+    for (let i = 0; i < numberOfGenes; i++) {
+      const off = i * GENE_FLOATS
+      genes[off + 0] = Math.random()
+      genes[off + 1] = Math.random()
+      genes[off + 2] = Math.random()
+      genes[off + 3] = Math.random()
+      genes[off + 4] = Math.random()
+      genes[off + 5] = Math.random()
+      genes[off + 6] = Math.random()
+      genes[off + 7] = Math.random()
+      genes[off + 8] = Math.random()
+      genes[off + 9] = Math.random() * 0.8 + 0.2
+    }
+    return {
       id: imageId,
-      settingsId: generateChronologicalId(),
-
-      genes: new Array(numberOfGenes),
+      fitness: Number.MAX_SAFE_INTEGER,
       testedPlacements: 0,
       sourceImageWidth: 200,
       sourceImageHeight: 200,
-      renderSize: 128,
-      parent: null,
-      fitness: Number.MAX_SAFE_INTEGER,
-      colorSetup: {
-        maxOpacity: 1,
-        minOpacity: 0,
-        solidColors: [
-          [Math.random(), Math.random(), Math.random()],
-          [Math.random(), Math.random(), Math.random()],
-          [Math.random(), Math.random(), Math.random()],
-        ],
-      },
+      genes,
     }
-
-    for (var i = 0; i < numberOfGenes; i++) {
-      dna.genes[i] = {
-        color: [
-          ...dna.colorSetup.solidColors[i % dna.colorSetup.solidColors.length],
-          Math.random() * 0.8 + 0.2,
-        ],
-        pos: [
-          Math.random(),
-          Math.random(),
-          Math.random(),
-          Math.random(),
-          Math.random(),
-          Math.random(),
-        ],
-      }
-    }
-
-    return dna
   }
 }

@@ -1,4 +1,4 @@
-import {Dna} from './dna'
+import {Dna, GENE_FLOATS} from './dna'
 import {drawTriangle} from './raster'
 import {ImageData} from './ImageData'
 
@@ -24,16 +24,15 @@ function rasterize(dna: Dna, image: ImageData): Uint8Array {
   const w = image.width
   const h = image.height
   const genes = dna.genes
+  const count = genes.length / GENE_FLOATS
 
-  for (let i = 0; i < genes.length; i++) {
-    const gene = genes[i]
-    const color = gene.color
-    const pos = gene.pos
+  for (let i = 0; i < count; i++) {
+    const off = i * GENE_FLOATS
 
-    const r = (color[0] * 255) | 0
-    const g = (color[1] * 255) | 0
-    const b = (color[2] * 255) | 0
-    let alphaI = (color[3] * 256) | 0
+    const r = (genes[off + 6] * 255) | 0
+    const g = (genes[off + 7] * 255) | 0
+    const b = (genes[off + 8] * 255) | 0
+    let alphaI = (genes[off + 9] * 256) | 0
     if (alphaI < 0) alphaI = 0
     else if (alphaI > 256) alphaI = 256
     if (alphaI === 0) continue
@@ -42,12 +41,12 @@ function rasterize(dna: Dna, image: ImageData): Uint8Array {
       buffer,
       w,
       h,
-      pos[0] * w,
-      pos[1] * h,
-      pos[2] * w,
-      pos[3] * h,
-      pos[4] * w,
-      pos[5] * h,
+      genes[off + 0] * w,
+      genes[off + 1] * h,
+      genes[off + 2] * w,
+      genes[off + 3] * h,
+      genes[off + 4] * w,
+      genes[off + 5] * h,
       r,
       g,
       b,

@@ -90,15 +90,11 @@ export class JsRasterizer {
       this.workers[i].terminate()
     }
     this.workers.length = 0
-    this.dna.genes.forEach(gene => {
-      for (let i = 0; i < gene.pos.length; i++) {
-        gene.pos[i] = gene.pos[i] + (Math.random() - 0.5) * 0.1
-        gene.color[i] = Math.min(
-          1,
-          Math.max(0, gene.color[i] + (Math.random() - 0.5) * 0.1),
-        )
-      }
-    })
+    const genes = this.dna.genes
+    for (let i = 0; i < genes.length; i++) {
+      const v = genes[i] + (Math.random() - 0.5) * 0.1
+      genes[i] = v < 0 ? 0 : v > 1 ? 1 : v
+    }
 
     this.createThread()
   }

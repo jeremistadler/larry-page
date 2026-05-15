@@ -1,4 +1,4 @@
-import {Dna} from 'shared/src/dna'
+import {Dna, GENE_FLOATS, geneCount} from 'shared/src/dna'
 import './dna-image.css'
 
 function DnaImage({
@@ -12,42 +12,60 @@ function DnaImage({
   height: number
   index: number
 }) {
-  if (!dna || !dna.genes) {
-    var style = {
+  if (!dna || !dna.genes || dna.genes.length === 0) {
+    var emptyStyle = {
       width: width + 'px',
       height: height + 'px',
       display: 'inline-block',
     }
-    return <div style={style}></div>
+    return <div style={emptyStyle}></div>
   }
 
   var animationLength = 5
-  var lengthPerPoly = animationLength / dna.genes.length
+  const count = geneCount(dna)
+  var lengthPerPoly = animationLength / count
+  const genes = dna.genes
 
-  var polygons = dna.genes.map((gene, i) => {
-    var str = ''
-    for (let i = 0; i < gene.pos.length; i += 2)
-      str += gene.pos[i] * width + ',' + gene.pos[i + 1] * height + ' '
+  const polygons = []
+  for (let i = 0; i < count; i++) {
+    const off = i * GENE_FLOATS
+    const points =
+      genes[off + 0] * width +
+      ',' +
+      genes[off + 1] * height +
+      ' ' +
+      genes[off + 2] * width +
+      ',' +
+      genes[off + 3] * height +
+      ' ' +
+      genes[off + 4] * width +
+      ',' +
+      genes[off + 5] * height
 
-    var color =
+    const color =
       'rgba(' +
-      Math.floor(gene.color[0] * 255) +
+      Math.floor(genes[off + 6] * 255) +
       ',' +
-      Math.floor(gene.color[1] * 255) +
+      Math.floor(genes[off + 7] * 255) +
       ',' +
-      Math.floor(gene.color[2] * 255) +
+      Math.floor(genes[off + 8] * 255) +
       ',' +
-      gene.color[3] +
+      genes[off + 9] +
       ')'
 
-    var style = {
-      fill: color,
-      stroke: 'rgba(0, 0, 0, 0.05)',
-      strokeWidth: 0,
-      animationDelay: i * lengthPerPoly + 's',
-    }
-    return <polygon points={str} style={style} key={i} />
-  })
+    polygons.push(
+      <polygon
+        points={points}
+        style={{
+          fill: color,
+          stroke: 'rgba(0, 0, 0, 0.05)',
+          strokeWidth: 0,
+          animationDelay: i * lengthPerPoly + 's',
+        }}
+        key={i}
+      />,
+    )
+  }
 
   return (
     <svg height={height} width={width}>

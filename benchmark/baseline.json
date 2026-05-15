@@ -1,26 +1,26 @@
 {
   "choosen.jpg  64x64   20 genes": {
-    "fitness": 61495.46435546875
+    "fitness": 66353.8349609375
   },
   "choosen.jpg  128x128   50 genes": {
-    "fitness": 55041.285217285156
+    "fitness": 52374.46667480469
   },
   "choosen.jpg  256x256  100 genes": {
-    "fitness": 56800.29008483887
+    "fitness": 49587.91532897949
   },
   "choosen.jpg  256x256  250 genes": {
-    "fitness": 66274.45793151855
+    "fitness": 39958.136962890625
   },
   "hourse.jpg   64x64   20 genes": {
-    "fitness": 23986.0283203125
+    "fitness": 26819.8681640625
   },
   "hourse.jpg   128x128   50 genes": {
-    "fitness": 19964.389587402344
+    "fitness": 25935.055297851562
   },
   "hourse.jpg   256x256  100 genes": {
-    "fitness": 24751.662307739258
+    "fitness": 31485.566116333008
   },
   "hourse.jpg   256x256  250 genes": {
-    "fitness": 22913.69465637207
+    "fitness": 29966.13363647461
   }
 }

@@ -1,5 +1,5 @@
 import {generateChronologicalId} from './generateChronologicalId'
-import {Dna} from 'shared/src/dna'
+import {DNA_HEADER_BYTES, encodeDna, encodeDnaList, decodeDna} from 'shared/src/dna'
 import {Utils} from 'shared/src/utils'
 
 export interface Env {
@@ -11,11 +11,17 @@ const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Origin': 'http://localhost:1234',
   'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Expose-Headers': 'X-Dna-Id',
 }
 
-const DEFAULT_HEADERS: Record<string, string> = {
+const JSON_HEADERS: Record<string, string> = {
   ...CORS_HEADERS,
   'content-type': 'application/json',
+}
+
+const BINARY_HEADERS: Record<string, string> = {
+  ...CORS_HEADERS,
+  'content-type': 'application/octet-stream',
 }
 
 export default {
@@ -25,13 +31,9 @@ export default {
     ctx: ExecutionContext,
   ): Promise<Response> {
     const url = new URL(request.url)
-    console.log(url)
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        status: 204,
-        headers: CORS_HEADERS,
-      })
+      return new Response(null, {status: 204, headers: CORS_HEADERS})
     }
 
     if (url.protocol === 'http:') {
@@ -40,180 +42,146 @@ export default {
 
     if (url.pathname.includes('/api')) {
       const params: Record<string, string> = {}
-      const queryString = url.search.slice(1).split('&')
-
-      queryString.forEach(item => {
-        const kv = item.split('=')
-        if (kv[0]) params[kv[0]] = kv[1]
-      })
-
+      url.searchParams.forEach((v, k) => (params[k] = v))
       return handleApiRequest(request, env, ctx, params)
     }
 
-    // Static assets are served automatically by Cloudflare Workers Assets
     return new Response('Not Found', {status: 404})
   },
 } satisfies ExportedHandler<Env>
 
+function readFitnessFromDnaBytes(bytes: Uint8Array): number {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  return view.getFloat64(0, true)
+}
+
 async function handleApiRequest(
   request: Request,
   env: Env,
-  ctx: ExecutionContext,
+  _ctx: ExecutionContext,
   query: Record<string, string>,
 ): Promise<Response> {
   const {KV} = env
 
   if (query.route === 'upload') {
-    let buf = await request.arrayBuffer()
+    const buf = await request.arrayBuffer()
     const id = generateChronologicalId()
     const dna = Utils.createDna(1, id)
-    const json = JSON.stringify(dna)
+    const encoded = encodeDna(dna)
 
     await KV.put('image:' + id, buf)
     await KV.put(
       'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness),
-      json,
+      encoded as unknown as ArrayBuffer,
     )
     await KV.put('dnaIds:' + id, id)
     await updateDnaCurrentList(KV)
 
-    return new Response(JSON.stringify({id, dna}), {
-      headers: DEFAULT_HEADERS,
+    return new Response(encoded, {
+      headers: {...BINARY_HEADERS, 'x-dna-id': id},
     })
   } else if (query.route === 'dna') {
     const dnaId = query.id
-    const dna = await getFittestDnaAsJsonTextById(KV, dnaId)
-
-    if (dna) {
+    const bytes = await getFittestDnaBytesById(KV, dnaId)
+    if (bytes) {
       await KV.put('lastReturnedId', dnaId)
-      return new Response(dna, {
-        headers: DEFAULT_HEADERS,
+      return new Response(bytes, {
+        headers: {...BINARY_HEADERS, 'x-dna-id': dnaId},
       })
     }
-
     return new Response(JSON.stringify({errorMessage: 'No dna found'}), {
-      status: 500,
-      headers: DEFAULT_HEADERS,
+      status: 404,
+      headers: JSON_HEADERS,
     })
   } else if (query.route === 'random') {
-    const dnaIds = ((await KV.get('dnaIdsList', 'json')) as string[] | null) ?? []
+    const dnaIds =
+      ((await KV.get('dnaIdsList', 'json')) as string[] | null) ?? []
     if (dnaIds.length === 0) {
       return new Response(JSON.stringify({errorMessage: 'No dna found'}), {
         status: 404,
-        headers: DEFAULT_HEADERS,
+        headers: JSON_HEADERS,
       })
     }
     const lastReturnedId = await KV.get('lastReturnedId', 'text')
-
     let index = (dnaIds.indexOf(lastReturnedId ?? '') + 1) % dnaIds.length
 
     for (let i = 0; i < dnaIds.length; i++) {
       const dnaId = dnaIds[index]
-      const dna = await getFittestDnaAsJsonTextById(KV, dnaId)
-
-      if (dna) {
+      const bytes = await getFittestDnaBytesById(KV, dnaId)
+      if (bytes) {
         await KV.put('lastReturnedId', dnaId)
-        return new Response(dna, {
-          headers: DEFAULT_HEADERS,
+        return new Response(bytes, {
+          headers: {...BINARY_HEADERS, 'x-dna-id': dnaId},
         })
-      } else {
-        index = (index + 1) % dnaIds.length
       }
+      index = (index + 1) % dnaIds.length
     }
 
     return new Response(JSON.stringify({errorMessage: 'No dna found'}), {
-      status: 500,
-      headers: DEFAULT_HEADERS,
-    })
-  } else if (query.route === 'dnaInfo') {
-    const dnaIds = ((await KV.get('dnaIdsList', 'json')) as string[] | null) ?? []
-
-    const result = await Promise.all(
-      dnaIds.map(async id => {
-        const listResult = await KV.list({
-          prefix: 'fitness4:' + id + ':',
-          limit: 100,
-        })
-        return {id, count: listResult.keys.length}
-      }),
-    )
-
-    return new Response(JSON.stringify(result), {
-      headers: DEFAULT_HEADERS,
+      status: 404,
+      headers: JSON_HEADERS,
     })
   } else if (query.route === 'list') {
-    const list = await KV.get('fittestDnaList', 'text')
-    return new Response(list ?? '[]', {
-      headers: DEFAULT_HEADERS,
-    })
+    const dnaIds =
+      ((await KV.get('dnaIdsList', 'json')) as string[] | null) ?? []
+    const dnas = (
+      await Promise.all(
+        dnaIds.map(async id => {
+          const bytes = await getFittestDnaBytesById(KV, id)
+          return bytes ? decodeDna(id, bytes) : null
+        }),
+      )
+    ).filter((x): x is NonNullable<typeof x> => x !== null)
+    return new Response(encodeDnaList(dnas), {headers: BINARY_HEADERS})
   } else if (query.route === 'image') {
     const stream = await KV.get('image:' + query.id, 'stream')
     return new Response(stream, {
-      headers: {...DEFAULT_HEADERS, 'content-type': 'image/png'},
+      headers: {...CORS_HEADERS, 'content-type': 'image/png'},
     })
   } else if (query.route === 'save') {
-    const dna = (await request.json()) as Dna
-    const json = JSON.stringify(dna)
-    const id = dna.id
-
-    const key = 'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness)
-    await KV.put(key, json)
+    const buf = new Uint8Array(await request.arrayBuffer())
+    if (buf.byteLength < DNA_HEADER_BYTES) {
+      return new Response(JSON.stringify({errorMessage: 'Bad payload'}), {
+        status: 400,
+        headers: JSON_HEADERS,
+      })
+    }
+    const id = query.id
+    if (!id) {
+      return new Response(JSON.stringify({errorMessage: 'Missing id'}), {
+        status: 400,
+        headers: JSON_HEADERS,
+      })
+    }
+    const fitness = readFitnessFromDnaBytes(buf)
+    const key = 'fitness4:' + id + ':' + formatFitnessChronological(fitness)
+    await KV.put(key, buf as unknown as ArrayBuffer)
     await updateDnaCurrentList(KV)
-
     return new Response(JSON.stringify({message: 'Saved to ' + key}), {
-      headers: DEFAULT_HEADERS,
+      headers: JSON_HEADERS,
     })
   } else if (query.route === 'updateCurrentList') {
     const result = await updateDnaCurrentList(KV)
-
     return new Response(
-      JSON.stringify({
-        dnaCount: result.dnaIds.length,
-        dnaWithFitnessCount: result.fittestDnaList.length,
-      }),
-      {
-        headers: DEFAULT_HEADERS,
-      },
+      JSON.stringify({dnaCount: result.dnaIds.length}),
+      {headers: JSON_HEADERS},
     )
-  } else if (query.route === 'updateFitness') {
-    const keys = await KV.list({
-      prefix: 'fitness4:',
-      limit: 100,
-      cursor: query.cursor,
-    })
-
-    const dnaList = await Promise.all(
-      keys.keys
-        .map(f => f.name)
-        .map(async originalKey => {
-          const jsonText = await KV.get(originalKey, 'text')
-          const dna = JSON.parse(jsonText!) as Dna
-          return dna
-        }),
-    )
-
-    return new Response(JSON.stringify({keys, dnaList, cursor: (keys as any).cursor}), {
-      headers: DEFAULT_HEADERS,
-    })
-  } else if (query.route === 'deleteall') {
-    const fit2 = await KV.list({prefix: 'fitness2:'}).then(async items => {
-      for (const item of items.keys) await KV.delete(item.name)
-      return items.keys.length
-    })
-
-    const fit3 = await KV.list({prefix: 'fitness3:'}).then(async items => {
-      for (const item of items.keys) await KV.delete(item.name)
-      return items.keys.length
-    })
-
-    return new Response(JSON.stringify({fit2, fit3}), {
-      headers: DEFAULT_HEADERS,
-    })
+  } else if (query.route === 'wipe') {
+    let cursor: string | undefined = undefined
+    let deleted = 0
+    while (true) {
+      const page: KVNamespaceListResult<unknown, string> = await KV.list({cursor})
+      for (const item of page.keys) {
+        await KV.delete(item.name)
+        deleted++
+      }
+      if (page.list_complete || !page.cursor) break
+      cursor = page.cursor
+    }
+    return new Response(JSON.stringify({deleted}), {headers: JSON_HEADERS})
   }
 
-  return new Response('Hello from api!', {
-    headers: DEFAULT_HEADERS,
-  })
+  return new Response('Hello from api!', {headers: JSON_HEADERS})
 }
 
 function formatFitnessChronological(fitness: number) {
@@ -227,43 +195,32 @@ function formatFitnessChronological(fitness: number) {
 async function KvListAll(KV: KVNamespace, prefix: string): Promise<string[]> {
   let cursor: string | undefined = undefined
   let results: string[] = []
-
   while (true) {
-    const response: KVNamespaceListResult<unknown, string> = await KV.list({prefix, cursor})
-    results = results.concat(response.keys.map((f: KVNamespaceListKey<unknown, string>) => f.name))
-
+    const response: KVNamespaceListResult<unknown, string> = await KV.list({
+      prefix,
+      cursor,
+    })
+    results = results.concat(
+      response.keys.map((f: KVNamespaceListKey<unknown, string>) => f.name),
+    )
     if (response.list_complete || !response.cursor) return results
     cursor = response.cursor
   }
 }
 
-async function getFittestDnaAsJsonTextById(
+async function getFittestDnaBytesById(
   KV: KVNamespace,
   id: string,
-): Promise<string | null> {
-  const listResult = await KV.list({
-    prefix: 'fitness4:' + id + ':',
-    limit: 10,
-  })
+): Promise<Uint8Array | null> {
+  const listResult = await KV.list({prefix: 'fitness4:' + id + ':', limit: 1})
   if (listResult.keys.length === 0) return null
-  const dnaAsText = await KV.get(listResult.keys[0].name, 'text')
-  if (dnaAsText) return dnaAsText
-  return null
+  const buf = await KV.get(listResult.keys[0].name, 'arrayBuffer')
+  if (!buf) return null
+  return new Uint8Array(buf)
 }
 
 async function updateDnaCurrentList(KV: KVNamespace) {
   const dnaIds = (await KvListAll(KV, 'dnaIds:')).map(f => f.split(':')[1])
-
-  KV.put('dnaIdsList', JSON.stringify(dnaIds))
-
-  const fittestDnaList: string[] = (
-    await Promise.all(dnaIds.map(id => getFittestDnaAsJsonTextById(KV, id)))
-  ).filter(Boolean) as string[]
-
-  await KV.put('fittestDnaList', '[' + fittestDnaList.join(',') + ']')
-
-  return {
-    dnaIds,
-    fittestDnaList,
-  }
+  await KV.put('dnaIdsList', JSON.stringify(dnaIds))
+  return {dnaIds}
 }

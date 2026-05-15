@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import {Dna} from 'shared/src/dna'
+import {Dna, geneCount} from 'shared/src/dna'
 import {DnaApi} from './../scripts/api'
 import {Utils} from 'shared/src/utils'
 import DnaImage from '../dna-image/dna-image'
@@ -48,7 +48,7 @@ const DnaGrid = ({onChangeDna}: {onChangeDna: (dna: Dna) => void}) => {
               onClick={() => onChangeDna(dna)}>
               <DnaImage dna={dna} width={width} height={height} index={index} />
               <div className="grid-image-info">
-                <span>{dna.genes.length} genes</span>
+                <span>{geneCount(dna)} genes</span>
                 <span style={floatRightStyle}>
                   {dna.testedPlacements} generations
                 </span>
