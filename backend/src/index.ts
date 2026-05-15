@@ -183,6 +183,19 @@ async function handleApiRequest(
       JSON.stringify({dnaCount: result.dnaIds.length}),
       {headers: JSON_HEADERS},
     )
+  } else if (query.route === 'wipe') {
+    let cursor: string | undefined = undefined
+    let deleted = 0
+    while (true) {
+      const page: KVNamespaceListResult<unknown, string> = await KV.list({cursor})
+      for (const item of page.keys) {
+        await KV.delete(item.name)
+        deleted++
+      }
+      if (page.list_complete || !page.cursor) break
+      cursor = page.cursor
+    }
+    return new Response(JSON.stringify({deleted}), {headers: JSON_HEADERS})
   }
 
   return new Response('Hello from api!', {headers: JSON_HEADERS})
