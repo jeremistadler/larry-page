@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import {useState, useEffect, useRef} from 'react'
 import {Dna, ISettings} from 'shared/src/dna'
 import {JsRasterizer} from '../scripts/rasterizer'
 import './renderer.css'
@@ -27,7 +27,7 @@ function DnaRenderer({
     workerThreads: 1,
 
     maxGenes: 200,
-    genesPerGeneration: 0.002,
+    genesPerGeneration: 0.0005,
   })
 
   const width = 256
