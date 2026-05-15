@@ -42,16 +42,16 @@ export class DnaApi {
     return (await response.json()) as {id: string; dna: Dna}
   }
 
-  static async fetchRandomDna(): Promise<Dna> {
+  static async fetchRandomDna(): Promise<Dna | null> {
     const response = await fetch(RenderConfig.baseUrl + '?route=random')
-    const data = await response.json()
-    return data as Dna
+    if (!response.ok) return null
+    return (await response.json()) as Dna
   }
 
-  static async fetchDnaById(id: string): Promise<Dna> {
+  static async fetchDnaById(id: string): Promise<Dna | null> {
     const response = await fetch(RenderConfig.baseUrl + '?route=dna&id=' + id)
-    const data = await response.json()
-    return data as Dna
+    if (!response.ok) return null
+    return (await response.json()) as Dna
   }
 
   static async fetchDnaToUpdate(cursor: undefined | string) {

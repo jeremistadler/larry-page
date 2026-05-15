@@ -57,7 +57,10 @@ export class JsRasterizer {
   }
 
   createThread() {
-    const worker = new Worker('rasterizer.worker.ts')
+    const worker = new Worker(
+      new URL('./rasterizer.worker.ts', import.meta.url),
+      {type: 'module'},
+    )
     this.workers.push(worker)
     worker.onmessage = f => this.onMessage(f)
     worker.onerror = a => console.error(a)
