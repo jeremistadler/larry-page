@@ -2,6 +2,7 @@ import {readFile, writeFile} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
 import {dirname, join} from 'node:path'
 import {GetFitness} from 'shared/src/fitness-calculator'
+import {liveGenes} from 'shared/src/dna'
 import {Rasterizer as RustRasterizer} from 'larry-rasterizer'
 import {loadImage} from './loadImage.js'
 import {buildDna} from './buildDna.js'
@@ -61,8 +62,9 @@ async function main() {
         image.height,
         image.data as unknown as Uint8Array,
       )
+      const live = liveGenes(dna)
       const wasmResult = bench(scenario + ' [wasm]', () =>
-        rust.get_fitness(dna.genes),
+        rust.get_fitness(live),
       )
       rust.free()
 

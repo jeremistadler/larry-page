@@ -12,7 +12,7 @@ function DnaImage({
   height: number
   index: number
 }) {
-  if (!dna || !dna.genes || dna.genes.length === 0) {
+  if (!dna || !dna.genes || dna.geneCount === 0) {
     var emptyStyle = {
       width: width + 'px',
       height: height + 'px',

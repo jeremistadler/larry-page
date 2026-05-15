@@ -24,7 +24,7 @@ function rasterize(dna: Dna, image: ImageData): Uint8Array {
   const w = image.width
   const h = image.height
   const genes = dna.genes
-  const count = genes.length / GENE_FLOATS
+  const count = dna.geneCount
 
   for (let i = 0; i < count; i++) {
     const off = i * GENE_FLOATS

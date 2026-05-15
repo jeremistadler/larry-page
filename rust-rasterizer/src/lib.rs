@@ -1,6 +1,14 @@
 use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use core::arch::wasm32::*;
 
 const GENE_FLOATS: usize = 10;
+const MAX_GENES: usize = 256;
+
+#[wasm_bindgen]
+pub fn wasm_memory() -> JsValue {
+    wasm_bindgen::memory()
+}
 
 #[wasm_bindgen]
 pub struct Rasterizer {
@@ -10,6 +18,7 @@ pub struct Rasterizer {
     buffer: Vec<u8>,
     row_min: Vec<i32>,
     row_max: Vec<i32>,
+    genes_buf: Box<[f32; MAX_GENES * GENE_FLOATS]>,
 }
 
 #[wasm_bindgen]
@@ -24,16 +33,65 @@ impl Rasterizer {
             buffer: vec![255u8; pixels * 4],
             row_min: vec![0i32; height as usize + 4],
             row_max: vec![0i32; height as usize + 4],
+            genes_buf: Box::new([0.0f32; MAX_GENES * GENE_FLOATS]),
         }
     }
 
+    /// Pointer to the internal genes buffer (host writes via a Float32Array
+    /// view to skip wasm-bindgen marshaling on every call).
+    pub fn genes_ptr(&self) -> *const f32 {
+        self.genes_buf.as_ptr()
+    }
+
+    pub fn genes_capacity(&self) -> usize {
+        MAX_GENES * GENE_FLOATS
+    }
+
+    /// Compute fitness over the first `gene_count` genes already written
+    /// to the internal buffer via `genes_ptr`.
+    pub fn get_fitness_internal(&mut self, gene_count: usize) -> f64 {
+        let count = gene_count.min(MAX_GENES);
+        let len = count * GENE_FLOATS;
+        // SAFETY: split the borrow so we can pass the genes slice immutably
+        // while mutably borrowing the rasterizer's buffers.
+        let genes_ptr = self.genes_buf.as_ptr();
+        let genes: &[f32] = unsafe { core::slice::from_raw_parts(genes_ptr, len) };
+        Self::run(
+            self.width,
+            self.height,
+            &self.src,
+            &mut self.buffer,
+            &mut self.row_min,
+            &mut self.row_max,
+            genes,
+        )
+    }
+
     pub fn get_fitness(&mut self, genes: &[f32]) -> f64 {
-        let w = self.width;
-        let h = self.height;
+        Self::run(
+            self.width,
+            self.height,
+            &self.src,
+            &mut self.buffer,
+            &mut self.row_min,
+            &mut self.row_max,
+            genes,
+        )
+    }
+
+    fn run(
+        w: u32,
+        h: u32,
+        src: &[u8],
+        buffer: &mut [u8],
+        row_min: &mut [i32],
+        row_max: &mut [i32],
+        genes: &[f32],
+    ) -> f64 {
         let pixels = (w as usize) * (h as usize);
 
         // Reset working buffer to white.
-        for b in &mut self.buffer[..pixels * 4] {
+        for b in &mut buffer[..pixels * 4] {
             *b = 255;
         }
 
@@ -57,9 +115,9 @@ impl Rasterizer {
             let wf = w as f64;
             let hf = h as f64;
             draw_triangle(
-                &mut self.buffer,
-                &mut self.row_min,
-                &mut self.row_max,
+                buffer,
+                row_min,
+                row_max,
                 w,
                 h,
                 genes[off + 0] as f64 * wf,
@@ -75,7 +133,7 @@ impl Rasterizer {
             );
         }
 
-        calculate_fitness(&self.src, &self.buffer, w, h)
+        calculate_fitness(src, buffer, w, h)
     }
 }
 
@@ -181,6 +239,7 @@ fn draw_triangle(
     let r_pre = r * alpha_i;
     let g_pre = g * alpha_i;
     let b_pre = b * alpha_i;
+    let a_pre = 255 * alpha_i;
     let w = width as i32;
 
     for row in 0..row_count {
@@ -201,7 +260,22 @@ fn draw_triangle(
 
         let y = y_start + row as i32;
         let mut idx = ((y * w + x_l) as usize) * 4;
-        for _ in x_l..=x_r {
+        let mut x = x_l;
+
+        blend_span_simd(
+            buffer,
+            &mut x,
+            x_r,
+            &mut idx,
+            r_pre,
+            g_pre,
+            b_pre,
+            a_pre,
+            inv_alpha,
+        );
+
+        // Scalar tail (and full path on non-wasm).
+        while x <= x_r {
             unsafe {
                 let pr = buffer.get_unchecked_mut(idx);
                 *pr = ((r_pre + (*pr as i32) * inv_alpha) >> 8) as u8;
@@ -211,10 +285,115 @@ fn draw_triangle(
                 *pb = ((b_pre + (*pb as i32) * inv_alpha) >> 8) as u8;
             }
             idx += 4;
+            x += 1;
         }
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+#[inline(always)]
+fn blend_span_simd(
+    buffer: &mut [u8],
+    x: &mut i32,
+    x_r: i32,
+    idx: &mut usize,
+    r_pre: i32,
+    g_pre: i32,
+    b_pre: i32,
+    a_pre: i32,
+    inv_alpha: i32,
+) {
+    unsafe {
+        let inv = i16x8_splat(inv_alpha as i16);
+        // Per-pixel addend: 4 i32 lanes for one RGBA pixel.
+        let pre = i32x4(r_pre, g_pre, b_pre, a_pre);
+        while *x + 4 <= x_r + 1 {
+            let buf_v = v128_load(buffer.as_ptr().add(*idx) as *const v128);
+            let buf_lo = i16x8_extend_low_u8x16(buf_v);
+            let buf_hi = i16x8_extend_high_u8x16(buf_v);
+            // Widening multiply each i16 lane by inv_alpha → i32x4 per pair of pixels.
+            let p0 = i32x4_extmul_low_i16x8(buf_lo, inv);
+            let p1 = i32x4_extmul_high_i16x8(buf_lo, inv);
+            let p2 = i32x4_extmul_low_i16x8(buf_hi, inv);
+            let p3 = i32x4_extmul_high_i16x8(buf_hi, inv);
+            // Add per-pixel constant and shift right by 8.
+            let r0 = i32x4_shr(i32x4_add(p0, pre), 8);
+            let r1 = i32x4_shr(i32x4_add(p1, pre), 8);
+            let r2 = i32x4_shr(i32x4_add(p2, pre), 8);
+            let r3 = i32x4_shr(i32x4_add(p3, pre), 8);
+            // Narrow back to u8x16 with saturation.
+            let n01 = i16x8_narrow_i32x4(r0, r1);
+            let n23 = i16x8_narrow_i32x4(r2, r3);
+            let packed = u8x16_narrow_i16x8(n01, n23);
+            v128_store(buffer.as_mut_ptr().add(*idx) as *mut v128, packed);
+            *x += 4;
+            *idx += 16;
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[inline(always)]
+fn blend_span_simd(
+    _buffer: &mut [u8],
+    _x: &mut i32,
+    _x_r: i32,
+    _idx: &mut usize,
+    _r_pre: i32,
+    _g_pre: i32,
+    _b_pre: i32,
+    _a_pre: i32,
+    _inv_alpha: i32,
+) {
+}
+
+#[cfg(target_arch = "wasm32")]
+#[inline(always)]
+fn calculate_fitness(src: &[u8], buf: &[u8], w: u32, h: u32) -> f64 {
+    let len = (w as usize) * (h as usize) * 4;
+    let mut sum: v128 = i32x4_splat(0);
+    let mut i = 0;
+    unsafe {
+        while i + 16 <= len {
+            let s = v128_load(src.as_ptr().add(i) as *const v128);
+            let b = v128_load(buf.as_ptr().add(i) as *const v128);
+            // Widen to i16 so that (src - buf) fits without overflow.
+            let s_lo = i16x8_extend_low_u8x16(s);
+            let s_hi = i16x8_extend_high_u8x16(s);
+            let b_lo = i16x8_extend_low_u8x16(b);
+            let b_hi = i16x8_extend_high_u8x16(b);
+            let d_lo = i16x8_sub(s_lo, b_lo);
+            let d_hi = i16x8_sub(s_hi, b_hi);
+            // Square: d * d in i32 to avoid overflow (max 255^2 = 65025).
+            let sq_lo_lo = i32x4_extmul_low_i16x8(d_lo, d_lo);
+            let sq_lo_hi = i32x4_extmul_high_i16x8(d_lo, d_lo);
+            let sq_hi_lo = i32x4_extmul_low_i16x8(d_hi, d_hi);
+            let sq_hi_hi = i32x4_extmul_high_i16x8(d_hi, d_hi);
+            sum = i32x4_add(sum, i32x4_add(sq_lo_lo, sq_lo_hi));
+            sum = i32x4_add(sum, i32x4_add(sq_hi_lo, sq_hi_hi));
+            i += 16;
+        }
+    }
+    // Horizontal-add the four i32 lanes. Alpha lanes contribute 0 because
+    // both src and buf hold 255 in alpha throughout.
+    let mut diff: u64 = (i32x4_extract_lane::<0>(sum) as u64)
+        + (i32x4_extract_lane::<1>(sum) as u64)
+        + (i32x4_extract_lane::<2>(sum) as u64)
+        + (i32x4_extract_lane::<3>(sum) as u64);
+    // Tail (very rare for a 4-byte-pixel layout aligned at 16, but keep correct).
+    while i + 4 <= len {
+        unsafe {
+            let dr = *src.get_unchecked(i) as i32 - *buf.get_unchecked(i) as i32;
+            let dg = *src.get_unchecked(i + 1) as i32 - *buf.get_unchecked(i + 1) as i32;
+            let db = *src.get_unchecked(i + 2) as i32 - *buf.get_unchecked(i + 2) as i32;
+            diff += (dr * dr + dg * dg + db * db) as u64;
+        }
+        i += 4;
+    }
+    (diff as f64) / ((w as f64) * (h as f64))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 #[inline(always)]
 fn calculate_fitness(src: &[u8], buf: &[u8], w: u32, h: u32) -> f64 {
     let len = (w as usize) * (h as usize) * 4;

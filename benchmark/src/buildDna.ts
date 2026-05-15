@@ -1,4 +1,4 @@
-import {Dna, GENE_FLOATS} from 'shared/src/dna'
+import {Dna, GENE_FLOATS, MAX_GENES} from 'shared/src/dna'
 
 export function buildDna(
   rng: () => number,
@@ -6,7 +6,7 @@ export function buildDna(
   imageWidth: number,
   imageHeight: number,
 ): Dna {
-  const genes = new Float32Array(numberOfGenes * GENE_FLOATS)
+  const genes = new Float32Array(MAX_GENES * GENE_FLOATS)
   for (let i = 0; i < numberOfGenes; i++) {
     const off = i * GENE_FLOATS
     genes[off + 0] = rng()
@@ -28,6 +28,7 @@ export function buildDna(
     sourceImageWidth: imageWidth,
     sourceImageHeight: imageHeight,
     renderSize: imageWidth,
+    geneCount: numberOfGenes,
     genes,
   }
 }

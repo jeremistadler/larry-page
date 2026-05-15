@@ -1,4 +1,4 @@
-import {Dna, GENE_FLOATS} from './dna'
+import {Dna, GENE_FLOATS, MAX_GENES} from './dna'
 
 export class Utils {
   static randomIndex(arr: ArrayLike<unknown>) {
@@ -40,7 +40,7 @@ export class Utils {
   }
 
   static createDna(numberOfGenes: number, imageId: string): Dna {
-    const genes = new Float32Array(numberOfGenes * GENE_FLOATS)
+    const genes = new Float32Array(MAX_GENES * GENE_FLOATS)
     for (let i = 0; i < numberOfGenes; i++) {
       const off = i * GENE_FLOATS
       genes[off + 0] = Math.random()
@@ -61,6 +61,7 @@ export class Utils {
       sourceImageWidth: 200,
       sourceImageHeight: 200,
       renderSize: 0,
+      geneCount: numberOfGenes,
       genes,
     }
   }

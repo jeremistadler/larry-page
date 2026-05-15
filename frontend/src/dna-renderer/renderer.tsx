@@ -34,7 +34,7 @@ function DnaRenderer({
 
     workerThreads: 1,
 
-    maxGenes: 300,
+    maxGenes: 256,
     genesPerGeneration: 0.00001,
   })
 

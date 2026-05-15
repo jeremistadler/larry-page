@@ -9,7 +9,7 @@ export function drawDnaOnCanvas(ctx: CanvasRenderingContext2D, image: Dna) {
   ctx.fillRect(0, 0, width, height)
 
   const genes = image.genes
-  const count = genes.length / GENE_FLOATS
+  const count = image.geneCount
 
   for (let i = 0; i < count; i++) {
     const off = i * GENE_FLOATS

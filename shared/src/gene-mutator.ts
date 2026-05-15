@@ -4,6 +4,7 @@ import {
   IMutatorState,
   IGeneMutator,
   GENE_FLOATS,
+  MAX_GENES,
   Dna,
 } from './dna'
 import {GetFitness} from './fitness-calculator'
@@ -34,9 +35,8 @@ export function getFromName(name: string) {
 }
 
 function pickGeneOffset(dna: Dna): number | null {
-  const count = dna.genes.length / GENE_FLOATS
-  if (count === 0) return null
-  return Math.floor(Math.random() * count) * GENE_FLOATS
+  if (dna.geneCount === 0) return null
+  return Math.floor(Math.random() * dna.geneCount) * GENE_FLOATS
 }
 
 function snapshotGene(dna: Dna, offset: number): Float32Array {
@@ -47,13 +47,9 @@ function restoreGene(dna: Dna, offset: number, oldData: Float32Array): void {
   dna.genes.set(oldData, offset)
 }
 
-function appendGene(dna: Dna, gene: Float32Array): Float32Array {
-  const oldGenes = dna.genes
-  const next = new Float32Array(oldGenes.length + GENE_FLOATS)
-  next.set(oldGenes, 0)
-  next.set(gene, oldGenes.length)
-  dna.genes = next
-  return oldGenes
+function appendGeneAt(dna: Dna, gene: Float32Array): void {
+  dna.genes.set(gene, dna.geneCount * GENE_FLOATS)
+  dna.geneCount += 1
 }
 
 function undoReplace(ctx: IDnaRenderContext, state: IMutatorState) {
@@ -63,13 +59,13 @@ function undoReplace(ctx: IDnaRenderContext, state: IMutatorState) {
 
 function undoAdd(ctx: IDnaRenderContext, state: IMutatorState) {
   if (state.kind !== 'add') return
-  ctx.dna.genes = state.oldGenes
+  ctx.dna.geneCount = state.previousCount
 }
 
 function canAddGene(dna: Dna, settings: ISettings): boolean {
-  const count = dna.genes.length / GENE_FLOATS
-  if (count >= settings.maxGenes) return false
-  if (count > dna.testedPlacements * settings.genesPerGeneration + 1)
+  const cap = Math.min(settings.maxGenes, MAX_GENES)
+  if (dna.geneCount >= cap) return false
+  if (dna.geneCount > dna.testedPlacements * settings.genesPerGeneration + 1)
     return false
   return true
 }
@@ -176,8 +172,9 @@ export const GeneMutators: IGeneMutator[] = [
       gene[7] = Math.random()
       gene[8] = Math.random()
       gene[9] = 1 / (1 + ctx.dna.testedPlacements * 0.0002)
-      const oldGenes = appendGene(ctx.dna, gene)
-      return {kind: 'add', oldGenes}
+      const previousCount = ctx.dna.geneCount
+      appendGeneAt(ctx.dna, gene)
+      return {kind: 'add', previousCount}
     },
     undo: undoAdd,
   },
@@ -200,8 +197,9 @@ export const GeneMutators: IGeneMutator[] = [
         ctx.settings.newMinOpacity,
         ctx.settings.newMaxOpacity,
       )
-      const oldGenes = appendGene(ctx.dna, gene)
-      return {kind: 'add', oldGenes}
+      const previousCount = ctx.dna.geneCount
+      appendGeneAt(ctx.dna, gene)
+      return {kind: 'add', previousCount}
     },
     undo: undoAdd,
   },

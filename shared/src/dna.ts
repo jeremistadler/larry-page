@@ -3,6 +3,8 @@ import {ImageData} from './ImageData'
 export const GENE_FLOATS = 10
 export const GENE_BYTES = GENE_FLOATS * 4
 export const DNA_HEADER_BYTES = 28
+export const MAX_GENES = 256
+export const GENES_BUFFER_FLOATS = MAX_GENES * GENE_FLOATS
 
 export type Dna = {
   id: string
@@ -11,15 +13,22 @@ export type Dna = {
   sourceImageWidth: number
   sourceImageHeight: number
   renderSize: number
+  geneCount: number
+  /** Always GENES_BUFFER_FLOATS long. Only the first `geneCount * GENE_FLOATS`
+   * elements are live; the rest are scratch. */
   genes: Float32Array
 }
 
 export function geneCount(dna: Dna): number {
-  return dna.genes.length / GENE_FLOATS
+  return dna.geneCount
+}
+
+export function liveGenes(dna: Dna): Float32Array {
+  return dna.genes.subarray(0, dna.geneCount * GENE_FLOATS)
 }
 
 export function encodeDna(dna: Dna): Uint8Array {
-  const count = geneCount(dna)
+  const count = dna.geneCount
   const out = new Uint8Array(DNA_HEADER_BYTES + count * GENE_BYTES)
   const view = new DataView(out.buffer)
   view.setFloat64(0, dna.fitness, true)
@@ -43,10 +52,12 @@ export function decodeDna(id: string, bytes: Uint8Array): Dna {
   const sourceImageHeight = view.getUint32(16, true)
   const renderSize = view.getUint32(20, true)
   const count = view.getUint32(24, true)
-  const genes = new Float32Array(count * GENE_FLOATS)
-  new Uint8Array(genes.buffer).set(
-    bytes.subarray(DNA_HEADER_BYTES, DNA_HEADER_BYTES + count * GENE_BYTES),
-  )
+  const genes = new Float32Array(GENES_BUFFER_FLOATS)
+  if (count > 0) {
+    new Uint8Array(genes.buffer).set(
+      bytes.subarray(DNA_HEADER_BYTES, DNA_HEADER_BYTES + count * GENE_BYTES),
+    )
+  }
   return {
     id,
     fitness,
@@ -54,6 +65,7 @@ export function decodeDna(id: string, bytes: Uint8Array): Dna {
     sourceImageWidth,
     sourceImageHeight,
     renderSize,
+    geneCount: count,
     genes,
   }
 }
@@ -135,7 +147,7 @@ export type IDnaRenderContext = {
 
 export type IMutatorState =
   | {kind: 'replace'; offset: number; oldData: Float32Array}
-  | {kind: 'add'; oldGenes: Float32Array}
+  | {kind: 'add'; previousCount: number}
 
 export type IGeneMutator = {
   name: string
