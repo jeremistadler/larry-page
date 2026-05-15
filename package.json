@@ -6,7 +6,7 @@
         "dev": "cd ./frontend && pnpm start",
         "bench": "pnpm --filter benchmark bench",
         "bench:baseline": "pnpm --filter benchmark bench:baseline",
-        "wasm-build": "cd rust-rasterizer && wasm-pack build --target nodejs --release"
+        "wasm-build": "cd rust-rasterizer && wasm-pack build --target nodejs --release && wasm-pack build --target web --out-dir pkg-web --release && node -e \"const fs=require('fs'),p=JSON.parse(fs.readFileSync('pkg-web/package.json'));p.name='larry-rasterizer-web';fs.writeFileSync('pkg-web/package.json',JSON.stringify(p,null,2)+'\\n')\""
     },
     "packageManager": "pnpm@10.33.0"
 }

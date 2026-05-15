@@ -54,6 +54,9 @@ importers:
       gifencoder:
         specifier: ^2.0.1
         version: 2.0.1
+      larry-rasterizer-web:
+        specifier: file:../rust-rasterizer/pkg-web
+        version: file:rust-rasterizer/pkg-web
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1256,6 +1259,9 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  larry-rasterizer-web@file:rust-rasterizer/pkg-web:
+    resolution: {directory: rust-rasterizer/pkg-web, type: directory}
 
   larry-rasterizer@file:rust-rasterizer/pkg:
     resolution: {directory: rust-rasterizer/pkg, type: directory}
@@ -2561,6 +2567,8 @@ snapshots:
   jsesc@3.1.0: {}
 
   json5@2.2.3: {}
+
+  larry-rasterizer-web@file:rust-rasterizer/pkg-web: {}
 
   larry-rasterizer@file:rust-rasterizer/pkg: {}
 

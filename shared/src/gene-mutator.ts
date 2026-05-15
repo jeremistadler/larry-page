@@ -7,18 +7,24 @@ import {
   MAX_GENES,
   Dna,
 } from './dna'
+import {ImageData} from './ImageData'
 import {GetFitness} from './fitness-calculator'
 import {Utils} from './utils'
+
+export type FitnessFn = (dna: Dna, source: ImageData) => number
 
 const EffectivenessChangeRate = 0.03
 const MinEffectiveness = 0.00001
 const MaxEffectiveness = 3000
 
-export function MutateDna(ctx: IDnaRenderContext) {
+export function MutateDna(
+  ctx: IDnaRenderContext,
+  getFitness: FitnessFn = GetFitness,
+) {
   const mutatorState = ctx.mutator.func(ctx)
   if (mutatorState === null) return
 
-  const fitness = GetFitness(ctx.dna, ctx.source)
+  const fitness = getFitness(ctx.dna, ctx.source)
 
   if (fitness < ctx.fitness) {
     ctx.fitness = fitness

@@ -5,6 +5,7 @@ import {
   GetMutator,
   UpdateEffectiveness,
 } from 'shared/src/gene-mutator'
+import init, {Rasterizer} from 'larry-rasterizer-web'
 
 async function startRasterizing(
   sourceImageData: ImageData,
@@ -12,32 +13,40 @@ async function startRasterizing(
   settings: ISettings,
   epoc: number,
 ) {
+  await init()
+  const rasterizer = new Rasterizer(
+    sourceImageData.width,
+    sourceImageData.height,
+    sourceImageData.data as unknown as Uint8Array,
+  )
+  const wasmFitness = (d: Dna) =>
+    rasterizer.get_fitness(d.genes.subarray(0, d.geneCount * 10))
+
   let targetIterations = 10
 
   while (true) {
     const startTime = Date.now()
 
     for (let runIndex = 0; runIndex < targetIterations; runIndex++) {
-      var mutator = GetMutator()
+      const mutator = GetMutator()
 
-      var ctx: IDnaRenderContext = {
-        dna: dna,
+      const ctx: IDnaRenderContext = {
+        dna,
         mutations: [],
-        mutator: mutator,
+        mutator,
         source: sourceImageData,
         fitness: dna.fitness,
-        settings: settings,
+        settings,
       }
 
       const originalFitness = ctx.fitness
 
-      MutateDna(ctx)
+      MutateDna(ctx, wasmFitness)
 
       const fitnessImprovement = originalFitness - ctx.fitness
 
       UpdateEffectiveness(fitnessImprovement, mutator)
 
-      dna.testedPlacements++
       dna.fitness = ctx.fitness
     }
 

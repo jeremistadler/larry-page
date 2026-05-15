@@ -18,7 +18,7 @@ Package manager is **pnpm** (workspace). Run from the repo root unless noted.
 - `pnpm deploy` — builds the frontend, then `wrangler deploy` from `backend` (the Worker bundles `frontend/dist` as its assets directory; see `backend/wrangler.toml`).
 - `pnpm --filter <pkg> <script>` — run a script in a single workspace (`frontend`, `backend`, `shared`, `benchmark`).
 - `pnpm bench` — runs the GetFitness microbench (JS vs WASM) under `benchmark/` against test-images. Requires `rust-rasterizer/pkg/` to exist; if missing or stale, run `pnpm wasm-build` first (needs the Rust toolchain — see below).
-- `pnpm wasm-build` — rebuilds the Rust → WASM rasterizer at `rust-rasterizer/pkg/`. Requires `rustup` + `wasm-pack` on PATH; the brew rust install does not include the wasm32 target, so wasm-pack must use rustup's toolchain (e.g. `PATH="/opt/homebrew/Cellar/rustup/1.29.0/bin:$PATH" pnpm wasm-build` if both are installed).
+- `pnpm wasm-build` — rebuilds the Rust → WASM rasterizer for both `rust-rasterizer/pkg/` (nodejs target, used by the benchmark) and `rust-rasterizer/pkg-web/` (web target, imported by the frontend worker — name renamed to `larry-rasterizer-web` to differentiate from the nodejs build). Requires `rustup` + `wasm-pack` on PATH; the brew rust install does not include the wasm32 target, so wasm-pack must use rustup's toolchain (e.g. `PATH="/opt/homebrew/Cellar/rustup/1.29.0/bin:$PATH" pnpm wasm-build` if both are installed).
 - No test runner is configured at the workspace level.
 
 Formatting: Prettier with React's config (`.prettierrc.js`) — no semis, single quotes, `bracketSpacing: false`, `arrowParens: 'avoid'`, trailing commas. Match it when editing.
