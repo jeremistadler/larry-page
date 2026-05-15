@@ -26,8 +26,8 @@ function DnaRenderer({
 
     workerThreads: 1,
 
-    maxGenes: 200,
-    genesPerGeneration: 0.0005,
+    maxGenes: 300,
+    genesPerGeneration: 0.00001,
   })
 
   const width = 256
