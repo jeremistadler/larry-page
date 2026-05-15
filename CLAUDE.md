@@ -40,14 +40,6 @@ Three workspace packages plus several standalone experimental sister directories
   - `updateCurrentList` is the route that rebuilds `dnaIdsList` and `fittestDnaList` after mutations — call it after schema changes or bulk imports.
   - CORS `Access-Control-Allow-Origin` is hardcoded to `http://localhost:1234` (a stale dev port from an older Parcel setup). Vite defaults to 5173; if you need real local cross-origin dev against the deployed worker, expect to either change this or proxy.
 
-### `wasm-worker/` (workspace member, not currently wired into the frontend)
-
-AssemblyScript port of the rasterizer in `wasm-worker/assembly/raster.ts`. Lives in the workspace but the frontend's `JsRasterizer` does not use it yet — it's groundwork for the README TODO "Web assembly script the workers."
-
-### Standalone experiments (NOT in the pnpm workspace)
-
-`rasterizer-js/`, `rust-wasm/`, `go-test/`, `web-gl-test/`, `metal/` are independent prototypes for alternative implementations of the same triangle-fitting idea. They are not built by `pnpm build` and should be treated as scratch unless the user asks about them specifically.
-
 ## Things to know before editing
 
 - The `Dna` shape in `shared/src/dna.ts` is the contract between worker, main thread, and KV. Changing it is a schema migration — bump the `fitnessN:` prefix in the backend and add a migration route, don't silently break stored records.

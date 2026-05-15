@@ -2,7 +2,6 @@ packages:
   - backend
   - frontend
   - shared
-  - wasm-worker
 onlyBuiltDependencies:
   - esbuild
   - workerd
