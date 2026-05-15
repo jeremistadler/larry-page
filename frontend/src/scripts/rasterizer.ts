@@ -2,6 +2,8 @@ import {Dna, ISettings, IWorkerResult} from 'shared/src/dna'
 import {GetFitness} from 'shared/src/fitness-calculator'
 import {DnaApi} from './api'
 
+const SAVE_INTERVAL_MS = 10_000
+
 export class JsRasterizer {
   workers: Worker[] = []
   onFrameCompleted: {(dna: Dna): void}[] = []
@@ -9,6 +11,8 @@ export class JsRasterizer {
   epoc = 0
   disposed: boolean = false
   source: ImageData | null = null
+  lastSaveAt = 0
+  lastSavedFitness = Infinity
 
   constructor(public dna: Dna, public settings: ISettings) {
     if (dna.testedPlacements == null) dna.testedPlacements = 0
@@ -51,8 +55,14 @@ export class JsRasterizer {
     for (let g = 0; g < this.onFrameCompleted.length; g++)
       this.onFrameCompleted[g](this.dna)
 
-    if (this.currentIteration % this.settings.saveInterval === 0) {
-      // DnaApi.saveDna(this.dna)
+    const now = Date.now()
+    if (
+      now - this.lastSaveAt >= SAVE_INTERVAL_MS &&
+      this.dna.fitness < this.lastSavedFitness
+    ) {
+      this.lastSaveAt = now
+      this.lastSavedFitness = this.dna.fitness
+      DnaApi.saveDna(this.dna).catch(err => console.warn('saveDna failed', err))
     }
   }
 
