@@ -58,8 +58,7 @@ function DnaImage({
         points={points}
         style={{
           fill: color,
-          stroke: 'rgba(0, 0, 0, 0.05)',
-          strokeWidth: 0,
+          stroke: 'none',
           animationDelay: i * lengthPerPoly + 's',
         }}
         key={i}
@@ -69,6 +68,7 @@ function DnaImage({
 
   return (
     <svg height={height} width={width}>
+      <rect width={width} height={height} fill="white" />
       {polygons}
     </svg>
   )
