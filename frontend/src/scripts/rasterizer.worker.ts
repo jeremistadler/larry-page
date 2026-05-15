@@ -25,11 +25,6 @@ async function startRasterizing(
   let targetIterations = 10
 
   while (true) {
-    // DEBUG
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    // DEBUG
-    targetIterations = 1
-
     const startTime = Date.now()
 
     for (let runIndex = 0; runIndex < targetIterations; runIndex++) {

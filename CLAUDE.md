@@ -29,7 +29,7 @@ Three workspace packages plus several standalone experimental sister directories
 - **`shared/`** — pure TS types and algorithm primitives shared by frontend and backend. The key module is `shared/src/dna.ts` which defines `Dna` (an image + its current set of `Triangle` genes + `fitness`). `fitness-calculator.ts` and `gene-mutator.ts` implement the GA inner loop.
 - **`frontend/`** — Vite + React 18 SPA. `App.tsx` is tiny: it loads a `Dna` (random or by `?dna=<id>`) and renders `DnaRenderer` (live optimization view) + `Uploader` + `DnaGrid` (gallery). The optimization itself runs in a Web Worker:
   - `scripts/rasterizer.ts` (`JsRasterizer`) spawns Web Workers, owns the canonical `Dna`, and re-checks fitness on the main thread when a worker reports back (it logs a warning if main-thread vs worker fitness disagree — that catches mutator bugs).
-  - `scripts/rasterizer.worker.ts` runs the actual mutate-and-keep-if-better loop using `shared/src/gene-mutator.ts`. There is a deliberate 1s sleep + `targetIterations = 1` at the top of the loop currently (marked `// DEBUG`) — don't mistake this for a bug unless you're intentionally re-enabling fast mode.
+  - `scripts/rasterizer.worker.ts` runs the actual mutate-and-keep-if-better loop using `shared/src/gene-mutator.ts`.
   - `scripts/api.ts` (`DnaApi`) is the only place that talks to the Worker. `uploadNewImage` re-encodes whatever the user picked as PNG client-side via canvas (this is how iPhone HEIC uploads are handled — see commit `c7330de`).
 - **`backend/`** — Cloudflare Worker (`backend/src/index.ts`). Single `fetch` handler that dispatches on `?route=` query param. All persistence is in one KV namespace (binding `KV`). Key conventions:
   - `image:<id>` — uploaded PNG bytes.
