@@ -1,5 +1,6 @@
 import {generateChronologicalId} from './generateChronologicalId'
 import {Dna} from 'shared/src/dna'
+import {Utils} from 'shared/src/utils'
 
 export interface Env {
   KV: KVNamespace
@@ -65,8 +66,18 @@ async function handleApiRequest(
   if (query.route === 'upload') {
     let buf = await request.arrayBuffer()
     const id = generateChronologicalId()
+    const dna = Utils.createDna(1, id)
+    const json = JSON.stringify(dna)
+
     await KV.put('image:' + id, buf)
-    return new Response(JSON.stringify({id}), {
+    await KV.put(
+      'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness),
+      json,
+    )
+    await KV.put('dnaIds:' + id, id)
+    await updateDnaCurrentList(KV)
+
+    return new Response(JSON.stringify({id, dna}), {
       headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'dna') {
@@ -85,7 +96,13 @@ async function handleApiRequest(
       headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'random') {
-    const dnaIds = (await KV.get('dnaIdsList', 'json')) as string[]
+    const dnaIds = ((await KV.get('dnaIdsList', 'json')) as string[] | null) ?? []
+    if (dnaIds.length === 0) {
+      return new Response(JSON.stringify({errorMessage: 'No dna found'}), {
+        status: 404,
+        headers: DEFAULT_HEADERS,
+      })
+    }
     const lastReturnedId = await KV.get('lastReturnedId', 'text')
 
     let index = (dnaIds.indexOf(lastReturnedId ?? '') + 1) % dnaIds.length
@@ -109,7 +126,7 @@ async function handleApiRequest(
       headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'dnaInfo') {
-    const dnaIds = (await KV.get('dnaIdsList', 'json')) as string[]
+    const dnaIds = ((await KV.get('dnaIdsList', 'json')) as string[] | null) ?? []
 
     const result = await Promise.all(
       dnaIds.map(async id => {
@@ -126,7 +143,7 @@ async function handleApiRequest(
     })
   } else if (query.route === 'list') {
     const list = await KV.get('fittestDnaList', 'text')
-    return new Response(list, {
+    return new Response(list ?? '[]', {
       headers: DEFAULT_HEADERS,
     })
   } else if (query.route === 'image') {

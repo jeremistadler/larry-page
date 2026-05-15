@@ -32,15 +32,14 @@ function convertImageToPng(file: File): Promise<ArrayBuffer> {
 }
 
 export class DnaApi {
-  static async uploadNewImage(file: File): Promise<string> {
+  static async uploadNewImage(file: File): Promise<{id: string; dna: Dna}> {
     const pngBuffer = await convertImageToPng(file)
 
     const response = await fetch(RenderConfig.baseUrl + '?route=upload', {
       method: 'POST',
       body: pngBuffer,
     })
-    const data = (await response.json()) as {id: string}
-    return data.id
+    return (await response.json()) as {id: string; dna: Dna}
   }
 
   static async fetchRandomDna(): Promise<Dna> {
