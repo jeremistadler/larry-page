@@ -27,6 +27,7 @@ export function buildDna(
     testedPlacements: 0,
     sourceImageWidth: imageWidth,
     sourceImageHeight: imageHeight,
+    renderSize: imageWidth,
     genes,
   }
 }

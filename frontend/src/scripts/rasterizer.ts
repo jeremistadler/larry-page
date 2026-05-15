@@ -42,6 +42,7 @@ export class JsRasterizer {
     if (data.epoc !== this.epoc) return
 
     this.dna = data.dna
+    this.dna.renderSize = this.settings.size
     this.currentIteration++
 
     var fitnessAfter = GetFitness(this.dna, this.source!)

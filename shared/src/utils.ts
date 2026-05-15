@@ -60,6 +60,7 @@ export class Utils {
       testedPlacements: 0,
       sourceImageWidth: 200,
       sourceImageHeight: 200,
+      renderSize: 0,
       genes,
     }
   }

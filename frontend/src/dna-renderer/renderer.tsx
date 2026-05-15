@@ -7,6 +7,13 @@ import {
   drawFitnessDiffOnCanvas,
 } from '../scripts/drawDnaOnCanvas'
 
+function sizeForPlacements(testedPlacements: number): number {
+  if (testedPlacements >= 50000) return 256
+  if (testedPlacements >= 20000) return 192
+  if (testedPlacements >= 5000) return 128
+  return 64
+}
+
 function DnaRenderer({
   dna,
   onDnaChanged,
@@ -15,6 +22,7 @@ function DnaRenderer({
   onDnaChanged: (dn: Dna) => void
 }) {
   const dnaId = dna.id
+  const targetSize = sizeForPlacements(dna.testedPlacements)
   const [settings, setSettings] = useState<ISettings>({
     newMinOpacity: 0.1,
     newMaxOpacity: 1,
@@ -22,7 +30,7 @@ function DnaRenderer({
     saveInterval: 10,
     updateScreenInterval: 500,
 
-    size: 128,
+    size: targetSize,
 
     workerThreads: 1,
 
@@ -53,6 +61,12 @@ function DnaRenderer({
       rasterizer.Stop()
     }
   }, [dnaId, settings])
+
+  useEffect(() => {
+    if (targetSize !== settings.size) {
+      setSettings(s => ({...s, size: targetSize}))
+    }
+  }, [targetSize, settings.size])
 
   useEffect(() => {
     const rasterizer = rasterizerRef.current
@@ -134,18 +148,6 @@ function DnaRenderer({
           </p> */}
 
           <button onClick={() => rasterizerRef.current?.nudge()}>Nudge</button>
-          <button
-            onClick={() =>
-              setSettings({...settings, size: settings.size - 32})
-            }>
-            Lower resolution
-          </button>
-          <button
-            onClick={() =>
-              setSettings({...settings, size: settings.size + 32})
-            }>
-            Higher resolution
-          </button>
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@ import {ImageData} from './ImageData'
 
 export const GENE_FLOATS = 10
 export const GENE_BYTES = GENE_FLOATS * 4
-export const DNA_HEADER_BYTES = 24
+export const DNA_HEADER_BYTES = 28
 
 export type Dna = {
   id: string
@@ -10,6 +10,7 @@ export type Dna = {
   testedPlacements: number
   sourceImageWidth: number
   sourceImageHeight: number
+  renderSize: number
   genes: Float32Array
 }
 
@@ -25,7 +26,8 @@ export function encodeDna(dna: Dna): Uint8Array {
   view.setUint32(8, dna.testedPlacements, true)
   view.setUint32(12, dna.sourceImageWidth, true)
   view.setUint32(16, dna.sourceImageHeight, true)
-  view.setUint32(20, count, true)
+  view.setUint32(20, dna.renderSize, true)
+  view.setUint32(24, count, true)
   out.set(
     new Uint8Array(dna.genes.buffer, dna.genes.byteOffset, count * GENE_BYTES),
     DNA_HEADER_BYTES,
@@ -39,7 +41,8 @@ export function decodeDna(id: string, bytes: Uint8Array): Dna {
   const testedPlacements = view.getUint32(8, true)
   const sourceImageWidth = view.getUint32(12, true)
   const sourceImageHeight = view.getUint32(16, true)
-  const count = view.getUint32(20, true)
+  const renderSize = view.getUint32(20, true)
+  const count = view.getUint32(24, true)
   const genes = new Float32Array(count * GENE_FLOATS)
   new Uint8Array(genes.buffer).set(
     bytes.subarray(DNA_HEADER_BYTES, DNA_HEADER_BYTES + count * GENE_BYTES),
@@ -50,6 +53,7 @@ export function decodeDna(id: string, bytes: Uint8Array): Dna {
     testedPlacements,
     sourceImageWidth,
     sourceImageHeight,
+    renderSize,
     genes,
   }
 }

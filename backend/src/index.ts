@@ -55,6 +55,22 @@ function readFitnessFromDnaBytes(bytes: Uint8Array): number {
   return view.getFloat64(0, true)
 }
 
+function readRenderSizeFromDnaBytes(bytes: Uint8Array): number {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  return view.getUint32(20, true)
+}
+
+function fitnessKey(id: string, renderSize: number, fitness: number): string {
+  return (
+    'fitness4:' +
+    id +
+    ':' +
+    (99999 - renderSize).toString().padStart(5, '0') +
+    ':' +
+    formatFitnessChronological(fitness)
+  )
+}
+
 async function handleApiRequest(
   request: Request,
   env: Env,
@@ -71,7 +87,7 @@ async function handleApiRequest(
 
     await KV.put('image:' + id, buf)
     await KV.put(
-      'fitness4:' + id + ':' + formatFitnessChronological(dna.fitness),
+      fitnessKey(id, dna.renderSize, dna.fitness),
       encoded as unknown as ArrayBuffer,
     )
     await KV.put('dnaIds:' + id, id)
@@ -154,7 +170,8 @@ async function handleApiRequest(
       })
     }
     const fitness = readFitnessFromDnaBytes(buf)
-    const key = 'fitness4:' + id + ':' + formatFitnessChronological(fitness)
+    const renderSize = readRenderSizeFromDnaBytes(buf)
+    const key = fitnessKey(id, renderSize, fitness)
     await KV.put(key, buf as unknown as ArrayBuffer)
     await updateDnaCurrentList(KV)
     return new Response(JSON.stringify({message: 'Saved to ' + key}), {
