@@ -1,0 +1,15 @@
+{
+  "name": "larry-rasterizer-web",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "larry_rasterizer_bg.wasm",
+    "larry_rasterizer.js",
+    "larry_rasterizer.d.ts"
+  ],
+  "main": "larry_rasterizer.js",
+  "types": "larry_rasterizer.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
