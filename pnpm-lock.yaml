@@ -29,6 +29,9 @@ importers:
 
   benchmark:
     dependencies:
+      larry-rasterizer:
+        specifier: file:../rust-rasterizer/pkg
+        version: file:rust-rasterizer/pkg
       shared:
         specifier: workspace:*
         version: link:../shared
@@ -1253,6 +1256,9 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  larry-rasterizer@file:rust-rasterizer/pkg:
+    resolution: {directory: rust-rasterizer/pkg, type: directory}
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -2555,6 +2561,8 @@ snapshots:
   jsesc@3.1.0: {}
 
   json5@2.2.3: {}
+
+  larry-rasterizer@file:rust-rasterizer/pkg: {}
 
   loose-envify@1.4.0:
     dependencies:

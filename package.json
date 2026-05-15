@@ -5,7 +5,8 @@
         "deploy": "cd ./frontend && pnpm build && cd ../backend && wrangler deploy",
         "dev": "cd ./frontend && pnpm start",
         "bench": "pnpm --filter benchmark bench",
-        "bench:baseline": "pnpm --filter benchmark bench:baseline"
+        "bench:baseline": "pnpm --filter benchmark bench:baseline",
+        "wasm-build": "cd rust-rasterizer && wasm-pack build --target nodejs --release"
     },
     "packageManager": "pnpm@10.33.0"
 }

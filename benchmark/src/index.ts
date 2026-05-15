@@ -2,6 +2,7 @@ import {readFile, writeFile} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
 import {dirname, join} from 'node:path'
 import {GetFitness} from 'shared/src/fitness-calculator'
+import {Rasterizer as RustRasterizer} from 'larry-rasterizer'
 import {loadImage} from './loadImage.js'
 import {buildDna} from './buildDna.js'
 import {mulberry32} from './seededRandom.js'
@@ -34,7 +35,12 @@ async function main() {
   const updateBaseline = process.argv.includes('--update-baseline')
   const baseline = await loadBaseline()
   const nextBaseline: Baseline = {}
-  const results: BenchResult[] = []
+  type Row = {
+    scenario: string
+    jsResult: BenchResult
+    wasmResult: BenchResult
+  }
+  const rows: Row[] = []
   const correctnessFailures: string[] = []
 
   for (const imageName of IMAGES) {
@@ -46,18 +52,36 @@ async function main() {
       )
       const rng = mulberry32(0xc0ffee ^ size ^ (genes << 8))
       const dna = buildDna(rng, genes, image.width, image.height)
-      const name = `${imageName.padEnd(12)} ${size}x${size}  ${String(genes).padStart(3)} genes`
+      const scenario = `${imageName.padEnd(12)} ${size}x${size}  ${String(genes).padStart(3)} genes`
 
-      const result = bench(name, () => GetFitness(dna, image))
-      results.push(result)
-      nextBaseline[name] = {fitness: result.fitness}
+      const jsResult = bench(scenario + ' [js  ]', () => GetFitness(dna, image))
 
-      const recorded = baseline[name]?.fitness
+      const rust = new RustRasterizer(
+        image.width,
+        image.height,
+        image.data as unknown as Uint8Array,
+      )
+      const wasmResult = bench(scenario + ' [wasm]', () =>
+        rust.get_fitness(dna.genes),
+      )
+      rust.free()
+
+      rows.push({scenario, jsResult, wasmResult})
+      nextBaseline[scenario] = {fitness: jsResult.fitness}
+
+      const fitnessDrift = Math.abs(jsResult.fitness - wasmResult.fitness)
+      if (fitnessDrift > 1e-3) {
+        correctnessFailures.push(
+          `${scenario}: js=${jsResult.fitness.toFixed(4)} vs wasm=${wasmResult.fitness.toFixed(4)} (drift ${fitnessDrift.toFixed(4)})`,
+        )
+      }
+
+      const recorded = baseline[scenario]?.fitness
       if (!updateBaseline && recorded != null) {
-        const drift = Math.abs(recorded - result.fitness)
+        const drift = Math.abs(recorded - jsResult.fitness)
         if (drift > 1e-6) {
           correctnessFailures.push(
-            `${name}: fitness ${result.fitness} != baseline ${recorded} (drift ${drift})`,
+            `${scenario} (js vs baseline): ${jsResult.fitness} != ${recorded} (drift ${drift})`,
           )
         }
       }
@@ -66,21 +90,22 @@ async function main() {
 
   console.log('')
   console.log(
-    'scenario'.padEnd(36) +
-      'ops/sec'.padStart(12) +
-      'ms/op'.padStart(12) +
-      'iters'.padStart(10) +
+    'scenario'.padEnd(38) +
+      'js ops/s'.padStart(11) +
+      'wasm ops/s'.padStart(13) +
+      'speedup'.padStart(10) +
       '  fitness',
   )
-  console.log('-'.repeat(80))
-  for (const r of results) {
+  console.log('-'.repeat(85))
+  for (const r of rows) {
+    const speedup = r.wasmResult.opsPerSec / r.jsResult.opsPerSec
     console.log(
-      r.name.padEnd(36) +
-        r.opsPerSec.toFixed(1).padStart(12) +
-        (r.nsPerOp / 1e6).toFixed(3).padStart(12) +
-        String(r.iterations).padStart(10) +
+      r.scenario.padEnd(38) +
+        r.jsResult.opsPerSec.toFixed(1).padStart(11) +
+        r.wasmResult.opsPerSec.toFixed(1).padStart(13) +
+        (speedup.toFixed(2) + '×').padStart(10) +
         '  ' +
-        r.fitness.toFixed(4),
+        r.jsResult.fitness.toFixed(4),
     )
   }
   console.log('')
@@ -102,7 +127,7 @@ async function main() {
       'No baseline.json found. Run with --update-baseline to record one.',
     )
   } else {
-    console.log('All fitness values match baseline.')
+    console.log('All fitness values match baseline and js/wasm agree.')
   }
 }
 

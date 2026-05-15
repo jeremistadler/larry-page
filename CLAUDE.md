@@ -10,12 +10,15 @@ Deployed at https://larry.jeremi.se (Cloudflare Worker serves both the API and t
 
 ## Commands
 
+
 Package manager is **pnpm** (workspace). Run from the repo root unless noted.
 
 - `pnpm dev` — start the Vite frontend dev server (cd's into `frontend`). The frontend talks to the deployed API at `larry.jeremi.se` (see `shared/src/shared.ts`) — there is no local backend dev workflow wired up by default; use `cd backend && pnpm dev` to run `wrangler dev` if you need it.
 - `pnpm build` — typechecks + builds both `frontend` (tsc + vite) and `backend` (tsc).
 - `pnpm deploy` — builds the frontend, then `wrangler deploy` from `backend` (the Worker bundles `frontend/dist` as its assets directory; see `backend/wrangler.toml`).
-- `pnpm --filter <pkg> <script>` — run a script in a single workspace (`frontend`, `backend`, `shared`).
+- `pnpm --filter <pkg> <script>` — run a script in a single workspace (`frontend`, `backend`, `shared`, `benchmark`).
+- `pnpm bench` — runs the GetFitness microbench (JS vs WASM) under `benchmark/` against test-images. Requires `rust-rasterizer/pkg/` to exist; if missing or stale, run `pnpm wasm-build` first (needs the Rust toolchain — see below).
+- `pnpm wasm-build` — rebuilds the Rust → WASM rasterizer at `rust-rasterizer/pkg/`. Requires `rustup` + `wasm-pack` on PATH; the brew rust install does not include the wasm32 target, so wasm-pack must use rustup's toolchain (e.g. `PATH="/opt/homebrew/Cellar/rustup/1.29.0/bin:$PATH" pnpm wasm-build` if both are installed).
 - No test runner is configured at the workspace level.
 
 Formatting: Prettier with React's config (`.prettierrc.js`) — no semis, single quotes, `bracketSpacing: false`, `arrowParens: 'avoid'`, trailing commas. Match it when editing.
