@@ -8,9 +8,9 @@ import {
 } from '../scripts/drawDnaOnCanvas'
 
 function sizeForPlacements(testedPlacements: number): number {
-  if (testedPlacements >= 50000) return 256
-  if (testedPlacements >= 20000) return 192
-  if (testedPlacements >= 5000) return 128
+  if (testedPlacements >= 10000000) return 256
+  if (testedPlacements >= 1000000) return 192
+  if (testedPlacements >= 100000) return 128
   return 64
 }
 
