@@ -20,6 +20,14 @@
     background: white;
     display: inline-block;
     font-size: 0;
+    width: 192px;
+    vertical-align: top;
+}
+
+.renderer-image canvas{
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .renderer-text-container{

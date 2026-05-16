@@ -4,6 +4,15 @@ import {DnaApi} from './api'
 
 const SAVE_INTERVAL_MS = 10_000
 
+export function renderDims(dna: Dna, size: number) {
+  const srcW = dna.sourceImageWidth || 1
+  const srcH = dna.sourceImageHeight || 1
+  if (srcW >= srcH) {
+    return {width: size, height: Math.max(1, Math.round((size * srcH) / srcW))}
+  }
+  return {width: Math.max(1, Math.round((size * srcW) / srcH)), height: size}
+}
+
 export class JsRasterizer {
   workers: Worker[] = []
   onFrameCompleted: {(dna: Dna): void}[] = []
@@ -17,7 +26,8 @@ export class JsRasterizer {
   constructor(public dna: Dna, public settings: ISettings) {
     if (dna.testedPlacements == null) dna.testedPlacements = 0
 
-    DnaApi.loadAndScaleImageData(dna, settings.size, settings.size).then(
+    const dims = renderDims(dna, settings.size)
+    DnaApi.loadAndScaleImageData(dna, dims.width, dims.height).then(
       imageData => {
         if (this.disposed) return
         this.source = imageData

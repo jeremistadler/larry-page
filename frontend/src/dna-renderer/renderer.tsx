@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef} from 'react'
 import {Dna, ISettings, geneCount} from 'shared/src/dna'
-import {JsRasterizer} from '../scripts/rasterizer'
+import {JsRasterizer, renderDims} from '../scripts/rasterizer'
 import './renderer.css'
 import {
   drawDnaOnCanvas,
@@ -38,8 +38,9 @@ function DnaRenderer({
     genesPerGeneration: 0.00001,
   })
 
-  const width = 256
-  const height = 256 * (dna.sourceImageHeight / dna.sourceImageWidth)
+  const previewDims = renderDims(dna, 256)
+  const dataDims = renderDims(dna, settings.size)
+  const aspectRatio = `${dna.sourceImageWidth || 1} / ${dna.sourceImageHeight || 1}`
 
   // const dnaUpdated = (dna: Dna) => {
   //   dnaRef.current = dna
@@ -93,21 +94,25 @@ function DnaRenderer({
     <div className="renderer-container">
       <div className="renderer-inner-container">
         <p className="renderer-header">Currently rendering</p>
-        <div className="renderer-image">
-          <canvas ref={canvasRef} width={width} height={height} />
-        </div>
-        <div className="renderer-image">
+        <div className="renderer-image" style={{aspectRatio}}>
           <canvas
-            ref={fitnessCanvasRef}
-            width={settings.size}
-            height={settings.size}
+            ref={canvasRef}
+            width={previewDims.width}
+            height={previewDims.height}
           />
         </div>
-        <div className="renderer-image">
+        <div className="renderer-image" style={{aspectRatio}}>
+          <canvas
+            ref={fitnessCanvasRef}
+            width={dataDims.width}
+            height={dataDims.height}
+          />
+        </div>
+        <div className="renderer-image" style={{aspectRatio}}>
           <canvas
             ref={originalCanvasRef}
-            width={settings.size}
-            height={settings.size}
+            width={dataDims.width}
+            height={dataDims.height}
           />
         </div>
 
